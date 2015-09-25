@@ -8,11 +8,11 @@ Imports System.Runtime.InteropServices
 
 ' Passez en revue les valeurs des attributs de l'assembly
 
-<Assembly: AssemblyTitle("ClassLibrary1")> 
+<Assembly: AssemblyTitle("Driver_Alerte")> 
 <Assembly: AssemblyDescription("")> 
-<Assembly: AssemblyCompany("Hewlett-Packard Company")> 
-<Assembly: AssemblyProduct("ClassLibrary1")> 
-<Assembly: AssemblyCopyright("Copyright © Hewlett-Packard Company 2015")> 
+<Assembly: AssemblyCompany("Homidom")> 
+<Assembly: AssemblyProduct("Driver_Alerte")> 
+<Assembly: AssemblyCopyright("")> 
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: ComVisible(False)>
