@@ -871,14 +871,22 @@ Imports System.Xml
                 Dim requestStream As Stream = Request.GetRequestStream()
                 requestStream.Write(postBytes, 0, postBytes.Length)
                 requestStream.Close()
-                Dim Response As HttpWebResponse = Request.GetResponse()
 
-                WriteLog("DBG: GetPollen, response cookie.count : " & Response.Cookies.Count)
-                Dim tmpmoncook As String = Response.Cookies("MonCookie").Value
-                Dim tmpmonphpid As String = Response.Cookies("PHPSESSID").Value
-                Dim responsereader = New StreamReader(Response.GetResponseStream())
-                responsebodystr = responsereader.ReadToEnd()
-                responsereader.Close()
+
+                Dim tmpmoncook As String = ""
+                Dim tmpmonphpid As String = ""
+                Try
+                    Dim Response As HttpWebResponse = Request.GetResponse()
+                    WriteLog("DBG: GetPollen, response cookie.count : " & Response.Cookies.Count)
+                    tmpmoncook = Response.Cookies("MonCookie").Value
+                    tmpmonphpid = Response.Cookies("PHPSESSID").Value
+                    Dim responsereader = New StreamReader(Response.GetResponseStream())
+                    responsebodystr = responsereader.ReadToEnd()
+                    responsereader.Close()
+                Catch ex As Exception
+                    WriteLog("ERR: GetPollen, Site stallergenes.fr inaccessible")
+                    Return "Pas de donnée"
+                End Try
 
 
                 'recherche pollen enregistré dans la session précedente
@@ -958,11 +966,13 @@ Imports System.Xml
                 getpollen = indicestr
             Catch ex As Exception
                 WriteLog("ERR: GetPollen, Exception : " & ex.Message)
+                Return ""
             End Try
 
-        Catch ex As Exception
-            WriteLog("ERR: GetPollen, Exception : " & ex.Message)
-        End Try
+            Catch ex As Exception
+                WriteLog("ERR: GetPollen, Exception : " & ex.Message)
+                Return ""
+            End Try
 
     End Function
 
@@ -997,15 +1007,17 @@ Imports System.Xml
 
         Catch ex As Exception
             WriteLog("ERR: GetPollenRnsa, Exception : " & ex.Message)
+            Return ""
         End Try
 
     End Function
 
     Private Function Getsentinelle(departement As String, typeall As String)
         Try
-
+            Return ""
         Catch ex As Exception
             WriteLog("ERR: GetSentinelle, Exception : " & ex.Message)
+            Return ""
         End Try
 
     End Function
