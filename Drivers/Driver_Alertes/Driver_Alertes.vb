@@ -545,6 +545,7 @@ Imports System.Xml
 
 #Region "Fonctions internes"
     Dim ListeDepFR As New Microsoft.VisualBasic.Collection()
+    Dim ListeDepBE As New Microsoft.VisualBasic.Collection()
     Dim ListePollen As New Microsoft.VisualBasic.Collection()
 
     Public Sub CodeDeptFR()
@@ -654,6 +655,27 @@ Imports System.Xml
         End Try
     End Sub
 
+    Public Sub CodeDeptBE()
+        Try
+            ListeDepBE.Clear()
+
+            ListeDepBE.Add("Dep Inconnu", 0)
+            ListeDepBE.Add("Luxembourg / Luxemburg", 1)
+            ListeDepBE.Add("Antwerpen / Anvers", 2)
+            ListeDepBE.Add("Oost Vlaanderen/Fl.Orientale", 3)
+            ListeDepBE.Add("Brabant", 4)
+            ListeDepBE.Add("Hainaut / Henegouwen", 5)
+            ListeDepBE.Add("Namur / Namen", 6)
+            ListeDepBE.Add("Limburg / Limbourg", 7)
+            ListeDepBE.Add("Liège / Luik", 8)
+            ListeDepBE.Add("West Vlaanderen/Fl.Occidentale", 9)
+            ListeDepBE.Add("Belgische Küste", 801)
+            WriteLog("DBG: CodeDeptBE, " & ListeDepBE.Count & " departements charges")
+        Catch ex As Exception
+            WriteLog("ERR: CodeDeptBE, Exception : " & ex.Message)
+        End Try
+    End Sub
+
     Public Sub CodePollen()
         Try
             ListePollen.Clear()
@@ -734,14 +756,23 @@ Imports System.Xml
             Dim nodes As XmlNodeList
             Dim wflag As String = ""
             Dim nivAlert As String = ""
-            Dim dept As String = ListeDepFR.Item(departement)
+            Dim dept As String = ""
             Dim dpt As String = ""
             Dim desc As String = ""
             Dim listalert As New List(Of String)
+            Dim stringurl As String = ""
 
             doc = New XmlDocument()
-            Dim url As New Uri("http://www.meteoalarm.eu/documents/rss/fr.rss")
-
+            If IsNumeric(dept) Then
+                stringurl = "http://www.meteoalarm.eu/documents/rss/fr.rss"
+                dept = ListeDepFR.Item(departement)
+            Else
+                stringurl = "http://www.meteoalarm.eu/documents/rss/" & LCase(Mid(departement, 1, 2)) & ".rss"
+                dept = ListeDepBE.Item(Val(Mid(departement, 3, Len(departement))))
+                WriteLog("DBG: Departement demande => " & Val(Mid(departement, 3, Len(departement))))
+            End If
+            
+            Dim url As New Uri(stringurl)
             WriteLog("DBG: Chargement de " & url.ToString)
             Dim Request As HttpWebRequest = CType(HttpWebRequest.Create(url), System.Net.HttpWebRequest)
             Dim response As Net.HttpWebResponse = CType(Request.GetResponse(), Net.HttpWebResponse)
