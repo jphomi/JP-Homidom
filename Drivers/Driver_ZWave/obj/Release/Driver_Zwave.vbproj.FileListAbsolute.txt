@@ -1,0 +1,8 @@
+C:\Users\JP\Documents\GitHub\HoMIDoM - Master\RELEASE\Drivers\Driver_Zwave.dll
+C:\Users\JP\Documents\GitHub\HoMIDoM - Master\RELEASE\Drivers\Driver_Zwave.pdb
+C:\Users\JP\Documents\GitHub\HoMIDoM - Master\RELEASE\Drivers\Driver_Zwave.xml
+C:\Users\JP\Documents\GitHub\HoMIDoM - Master\Drivers\Driver_Zwave\obj\Release\Driver_Zwave.Resources.resources
+C:\Users\JP\Documents\GitHub\HoMIDoM - Master\Drivers\Driver_Zwave\obj\Release\Driver_Zwave.vbproj.GenerateResource.Cache
+C:\Users\JP\Documents\GitHub\HoMIDoM - Master\Drivers\Driver_Zwave\obj\Release\Driver_Zwave.dll
+C:\Users\JP\Documents\GitHub\HoMIDoM - Master\Drivers\Driver_Zwave\obj\Release\Driver_Zwave.xml
+C:\Users\JP\Documents\GitHub\HoMIDoM - Master\Drivers\Driver_Zwave\obj\Release\Driver_Zwave.pdb
