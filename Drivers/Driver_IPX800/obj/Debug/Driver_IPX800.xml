@@ -8,16 +8,16 @@ Driver_IPX800
 <members>
 <member name="P:Driver_IPX800.My.Resources.Resources.ResourceManager">
 	<summary>
-  Returns the cached ResourceManager instance used by this class.
+  Retourne l'instance ResourceManager mise en cache utilisée par cette classe.
 </summary>
 </member><member name="P:Driver_IPX800.My.Resources.Resources.Culture">
 	<summary>
-  Overrides the current thread's CurrentUICulture property for all
-  resource lookups using this strongly typed resource class.
+  Remplace la propriété CurrentUICulture du thread actuel pour toutes
+  les recherches de ressources à l'aide de cette classe de ressource fortement typée.
 </summary>
 </member><member name="T:Driver_IPX800.My.Resources.Resources">
 	<summary>
-  A strongly-typed resource class, for looking up localized strings, etc.
+  Une classe de ressource fortement typée destinée, entre autres, à la consultation des chaînes localisées.
 </summary>
 </member><member name="M:Driver_IPX800.Driver_IPX800.GetCommandPlus">
 	<summary>
@@ -94,9 +94,12 @@ Driver_IPX800
 </member><member name="M:Driver_IPX800.Driver_IPX800.#ctor">
 	<summary>Creation d'un objet de type</summary>
 	<remarks></remarks>
+</member><member name="M:Driver_IPX800.Driver_IPX800.TimerTick(System.Object,System.Timers.ElapsedEventArgs)">
+	<summary>Si refresh &gt;0 gestion du timer</summary>
+	<remarks>PAS UTILISE CAR IL FAUT LANCER UN TIMER QUI LANCE/ARRETE CETTE FONCTION dans Start/Stop</remarks>
 </member><member name="T:Driver_IPX800.Driver_IPX800">
-	<summary>Driver IPX800 recption/envoi commandes</summary>
-	<remarks></remarks>
+	<summary>Driver IPX800 reception/envoi commandes</summary>
+	<remarks>Compatible IPX800_V4</remarks>
 </member>
 </members>
 </doc>
