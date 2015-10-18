@@ -7,3 +7,9 @@ C:\Users\JP\Documents\GitHub\HoMIDoM - Master\Drivers\Driver_Zwave\obj\Debug\Dri
 C:\Users\JP\Documents\GitHub\HoMIDoM - Master\Drivers\Driver_Zwave\obj\Debug\Driver_Zwave.dll
 C:\Users\JP\Documents\GitHub\HoMIDoM - Master\Drivers\Driver_Zwave\obj\Debug\Driver_Zwave.xml
 C:\Users\JP\Documents\GitHub\HoMIDoM - Master\Drivers\Driver_Zwave\obj\Debug\Driver_Zwave.pdb
+C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_Zwave\obj\Debug\Driver_Zwave.vbprojResolveAssemblyReference.cache
+C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_Zwave\obj\Debug\Driver_Zwave.Resources.resources
+C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_Zwave\obj\Debug\Driver_Zwave.vbproj.GenerateResource.Cache
+C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_Zwave\obj\Debug\Driver_Zwave.dll
+C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_Zwave\obj\Debug\Driver_Zwave.xml
+C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_Zwave\obj\Debug\Driver_Zwave.pdb

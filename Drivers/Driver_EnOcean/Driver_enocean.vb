@@ -584,7 +584,7 @@ End Sub
     End Sub
 
 '-----------------------------------------------------------------------------
-''' <summary>Ouvrir le port Z-Wave</summary>
+    ''' <summary>Ouvrir le port EnOcean</summary>
 ''' <param name="numero">Nom/Numero du port COM: COM2</param>
 ''' <remarks></remarks>
 Private Function ouvrir(ByVal numero As String) As String
@@ -592,12 +592,16 @@ Private Function ouvrir(ByVal numero As String) As String
             Try
                 'ouverture du port
                 If Not _IsConnect Then
+                    ' Test d'ouveture du port Com du controleur 
+                    port.PortName = numero
+                    port.Open()
 
                     Return ("Port " & port_name & " ouvert")
                 Else
                     ' Le port n'existe pas ==> le controleur n'est pas present
                     Return ("Port " & port_name & " fermé")
                 End If
+
             Catch ex As Exception
                 Return ("Port " & port_name & " n'existe pas")
                 Exit Function
@@ -608,13 +612,13 @@ Private Function ouvrir(ByVal numero As String) As String
         End Try
 End Function
 
-''' <summary>Fermer le port Z-Wave</summary>
+    ''' <summary>Fermer le port EnOcean</summary>
 ''' <remarks></remarks>
 Private Function fermer() As String
     Try
         If _IsConnect Then
             If (Not (port Is Nothing)) Then ' The COM port exists.
-                ' Sauvegarde de la configuration du réseau
+                    port.Close()
                 Else
                     Return ("Port " & _Com & " n'existe pas")
             End If

@@ -340,6 +340,7 @@ Imports System.Xml
 
             GET_VALUES(_urlIPX, _Username, _Password)
             WriteLog("Version : " & _IPXVersion)
+            WriteLog("Nbre de données relevées : " & ValueIPX.Count)
 
             If _IPXVersion = "IPX800_V3" Then
                 Get_Config(_urlIPX & "globalstatus.xml", _Username, _Password)

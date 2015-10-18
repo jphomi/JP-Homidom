@@ -1,0 +1,8 @@
+C:\Users\JP\Documents\GitHub\JP-Homidom\RELEASE\Drivers\Driver_IPX800.dll
+C:\Users\JP\Documents\GitHub\JP-Homidom\RELEASE\Drivers\Driver_IPX800.pdb
+C:\Users\JP\Documents\GitHub\JP-Homidom\RELEASE\Drivers\Driver_IPX800.xml
+C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_IPX800\obj\Release\Driver_IPX800.Resources.resources
+C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_IPX800\obj\Release\Driver_IPX800.vbproj.GenerateResource.Cache
+C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_IPX800\obj\Release\Driver_IPX800.dll
+C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_IPX800\obj\Release\Driver_IPX800.xml
+C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_IPX800\obj\Release\Driver_IPX800.pdb
