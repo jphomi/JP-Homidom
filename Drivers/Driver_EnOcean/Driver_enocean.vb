@@ -6,6 +6,8 @@ Imports HoMIDom.HoMIDom.Device
 Imports System.Text.RegularExpressions
 Imports STRGS = Microsoft.VisualBasic.Strings
 
+Imports EnOcean
+
 
 ' Auteur : JPHomi
 ' Date : 28/12/2015
@@ -327,10 +329,9 @@ Public Sub Start() Implements HoMIDom.HoMIDom.IDriver.Start
             If _Com <> "" Then
                 WriteLog("Demarrage du pilote, ceci peut prendre plusieurs secondes")
                 retour = ouvrir(_Com)
-                _IsConnect = True
             Else
                 retour = "ERR: Port Com non défini. Impossible d'ouvrir le port !"
-
+                _IsConnect = False
             End If
             WriteLog(retour)
         Catch ex As Exception
@@ -595,7 +596,14 @@ Private Function ouvrir(ByVal numero As String) As String
                     ' Test d'ouveture du port Com du controleur 
                     port.PortName = numero
                     port.Open()
-
+                    WriteLog("DBG: Message.MessageType.InformSoftwareVersion =>" & EnOcean.Message.MessageType.InformSoftwareVersion)
+                    WriteLog("DBG: Message.MessageType.InformRadioSensitivity =>" & EnOcean.Message.MessageType.InformRadioSensitivity)
+                    WriteLog("DBG: Message.MessageType.InformModemStatus =>" & EnOcean.Message.MessageType.InformModemStatus)
+                    WriteLog("DBG: Message.MessageType.InformInit =>" & EnOcean.Message.MessageType.InformInit)
+                    WriteLog("DBG: Message.MessageType.InformIdBase =>" & EnOcean.Message.MessageType.InformIdBase)
+                    ' WriteLog("DBG: Message.MessageType.Ok =>" & EnOcean.Message.InformSoftwareVersion)
+                    '     WriteLog("DBG: Radio.Sensor.Manufacturer.EnOcean =>" & EnOcean.Radio.Sensor.FourByteSensorTeachTelegram)
+                    '   WriteLog("DBG: Radio.Sensor.Manufacturer.AdHocElectronics =>" & EnOcean.Message.MessageTelegram)
                     Return ("Port " & port_name & " ouvert")
                 Else
                     ' Le port n'existe pas ==> le controleur n'est pas present
@@ -603,6 +611,7 @@ Private Function ouvrir(ByVal numero As String) As String
                 End If
 
             Catch ex As Exception
+                _IsConnect = False
                 Return ("Port " & port_name & " n'existe pas")
                 Exit Function
             End Try

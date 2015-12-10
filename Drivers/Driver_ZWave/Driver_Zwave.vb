@@ -5,7 +5,7 @@ Imports HoMIDom.HoMIDom.Device
 Imports STRGS = Microsoft.VisualBasic.Strings
 Imports OpenZWaveDotNet
 Imports System.ComponentModel
-
+Imports System.Text.RegularExpressions
 
 
 Public Class Driver_ZWave
@@ -101,6 +101,7 @@ Public Class Driver_ZWave
             COMMAND_CLASS_SWITCH_BINARY = 37                      ' 0x25
             COMMAND_CLASS_SWITCH_MULTILEVEL = 38                  ' 0x26
             COMMAND_CLASS_SWITCH_MULTILEVEL_V2 = 38               ' 0x26
+            COMMAND_CLASS_SWITCH_MULTILEVEL_V3 = 38               ' 0x26
             COMMAND_CLASS_SWITCH_ALL = 39                         ' 0x27
             COMMAND_CLASS_SWITCH_TOGGLE_BINARY = 40               ' 0x28
             COMMAND_CLASS_SWITCH_TOGGLE_MULTILEVEL = 41           ' 0x29
@@ -114,9 +115,11 @@ Public Class Driver_ZWave
             COMMAND_CLASS_SENSOR_MULTILEVEL = 49                  ' 0x31
             COMMAND_CLASS_SENSOR_MULTILEVEL_V2 = 49               ' 0x31
             COMMAND_CLASS_SENSOR_MULTILEVEL_V3 = 49               ' 0x31
+            COMMAND_CLASS_SENSOR_MULTILEVEL_V7 = 49               ' 0x31
             COMMAND_CLASS_METER = 50                              ' 0x32
             COMMAND_CLASS_METER_V2 = 50                           ' 0x32
             COMMAND_CLASS_METER_V3 = 50                           ' 0x32
+            COMMAND_CLASS_METER_V4 = 50                           ' 0x32
             COMMAND_CLASS_ZIP_ADV_SERVER = 51                     ' 0x33
             COMMAND_CLASS_ZIP_ADV_CLIENT = 52                     ' 0x34
             COMMAND_CLASS_METER_PULSE = 53                        ' 0x35
@@ -136,15 +139,21 @@ Public Class Driver_ZWave
             COMMAND_CLASS_BASIC_WINDOW_COVERING = 80              ' 0x50
             COMMAND_CLASS_MTP_WINDOW_COVERING = 81                ' 0x51
             COMMAND_CLASS_CRC_16_ENCAP = 86                       ' 0x56
+            COMMAND_CLASS_DEVICE_RESET_LOCALLY = 90               ' 0x5A
             COMMAND_CLASS_CENTRAL_SCENE = 91                      ' 0x5B
+            COMMAND_CLASS_ZWAVE_PLUS_INFO = 94                     '0x5E
+            COMMAND_CLASS_ZWAVE_PLUS_INFO_V2 = 94                  '0x5E
             COMMAND_CLASS_MULTI_INSTANCE = 96                     ' 0x60
             COMMAND_CLASS_MULTI_INSTANCE_V2 = 96                  ' 0x60
+            COMMAND_CLASS_MULTI_INSTANCE_V4 = 96                  ' 0x60
             COMMAND_CLASS_DOOR_LOCK = 98                          ' 0x62
             COMMAND_CLASS_USER_CODE = 99                          ' 0x63
             COMMAND_CLASS_BARRIER_OPERATOR = 102                  ' 0x66
             COMMAND_CLASS_CONFIGURATION = 112                     ' 0x70
             COMMAND_CLASS_CONFIGURATION_V2 = 112                  ' 0x70
             COMMAND_CLASS_ALARM = 113                             ' 0x71
+            COMMAND_CLASS_ALARM_V4 = 113                          ' 0x71
+            COMMAND_CLASS_ALARM_V5 = 113                          ' 0x71
             COMMAND_CLASS_MANUFACTURER_SPECIFIC = 114             ' 0x72
             COMMAND_CLASS_MANUFACTURER_SPECIFIC_V2 = 114          ' 0x72
             COMMAND_CLASS_POWERLEVEL = 115                        ' 0x73
@@ -154,6 +163,7 @@ Public Class Driver_ZWave
             COMMAND_CLASS_LOCK = 118                              ' 0x76
             COMMAND_CLASS_NODE_NAMING = 119                       ' 0x77
             COMMAND_CLASS_FIRMWARE_UPDATE_MD = 122                ' 0x7A
+            COMMAND_CLASS_FIRMWARE_UPDATE_MD_V2 = 122             ' 0x7A
             COMMAND_CLASS_GROUPING_NAME = 123                     ' 0x7B
             COMMAND_CLASS_REMOTE_ASSOCIATION_ACTIVATE = 124       ' 0x7C
             COMMAND_CLASS_REMOTE_ASSOCIATION = 125                ' 0x7D
@@ -165,6 +175,7 @@ Public Class Driver_ZWave
             COMMAND_CLASS_ASSOCIATION = 133                       ' 0x85
             COMMAND_CLASS_ASSOCIATION_V2 = 133                    ' 0x85
             COMMAND_CLASS_VERSION = 134                           ' 0x86
+            COMMAND_CLASS_VERSION_V2 = 134                        ' 0x86
             COMMAND_CLASS_INDICATOR = 135                         ' 0x87
             COMMAND_CLASS_PROPRIETARY = 136                       ' 0x88
             COMMAND_CLASS_LANGUAGE = 137                          ' 0x89
@@ -172,6 +183,8 @@ Public Class Driver_ZWave
             COMMAND_CLASS_TIME_PARAMETERS = 139                   ' 0x8B
             COMMAND_CLASS_GEOGRAPHIC_LOCATION = 140               ' 0x8C
             COMMAND_CLASS_COMPOSITE = 141                         ' 0x8D
+            COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION = 142         ' 0x8E
+            COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION_V2 = 142      ' 0x8E
             COMMAND_CLASS_MULTI_INSTANCE_ASSOCIATION = 142        ' 0x8E
             COMMAND_CLASS_MULTI_INSTANCE_ASSOCIATION_V2 = 142     ' 0x8E
             COMMAND_CLASS_MULTI_CMD = 143                         ' 0x8F
@@ -285,7 +298,7 @@ Public Class Driver_ZWave
 
             Public Property CommandClass() As List(Of CommandClass)
                 Get
-                    Return m_CommandClass
+                    Return m_commandClass
                 End Get
                 Set(ByVal value As List(Of CommandClass))
                     m_CommandClass = value
@@ -809,15 +822,17 @@ Public Class Driver_ZWave
                 End If
 
                 NodeTemp = GetNode(m_homeId, Objet.Adresse1)
-
                 WriteLog("DBG: " & "Write, Commande recue :" & Commande & " sur le noeud : " & Objet.Adresse1.ToString & " et de type " & Objet.Adresse2.ToString)
 
                 If IsNothing(NodeTemp) Then
-                    WriteLog("DBG: " & "Write, Noeud non trouvé avec l'adresse : " & Objet.Adresse1)
+                    WriteLog("ERR: " & "Write, Noeud non trouvé avec l'adresse : " & Objet.Adresse1)
                 Else
                     WriteLog("DBG: " & "Write, Noeud  trouvé avec l'adresse : " & Objet.Adresse1.ToString)
-                    If NodeTemp.CommandClass.Contains(CommandClass.COMMAND_CLASS_SWITCH_MULTILEVEL) Or NodeTemp.CommandClass.Contains(CommandClass.COMMAND_CLASS_SWITCH_BINARY) Then
-                        WriteLog("ERR: " & "Write, Recherche de : dans l'adresse2 " & Objet.adresse2)
+                    If NodeTemp.CommandClass.Contains(CommandClass.COMMAND_CLASS_SWITCH_MULTILEVEL) Or
+                        NodeTemp.CommandClass.Contains(CommandClass.COMMAND_CLASS_SWITCH_MULTILEVEL_V2) Or
+                        NodeTemp.CommandClass.Contains(CommandClass.COMMAND_CLASS_SWITCH_MULTILEVEL_V3) Or
+                        NodeTemp.CommandClass.Contains(CommandClass.COMMAND_CLASS_SWITCH_BINARY) Then
+                        WriteLog("DBG: " & "Write, Recherche de : dans l'adresse2 " & Objet.adresse2)
                         If InStr(Objet.adresse2, ":") Then
                             Dim ParaAdr2 = Split(Objet.adresse2, ":")
                             ValueTemp = GetValeur(NodeTemp, Trim(ParaAdr2(0)), Trim(ParaAdr2(1)))
@@ -825,7 +840,7 @@ Public Class Driver_ZWave
                                 WriteLog("ERR: " & "Write, Valeur non trouvée avec l'adresse : " & Objet.Adresse1 & " et " & Objet.Adresse2)
                                 Exit Sub
                             Else
-                                WriteLog("ERR: " & "Write, Valeur trouvée avec l'adresse : " & Objet.Adresse1 & " et " & Objet.Adresse2)
+                                WriteLog("DBG: " & "Write, Valeur trouvée avec l'adresse : " & Objet.Adresse1 & " et " & Objet.Adresse2)
                                 IsMultiLevel = True
                             End If
                         Else
@@ -1053,8 +1068,6 @@ Public Class Driver_ZWave
                 'ouverture du port
                 If Not _IsConnect Then
                     Try
-
-
                         ' Test d'ouveture du port Com du controleur 
                         port.PortName = numero
                         port.Open()
@@ -1118,17 +1131,18 @@ Public Class Driver_ZWave
                     If (Not (port Is Nothing)) Then ' The COM port exists.
                         ' Sauvegarde de la configuration du réseau
                         m_manager.WriteConfig(m_homeId)
+                        WriteLog("Close, sauvegarde de la config Zwave")
                         ' Fermeture du port du controleur 
-                        _IsConnect = False
                         Try
-                            If m_nodeList.Count Then
-                                For cpt As Byte = 0 To m_nodeList.Count - 1
-                                    m_nodeList.Remove(m_nodeList.ElementAt(cpt))
-                                Next
-
-                            End If
+                            WriteLog("Close, nbr de noeud à retirer => " & m_nodeList.Count)
+                            Dim node As Node
+                            While m_nodeList.Count > 0
+                                WriteLog("DBG: " & "Close, noeud " & m_nodeList.ElementAt(m_nodeList.Count - 1).ID & " / " & m_nodeList.ElementAt(m_nodeList.Count - 1).Label & " retiré")
+                                node = GetNode(m_homeId, m_nodeList.ElementAt(m_nodeList.Count - 1).ID)
+                                m_nodeList.Remove(node)
+                            End While
                         Catch ex As UnauthorizedAccessException
-                            Return ("Probleme lors de la suppression des noeuds" & m_nodeList.Count)
+                            Return ("ERR: Probleme lors de la suppression des noeuds" & m_nodeList.Count)
                         End Try
 
                         m_manager.RemoveDriver("\\.\" & _Com)
@@ -1138,11 +1152,14 @@ Public Class Driver_ZWave
                         port.Close()
                         m_homeId = Nothing
                         m_nodesReady = Nothing
+                        _IsConnect = False
                         Return ("Port " & _Com & " fermé")
                     Else
+                        _IsConnect = False
                         Return ("Port " & _Com & " n'existe pas")
                     End If
                 Else
+                    _IsConnect = False
                     Return ("Port " & _Com & "  est déjà fermé (port_ouvert=false)")
                 End If
                 ' Catch ex As UnauthorizedAccessException
@@ -1183,10 +1200,12 @@ Public Class Driver_ZWave
         Sub StartInclusionMode()
             WriteLog("Début de la séquence d'association.")
             ' modif jphomi 12/10/2015
-            '            m_manager.BeginControllerCommand(m_homeId, ZWControllerCommand.AddDevice, False, 1)
-            Dim Assoc() As Byte = Nothing
-            m_manager.AddAssociation(m_homeId, m_notification.GetNodeId(), m_notification.GetGroupIdx(), Assoc)
-
+            'm_manager.BeginControllerCommand(m_homeId, ZWControllerCommand.AddDevice, False, 1)
+            m_manager.AddNode(m_homeId, False)
+        End Sub
+        Sub StartSecureInclusionMode()
+            WriteLog("Début de la séquence d'association sécurisée.")
+            m_manager.AddNode(m_homeId, True)
         End Sub
         ''' <summary>
         ''' Place le controller en mode "exclusion" *** experimental ***
@@ -1196,8 +1215,7 @@ Public Class Driver_ZWave
             WriteLog("Début de la séquence désassociation.")
             ' modif jphomi 12/10/2015
             '           m_manager.BeginControllerCommand(m_homeId, ZWControllerCommand.RemoveDevice, False, 1)
-            Dim Assoc() As Byte = Nothing
-            m_manager.RemoveAssociation(m_homeId, m_notification.GetNodeId(), m_notification.GetGroupIdx(), Assoc)
+            m_manager.RemoveNode(m_homeId)
         End Sub
         ''' <summary>
         ''' Annule la commande en cours : permet de sortir du mode "inclusion/exclusion" *** experimental ***
@@ -1237,7 +1255,7 @@ Public Class Driver_ZWave
 
                             Else
                                 ' Message si le noeud n'est pas le controleur
-                                If (node.ID <> m_manager.GetControllerNodeId(m_homeId)) Then _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom & " NotificationHandler ", " Erreur dans ValueAdded : node " & m_notification.GetNodeId() & " non trouvé")
+                                If (node.ID <> m_manager.GetControllerNodeId(m_homeId)) Then WriteLog("DBG: " & "NotificationHandler - Erreur dans ValueAdded : node " & m_notification.GetNodeId() & " non trouvé")
                             End If
                         End If
 
@@ -1276,16 +1294,13 @@ Public Class Driver_ZWave
                                 Next
                             End If
                         End If
-                        ' AAAA
 
                     Case ZWNotification.Type.NodeAdded
-                        WriteLog("DBG: " & "NotificationHandler - NodeAdded sur node " & m_notification.GetNodeId())
-
                         ' Ajoute une nouveau noeud à notre liste
                         Dim node As New Node
                         ' Si ce n'est pas le controleur 
                         If m_notification.GetNodeId() <> m_manager.GetControllerNodeId(m_homeId) Then
-                            '_Server.Log(TypeLog.INFO, TypeSource.DRIVER, Me.Nom & " NotificationHandler ", "Ajout d'un nouveau noeud  " & m_notification.GetNodeId())
+                            WriteLog("NotificationHandler - Ajout d'un nouveau noeud " & m_notification.GetNodeId())
                             node.ID = m_notification.GetNodeId()
                             node.HomeID = m_notification.GetHomeId()
                             m_nodeList.Add(node)
@@ -1294,7 +1309,7 @@ Public Class Driver_ZWave
 
                     Case ZWNotification.Type.NodeRemoved
                         If m_notification.GetNodeId() <> m_manager.GetControllerNodeId(m_homeId) Then
-                            WriteLog("DBG: " & "NotificationHandler - NodeRemovedsur node " & m_notification.GetNodeId())
+                            WriteLog("NotificationHandler - Suppression du noeud " & m_notification.GetNodeId())
                             For Each node As Node In m_nodeList
                                 If node.ID = m_notification.GetNodeId() Then
                                     m_nodeList.Remove(node)
@@ -1551,12 +1566,11 @@ Public Class Driver_ZWave
                             'on maj la value si la durée entre les deux receptions est > à 1.5s
                             If (DateTime.Now - Date.Parse(LocalDevice.LastChange)).TotalMilliseconds > 1500 Then
                                 ' Recuperation de la valeur en fonction du type
-
-
                                 Select Case m_valueID.GetType()
                                     Case 0 : m_manager.GetValueAsBool(m_valueID, ValeurRecue) 'm_manager.GetValueAsBool(TempValeur, LocalDevice.value)
                                     Case 1 : m_manager.GetValueAsByte(m_valueID, ValeurRecue) ' GetValueAsByte(TempValeur, LocalDevice.value)
-                                    Case 2 : m_manager.GetValueAsDecimal(m_valueID, ValeurRecue) ' GetValueAsDecimal(TempValeur, LocalDevice.value)
+                                    Case 2 : m_manager.GetValueAsString(m_valueID, ValeurRecue) ' GetValueAsDecimal(TempValeur, LocalDevice.value)
+                                        ValeurRecue = Regex.Replace(CStr(ValeurRecue), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
                                     Case 3 : m_manager.GetValueAsInt(m_valueID, ValeurRecue) ' m_manager.GetValueAsInt(TempValeur, LocalDevice.value)
                                         '  Case 4 : m_manager.GetValueListItems(NodeTemp.Values(IndexTemp), LocalDevice.value) ; A voir + tard
                                     Case 6 : m_manager.GetValueAsShort(m_valueID, ValeurRecue) ' m_manager.GetValueAsShort(TempValeur, LocalDevice.value)

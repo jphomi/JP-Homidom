@@ -1,9 +1,0 @@
-C:\Users\JP\Documents\GitHub\HoMIDoM\DEBUG\Drivers\Driver_Netatmo.dll
-C:\Users\JP\Documents\GitHub\HoMIDoM\DEBUG\Drivers\Driver_Netatmo.pdb
-C:\Users\JP\Documents\GitHub\HoMIDoM\DEBUG\Drivers\Driver_Netatmo.xml
-C:\Users\JP\Documents\GitHub\HoMIDoM\Drivers\Driver_Netatmo\obj\x86\Debug\Driver_Netatmo.Resources.resources
-C:\Users\JP\Documents\GitHub\HoMIDoM\Drivers\Driver_Netatmo\obj\x86\Debug\Driver_Netatmo.vbproj.GenerateResource.Cache
-C:\Users\JP\Documents\GitHub\HoMIDoM\Drivers\Driver_Netatmo\obj\x86\Debug\Driver_Netatmo.dll
-C:\Users\JP\Documents\GitHub\HoMIDoM\Drivers\Driver_Netatmo\obj\x86\Debug\Driver_Netatmo.xml
-C:\Users\JP\Documents\GitHub\HoMIDoM\Drivers\Driver_Netatmo\obj\x86\Debug\Driver_Netatmo.pdb
-C:\Users\JP\Documents\GitHub\homidom\Drivers\Driver_Netatmo\obj\x86\Debug\Driver_Netatmo.vbprojResolveAssemblyReference.cache
