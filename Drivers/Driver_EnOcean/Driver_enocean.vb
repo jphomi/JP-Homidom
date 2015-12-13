@@ -8,7 +8,9 @@ Imports STRGS = Microsoft.VisualBasic.Strings
 
 Imports EnOcean
 
+Public Class Driver_ZWave
 
+End Class
 ' Auteur : JPHomi
 ' Date : 28/12/2015
 
@@ -64,6 +66,20 @@ Imports EnOcean
     ' Variables de gestion du port COM
     Private WithEvents port As New System.IO.Ports.SerialPort
     Private port_name As String = ""
+    Dim MyRep As String = System.IO.Path.GetDirectoryName(Reflection.Assembly.GetExecutingAssembly().Location)
+
+    ' Denition d'un noeud EnOcean 
+    <Serializable()> Public Class Node
+
+        Dim m_id As Byte = 0
+        Dim m_homeId As UInt32 = 0
+        Dim m_name As String = ""
+        Dim m_location As String = ""
+        Dim m_label As String = ""
+        Dim m_manufacturer As String = ""
+        Dim m_product As String = ""
+        '        Dim m_values As New List(Of ZWValueID)
+    End Class
 #End Region
 
 #Region "Propriétés génériques"
@@ -601,7 +617,9 @@ Private Function ouvrir(ByVal numero As String) As String
                     WriteLog("DBG: Message.MessageType.InformModemStatus =>" & EnOcean.Message.MessageType.InformModemStatus)
                     WriteLog("DBG: Message.MessageType.InformInit =>" & EnOcean.Message.MessageType.InformInit)
                     WriteLog("DBG: Message.MessageType.InformIdBase =>" & EnOcean.Message.MessageType.InformIdBase)
-                    ' WriteLog("DBG: Message.MessageType.Ok =>" & EnOcean.Message.InformSoftwareVersion)
+                    WriteLog("DBG: Org.Modem.ToString =>" & EnOcean.Org.ModemAcknowledge.ToString)
+                    WriteLog(EnOcean.TelegramType.ReceiveMessageTelegram.ToString)
+                    ' WriteLog("DBG: Message.MessageType.Ok =>" & EnOcean.Message.Ok.Parse.tostring)
                     '     WriteLog("DBG: Radio.Sensor.Manufacturer.EnOcean =>" & EnOcean.Radio.Sensor.FourByteSensorTeachTelegram)
                     '   WriteLog("DBG: Radio.Sensor.Manufacturer.AdHocElectronics =>" & EnOcean.Message.MessageTelegram)
                     Return ("Port " & port_name & " ouvert")
