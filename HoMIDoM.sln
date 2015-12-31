@@ -120,6 +120,8 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Driver_Homidom", "Drivers\D
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Driver_InfoClimat", "Drivers\Driver_InfoClimat\Driver_InfoClimat.vbproj", "{3160D167-AD3A-4DD2-8847-2D484C03A8F0}"
 EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Driver_Jeedom", "Drivers\Driver_Jeedom\Driver_Jeedom.vbproj", "{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -648,6 +650,16 @@ Global
 		{3160D167-AD3A-4DD2-8847-2D484C03A8F0}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{3160D167-AD3A-4DD2-8847-2D484C03A8F0}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{3160D167-AD3A-4DD2-8847-2D484C03A8F0}.Release|x86.ActiveCfg = Release|Any CPU
+		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -700,6 +712,7 @@ Global
 		{25D01A09-60A9-4D63-B18F-CF54D158897C} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
 		{7BB78B78-3864-4CA7-9C69-9AF0228E167F} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
 		{3160D167-AD3A-4DD2-8847-2D484C03A8F0} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
+		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		BuildVersion_IncrementBeforeBuild = True

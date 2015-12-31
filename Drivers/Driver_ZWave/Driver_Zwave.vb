@@ -62,10 +62,6 @@ Public Class Driver_ZWave
         Dim _DEBUG As Boolean = False
         Dim _AFFICHELOG As Boolean = False
         Dim _STARTIDLETIME As Integer = 10
-        Dim _baudspeed As Integer = 57600
-        Dim _nbrebit As Integer = 8
-        Dim _parity As IO.Ports.Parity = IO.Ports.Parity.None
-        Dim _nbrebitstop As IO.Ports.StopBits = IO.Ports.StopBits.One
 
         'Ajoutés dans les ppt avancés dans New()
 
@@ -74,9 +70,16 @@ Public Class Driver_ZWave
 
 #Region "Variables Internes"
         ' Variables de gestion du port COM
+        Dim _networkkey As String = "0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10"
+        Dim MyRep As String = System.IO.Path.GetDirectoryName(Reflection.Assembly.GetExecutingAssembly().Location)
+
+        ' variables port serie
         Private WithEvents port As New System.IO.Ports.SerialPort
         Private port_name As String = ""
-        Dim MyRep As String = System.IO.Path.GetDirectoryName(Reflection.Assembly.GetExecutingAssembly().Location)
+        Dim _baudspeed As Integer = 9600
+        Dim _nbrebit As Integer = 8
+        Dim _parity As IO.Ports.Parity = IO.Ports.Parity.None
+        Dim _nbrebitstop As IO.Ports.StopBits = IO.Ports.StopBits.One
 
         ' -----------------   Ajout des declarations pour OpenZWave
         Private g_initFailed As Boolean = False
@@ -145,8 +148,11 @@ Public Class Driver_ZWave
             COMMAND_CLASS_CRC_16_ENCAP = 86                       ' 0x56
             COMMAND_CLASS_DEVICE_RESET_LOCALLY = 90               ' 0x5A
             COMMAND_CLASS_CENTRAL_SCENE = 91                      ' 0x5B
-            COMMAND_CLASS_ZWAVE_PLUS_INFO = 94                     '0x5E
-            COMMAND_CLASS_ZWAVE_PLUS_INFO_V2 = 94                  '0x5E
+            COMMAND_CLASS_ZWAVE_PLUS_INFO = 94                    ' 0x5E
+            COMMAND_CLASS_ZWAVE_PLUS_INFO_V2 = 94                 ' 0x5E
+            COMMAND_CLASS_MULTI_CHANNEL = 96                      ' 0x60
+            COMMAND_CLASS_MULTI_CHANNEL_V2 = 96                   ' 0x60
+            COMMAND_CLASS_MULTI_CHANNEL_V4 = 96                   ' 0x60
             COMMAND_CLASS_MULTI_INSTANCE = 96                     ' 0x60
             COMMAND_CLASS_MULTI_INSTANCE_V2 = 96                  ' 0x60
             COMMAND_CLASS_MULTI_INSTANCE_V4 = 96                  ' 0x60
@@ -608,8 +614,6 @@ Public Class Driver_ZWave
 
                             Case "REQUESTNETWORKUPDATE"
                                 NodeTemp = GetNode(m_homeId, MyDevice.Adresse1)
-                                'jp homi 2/10/2015
-                                '                                m_manager.BeginControllerCommand(m_homeId, ZWControllerCommand.RequestNetworkUpdate, True, NodeTemp.ID)
                                 m_manager.RequestNetworkUpdate(m_homeId, NodeTemp.ID)
                                 WriteLog("DBG: " & "ExecuteCommand, Passage par la commande REQUESTNETWORKUPDATE = " & NodeTemp.Name)
 
@@ -621,7 +625,6 @@ Public Class Driver_ZWave
                                 Else
                                     WriteLog("ERR: " & "ExecuteCommand, Erreur dans la commande GETNUMGROUPS  pour le noeud " & NodeTemp.ID)
                                 End If
-
                             Case Else
                                 WriteLog("ERR: " & "ExecuteCommand, La commande " & texteCommande & " n'existe pas")
                         End Select
@@ -718,6 +721,8 @@ Public Class Driver_ZWave
                 valuetmp = Left(valuetmp, Len(valuetmp) - 1)
                 _nbrebit = Right(valuetmp, 1)
                 _baudspeed = Left(valuetmp, Len(valuetmp) - 1)
+
+                _networkkey = Parametres.Item(4).Valeur
 
             Catch ex As Exception
                 _DEBUG = False
@@ -1071,7 +1076,8 @@ Public Class Driver_ZWave
                 Add_ParamAvance("Debug", "Activer le Debug complet (True/False)", False)
                 Add_ParamAvance("AfficheLog", "Afficher Log OpenZwave à l'écran (True/False)", True)
                 Add_ParamAvance("StartIdleTime", "Durée durant laquelle le driver ne traite aucun message lors de son démarrage (en secondes).", 10)
-                Add_ParamAvance("BaudRate", "Vitesse,Nbre bits, Parité, Nbre bit stop ( défaut 576008N1 )", "576008N1")
+                Add_ParamAvance("BaudRate", "Vitesse,Nbre bits, Parité, Nbre bit stop ( défaut 96008N1 )", "96008N1")
+                Add_ParamAvance("NetworkKey", "Clef pour réseau sécurisé", "0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10")
 
                 'ajout des commandes avancées pour les devices
                 Add_DeviceCommande("ALL_LIGHT_ON", "", 0)
@@ -1153,6 +1159,12 @@ Public Class Driver_ZWave
                             m_options.AddOptionBool("IntervalBetweenPolls", True)
                             m_options.AddOptionBool("ValidateValueChanges", True)
 
+                            m_options.AddOptionString("NetworkKey", _networkkey, False)
+                            m_options.AddOptionBool("AssumeAwake", True)
+                            m_options.AddOptionBool("SuppressValueRefresh", True)
+                            m_options.AddOptionBool("PerformReturnRoutes", True)
+                            m_options.AddOptionBool("SaveConfiguration", True)
+
                             m_options.Lock()
                             m_manager.Create()
 
@@ -1226,7 +1238,7 @@ Public Class Driver_ZWave
 
 
 
-        ''' <summary>Reset le controleur Z-Wave avec les parametres d'Usine</summary>
+        ''' <summary>Reset le controleur Z-Wave avec les parametres d'Usine, hard reset</summary>
         ''' <remarks></remarks>
         Sub ResetControler()
             Try
@@ -1237,7 +1249,7 @@ Public Class Driver_ZWave
             End Try
         End Sub
 
-        ''' <summary>Reset le controleur Z-Wave sans effacer les parametres de configuration </summary>
+        ''' <summary>Reset le controleur Z-Wave sans effacer les parametres de configuration, soft reset </summary>
         ''' <remarks></remarks>
         Sub SoftReset()
             Try
@@ -1249,28 +1261,48 @@ Public Class Driver_ZWave
         End Sub
 
         ''' <summary>
-        ''' Place le controller en mode "inclusion" *** experimental ***
+        ''' Place le controller en mode "inclusion"
         ''' </summary>
         ''' <remarks></remarks>
         Sub StartInclusionMode()
             WriteLog("Début de la séquence d'association.")
-            ' modif jphomi 12/10/2015
-            'm_manager.BeginControllerCommand(m_homeId, ZWControllerCommand.AddDevice, False, 1)
             m_manager.AddNode(m_homeId, False)
         End Sub
+        ''' <summary>
+        ''' Place le controller en mode "inclusion securisée"
+        ''' </summary>
+        ''' <remarks></remarks>
         Sub StartSecureInclusionMode()
             WriteLog("Début de la séquence d'association sécurisée.")
+            RemoveFailedNode()  'preferable avant une inclusion sécurisée
             m_manager.AddNode(m_homeId, True)
         End Sub
         ''' <summary>
-        ''' Place le controller en mode "exclusion" *** experimental ***
+        ''' Place le controller en mode "exclusion"
         ''' </summary>
         ''' <remarks></remarks>
         Sub StartExclusionMode()
             WriteLog("Début de la séquence désassociation.")
-            ' modif jphomi 12/10/2015
-            '           m_manager.BeginControllerCommand(m_homeId, ZWControllerCommand.RemoveDevice, False, 1)
             m_manager.RemoveNode(m_homeId)
+        End Sub
+        ''' <summary>
+        ''' Suppresion des noeuds morts
+        ''' </summary>
+        ''' <remarks></remarks>
+        Sub RemoveFailedNode()
+            WriteLog("RemoveFailedNode, Nombre de noeud à analyser : " & m_nodeList.Count)
+            Try
+                Dim node As Node
+                Dim i As Integer
+                For i = 0 To m_nodeList.Count - 1
+                    WriteLog("DBG: " & "Suppression, noeud " & m_nodeList.ElementAt(m_nodeList.Count - 1).ID & " / " & m_nodeList.ElementAt(m_nodeList.Count - 1).Label & "?")
+                    node = GetNode(m_homeId, m_nodeList.ElementAt(m_nodeList.Count - 1).ID)
+                    m_manager.RemoveFailedNode(m_homeId, node.ID)
+                Next
+                WriteLog("RemoveFailedNode, Nombre de noeud présent aprés analyse :" & m_nodeList.Count)
+            Catch ex As Exception
+                WriteLog("ERR: RemoveFailedNode, Probleme lors de la suppression des noeuds")
+            End Try
         End Sub
         ''' <summary>
         ''' Annule la commande en cours : permet de sortir du mode "inclusion/exclusion" *** experimental ***
@@ -1280,8 +1312,6 @@ Public Class Driver_ZWave
             WriteLog("Annule la commande en cours.")
             m_manager.CancelControllerCommand(m_homeId)
         End Sub
-
-
 
         Sub ManagedControllerStateChangedHandler(ByVal m_controllerState As ZWControllerState)
             WriteLog("Controller State Change," & m_controllerState.ToString())
