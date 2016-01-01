@@ -674,17 +674,7 @@ Imports System.Text
             End If
 
             Dim ideqLogic As String = Trim(Mid(Objet.adresse1, 1, InStr(Objet.adresse1, "#") - 1))
-
-            Dim idCmd As String = ""
-            If Objet.adresse2 <> "" Then ' cas ou saisi dans la zone texte
-                If InStr(Objet.adresse2, "#") > 0 Then
-                    idCmd = (Trim(Mid(Objet.adresse2, 1, InStr(Objet.adresse2, "#") - 1)))
-                Else
-                    idCmd = Objet.adresse2
-                End If
-            Else
-                idCmd = Get_IdCmd(ideqLogic, Command)
-            End If
+            Dim idCmd As String = Get_IdCmd(ideqLogic, Command)
 
             If InStr(Objet.adresse1, "Scénario") > 0 Then
                 If (InStr(UCase(Objet.adresse2), "RUN") > 0) Or (Command = "ON") Then EXEC_Sce(idCmd, "run")
@@ -840,7 +830,8 @@ Imports System.Text
             'ajout des commandes avancées pour les devices
             'add_devicecommande("COMMANDE", "DESCRIPTION", nbparametre)
             'add_devicecommande("PRESETDIM", "permet de paramétrer le DIM : param1=niveau, param2=timer", 2)
-            '  Add_DeviceCommande("REFRESHCONFIG", "Permet de rafraichir la configuration", 0)
+            '            Add_DeviceCommande("RUN", "Run scenario", 0)
+            '            Add_DeviceCommande("STOP", "Run scenario", 0)
 
             'Libellé Driver
             Add_LibelleDriver("HELP", "Aide...", "Pas d'aide actuellement...")

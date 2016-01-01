@@ -24,7 +24,8 @@ Class Window1
     Dim Myfile As String
     Dim myChannelFactory As ServiceModel.ChannelFactory(Of HoMIDom.HoMIDom.IHoMIDom) = Nothing
     Dim FlagStart As Boolean = False
-    Dim MyRep As String = System.Environment.CurrentDirectory
+    ' Dim MyRep As String = System.Environment.CurrentDirectory
+    Dim MyRep As String = My.Application.Info.DirectoryPath
     Dim MyRepAppData As String = System.Environment.GetFolderPath(System.Environment.SpecialFolder.CommonApplicationData) & "\HoMIAdmiN"
     Dim mypush As PushNotification
 
@@ -39,6 +40,7 @@ Class Window1
     Dim FlagOK As Boolean = False
     Dim _IsConnect As Boolean = False
     Dim _ShowNbHistoInDevice As Boolean = False
+
 
 #End Region
 
@@ -147,6 +149,12 @@ Class Window1
                         list.Clear()
                     End If
 
+                    'met a jour le treeview si ajout-retrait device
+                    If refreshtreeviewdevice And Tabcontrol1.SelectedIndex = 1 Then
+                        Me.AffDevice()
+                        refreshtreeviewdevice = False
+                    End If
+
 
                     'Modifie les LOG
                     list = myService.GetLastLogs
@@ -209,8 +217,6 @@ Class Window1
                     AffIsDisconnect()
                 End If
             End If
-
-            Me.UpdateLayout()
         Catch ex As Exception
             AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "ERREUR dispatcherTimer_Tick: " & ex.Message, "ERREUR", "")
         End Try
@@ -1146,11 +1152,15 @@ Class Window1
                     label.Content = Dev.Name & " (" & nomdriver & ")"
 
                     'verification si le device fait parti d'une zone
+                    Dim Imagezone As String = ""
+                    Dim nomzone As String = ""
                     For Each Zon In _ListeZones
                         If FlagZone = False Then
                             For Each elemnt In Zon.ListElement
                                 If elemnt.ElementID = Dev.ID Then
                                     FlagZone = True
+                                    Imagezone = Zon.Image
+                                    nomzone = Zon.Name
                                     Exit For
                                 End If
                             Next
@@ -1167,6 +1177,17 @@ Class Window1
                         imgNoZone.ToolTip = "Ce composant ne fait pas partie d'une zone"
                         stack.Children.Add(imgNoZone)
                         imgNoZone = Nothing
+                    Else
+                        Dim imgZone As New Image
+                        imgZone.Height = 20
+                        imgZone.Width = 20
+                        imgZone.ToolTip = nomzone
+                        If String.IsNullOrEmpty(Imagezone) = False Then
+                            imgZone.Source = ConvertArrayToImage(myService.GetByteFromImage(Imagezone), 20)
+                        Else
+                            imgZone.Source = ImageFromUri(MyRep & "\Images\Icones\Zone_32.png")
+                        End If
+                        stack.Children.Add(imgZone)
                     End If
 
                     '*************************** TOOL TIP **************************
@@ -1213,6 +1234,7 @@ Class Window1
                     mnu0.Uid = Dev.ID
                     AddHandler mnu0.Click, AddressOf MnuitemDev_Click
                     ctxMenu.Items.Add(mnu0)
+                    mnu0 = Nothing
                     If Dev.Enable = False Then
                         Dim mnu1 As New MenuItem
                         mnu1.Header = "Enable"
@@ -1246,6 +1268,13 @@ Class Window1
                     AddHandler mnu5.Click, AddressOf MnuitemDev_Click
                     ctxMenu.Items.Add(mnu5)
                     mnu5 = Nothing
+                    Dim mnu6 As New MenuItem
+                    mnu6.Header = "Tester"
+                    mnu6.Tag = 6
+                    mnu6.Uid = Dev.ID
+                    AddHandler mnu6.Click, AddressOf MnuitemDev_Click
+                    ctxMenu.Items.Add(mnu6)
+                    mnu6 = Nothing
 
                     label.ContextMenu = ctxMenu
 
@@ -1312,12 +1341,14 @@ Class Window1
                     AffControlPage(x)
                 Case 1 'Enable
                     Dim x As TemplateDevice = myService.ReturnDeviceByID(IdSrv, sender.uid)
-                    myService.SaveDevice(IdSrv, sender.uid, x.Name, x.Adresse1, True, x.Solo, x.DriverID, x.Type.ToString, x.Refresh, x.IsHisto, x.RefreshHisto, x.Purge, x.MoyJour, x.MoyHeure)
+                    '                    myService.SaveDevice(IdSrv, sender.uid, x.Name, x.Adresse1, True, x.Solo, x.DriverID, x.Type.ToString, x.Refresh, x.IsHisto, x.RefreshHisto, x.Purge, x.MoyJour, x.MoyHeure)
+                    myService.SaveDevice(IdSrv, sender.uid, x.Name, x.Adresse1, True, x.Solo, x.DriverID, x.Type.ToString, x.Refresh, x.IsHisto, x.RefreshHisto, x.Purge, x.MoyJour, x.MoyHeure, x.Adresse2, x.Picture, x.Modele, x.Description, x.LastChangeDuree, x.LastEtat, x.Correction, x.Formatage, x.Precision, x.ValueMax, x.ValueMin, x.ValueDef, x.Commandes, x.Unit, x.Puissance, x.AllValue, x.VariablesOfDevice)
                     If IsConnect Then ManagerDevices.EnableDevice(sender.uid)
                     AffDevice()
                 Case 2 'Disable
                     Dim x As TemplateDevice = myService.ReturnDeviceByID(IdSrv, sender.uid)
-                    myService.SaveDevice(IdSrv, sender.uid, x.Name, x.Adresse1, False, x.Solo, x.DriverID, x.Type.ToString, x.Refresh, x.IsHisto, x.RefreshHisto, x.Purge, x.MoyJour, x.MoyHeure)
+                    '                    myService.SaveDevice(IdSrv, sender.uid, x.Name, x.Adresse1, False, x.Solo, x.DriverID, x.Type.ToString, x.Refresh, x.IsHisto, x.RefreshHisto, x.Purge, x.MoyJour, x.MoyHeure)
+                    myService.SaveDevice(IdSrv, sender.uid, x.Name, x.Adresse1, False, x.Solo, x.DriverID, x.Type.ToString, x.Refresh, x.IsHisto, x.RefreshHisto, x.Purge, x.MoyJour, x.MoyHeure, x.Adresse2, x.Picture, x.Modele, x.Description, x.LastChangeDuree, x.LastEtat, x.Correction, x.Formatage, x.Precision, x.ValueMax, x.ValueMin, x.ValueDef, x.Commandes, x.Unit, x.Puissance, x.AllValue, x.VariablesOfDevice)
                     If IsConnect Then ManagerDevices.DisableDevice(sender.uid)
                     AffDevice()
                 Case 4 'Graphe
@@ -1338,6 +1369,21 @@ Class Window1
                 Case 5 'Supprimer
                     DeleteElement(sender.uid, 1)
                     AffDevice()
+                Case 6 'Tester
+                    Try
+                        If myService.ReturnDeviceByID(IdSrv, sender.uid).Enable = False Then
+                            AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "Vous ne pouvez pas exécuter de commandes car le device n'est pas activé (propriété Enable)!", "Erreur", "")
+                            Exit Sub
+                        End If
+
+                        Dim y As New uTestDevice(sender.uid)
+                        y.Uid = System.Guid.NewGuid.ToString()
+                        AddHandler y.CloseMe, AddressOf UnloadControl
+                        Window1.CanvasUser.Children.Add(y)
+                    Catch ex As Exception
+                        AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "Erreur Tester: " & ex.Message, "Erreur", "")
+                    End Try
+
             End Select
 
         Catch ex As Exception
