@@ -109,7 +109,6 @@ Class Window1
     'Affiche la date et heure, heures levé et couché du soleil
     Public Sub dispatcherTimer_Tick(ByVal sender As Object, ByVal e As EventArgs)
         Timer_Sec.Stop()
-
         Try
             If IsConnect = True Then
                 Try
@@ -154,7 +153,6 @@ Class Window1
                         Me.AffDevice()
                         refreshtreeviewdevice = False
                     End If
-
 
                     'Modifie les LOG
                     list = myService.GetLastLogs
@@ -422,7 +420,6 @@ Class Window1
                         Case HoMIDom.HoMIDom.Sequence.TypeOfSequence.Zone
 
                         Case Else
-
                     End Select
                 End If
             End If
@@ -1046,7 +1043,6 @@ Class Window1
 
                         Me.Cursor = Cursors.Wait
                         myService.StartDriver(IdSrv, sender.uid)
-
                         Dim OK As Boolean = False
                         Dim t As DateTime = DateTime.Now
                         Do While DateTime.Now < t.AddSeconds(10) And OK = False
@@ -1105,10 +1101,8 @@ Class Window1
 
             'ajout David pour le bug de rafraichissement du treeview composant suite aux modifs de seb
             ManagerDevices.LoadDevices()
-
             If _ListeDevices IsNot Nothing Then
                 CntDevice.Content = _ListeDevices.Count & " Composant(s)"
-
                 For Each Dev As TemplateDevice In _ListeDevices
                     Dim newchild As New TreeViewItem
                     Dim stack As New StackPanel
@@ -1300,6 +1294,7 @@ Class Window1
                 AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "ERREUR Sub AffDevice: Le serveur n'a renvoyé aucun composant...", "ERREUR", "")
             End If
             'ListeZones = Nothing
+            Me.Cursor = Nothing
         Catch ex As Exception
             AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "ERREUR Sub AffDevice: " & ex.ToString, "ERREUR", "")
         End Try
@@ -3161,7 +3156,7 @@ Class Window1
         RefreshTreeView()
     End Sub
 
-    Private Sub LOG_PreviewMouseMove(ByVal sender As System.Object, ByVal e As System.Windows.Input.MouseEventArgs) Handles Log.PreviewMouseMove, ImgLog.PreviewMouseMove
+    Private Sub LOG_PreviewMouseMove(ByVal sender As System.Object, ByVal e As System.Windows.Input.MouseEventArgs) Handles LOG.PreviewMouseMove, ImgLog.PreviewMouseMove
         Try
             If IsConnect = True Then
                 Dim list As List(Of String) = myService.GetLastLogs

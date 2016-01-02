@@ -89,6 +89,13 @@ Imports System.Text
         Public result As List(Of ScenarioList)
     End Class
 
+    Public Class ResultError
+        Public jsonrpc As String
+        Public id As String
+        Public [error] As ErrorRpc
+    End Class
+
+
     Public Class ObjetList
         Public id As String
         Public name As String
@@ -133,6 +140,12 @@ Imports System.Text
         Public isActive As String
         Public isEnable As String
     End Class
+    Public Class ErrorRpc
+        Public code As Long
+        Public message As String
+    End Class
+
+
 #End Region
 
 #Region "Propriétés génériques"
@@ -676,7 +689,7 @@ Imports System.Text
                 Exit Sub
             End If
 
-            WriteLog("DBG: Write, commande Jeedom numero " & idCmd & " pour commande " & Command & " sur " & Objet.adresse1)
+            WriteLog("DBG: Write, commande Jeedom numéro " & idCmd & " pour commande " & Command & " sur " & Objet.adresse1)
 
             Try
                 Select Case Objet.Type
@@ -885,6 +898,7 @@ Imports System.Text
         End Try
     End Function
     Function Get_ConfigLibelleDevice()
+        Dim eqlogicname As String = ""
         Try
             ' mise en forme des libellés equipement actifs pour adresse1
             Dim IdLib As String = ""
@@ -892,13 +906,15 @@ Imports System.Text
             For i = 0 To eqLogicListe.Count - 1
                 If eqLogicListe.Item(i).isEnable = "0" Then Continue For
                 IdLib += eqLogicListe.Item(i).id & " # " & eqLogicListe.Item(i).name & " > " & eqLogicListe.Item(i).eqType_name & "|"
-                Get_ConfigCmd(eqLogicListe.Item(i).id)
+                If Not Get_ConfigCmd(eqLogicListe.Item(i).id) Then Continue For
+                eqlogicname = eqLogicListe.Item(i).id & " => " & eqLogicListe.Item(i).name
                 WriteLog("DBG: " & "GET_ConfigLibelleDevice, equipement récupéré id : " & eqLogicListe.Item(i).id & " => " & eqLogicListe.Item(i).name)
             Next
 
             For i = 0 To ScenarioListe.Count - 1
                 If ScenarioListe.Item(i).isActive = "0" Then Continue For
                 IdLib += ScenarioListe.Item(i).id & " # " & ScenarioListe.Item(i).name & " > scénario" & "|"
+                eqlogicname = ScenarioListe.Item(i).id & " => " & ScenarioListe.Item(i).name
                 WriteLog("DBG: " & "GET_ConfigLibelleDevice, scénario récupéré id : " & ScenarioListe.Item(i).id & " => " & ScenarioListe.Item(i).name)
             Next
 
@@ -927,7 +943,7 @@ Imports System.Text
             Add_LibelleDevice("ADRESSE2", "Nom de la commande", "Nom de la commande", idCom)
         Catch ex As Exception
 
-            WriteLog("ERR: " & "Get_ConfigLibelleDevice, " & ex.Message)
+            WriteLog("ERR: " & "Get_ConfigLibelleDevice, " & ex.Message & "idlogic " & eqlogicname)
             WriteLog("ERR: " & "Get_ConfigLibelleDevice, Url: " & _urlAPIJeedom)
             Return False
         End Try
@@ -937,16 +953,21 @@ Imports System.Text
         ' retourne toutes les commandes pour un equipement
 
         Try
+            If ideqLogic = "" Then
+                WriteLog("ERR: " & "GET_ConfigCmd, recherche des équipement impossible, pas de ideqlogic")
+                Return False
+            End If
             Dim response As String = ""
+            Dim resultcommand As Object
             'recherche des equipements
             response = Get_RPC(_urlAPIJeedom, "eqLogic::fullById", ideqLogic, "")
+            If response = "" Then Return False
             WriteLog("DBG: " & "GET_ConfigCmd, response: " & response.ToString)
-            Dim resultcommand = Newtonsoft.Json.JsonConvert.DeserializeObject(response, GetType(ResultCommand))
+            resultcommand = Newtonsoft.Json.JsonConvert.DeserializeObject(response, GetType(ResultCommand))
             Me.eqLogicCommandListeTotal.Add(resultcommand.result)
             WriteLog("DBG: GET_ConfigCmd, " & Me.eqLogicCommandListeTotal.Item(Me.eqLogicCommandListeTotal.Count - 1).cmds.Count & " commandes pour " & Me.eqLogicCommandListeTotal.Item(Me.eqLogicCommandListeTotal.Count - 1).name & " récupérées ")
             Return True
         Catch ex As Exception
-
             WriteLog("ERR: " & "GET_ConfigCmd, " & ex.Message)
             WriteLog("ERR: " & "EXEC_Cmd, Url: " & _urlAPIJeedom & " eqLogic::fullById " & "ideqlogic=" & ideqLogic)
             Return False
@@ -984,6 +1005,9 @@ Imports System.Text
                             ' recherche des objets
                             response = Get_RPC(_urlAPIJeedom & "core/api/jeeApi.php?", "eqLogic::fullById", Me.eqLogicCommandListeTotal.Item(i).cmds.Item(j).eqLogic_id, "")
                             WriteLog("DBG: " & "GET_Value, response: " & response.ToString)
+                            If InStr(response, "error"":") > 0 Then
+                                Continue For
+                            End If
                             Dim resultcommand = Newtonsoft.Json.JsonConvert.DeserializeObject(response, GetType(ResultCommand))
                             Me.eqLogicCommandListe = resultcommand.result
                             For k = 0 To eqLogicCommandListe.cmds.Count - 1
@@ -1067,25 +1091,34 @@ Imports System.Text
             Request.ContentType = "application/x-www-form-urlencoded"
             Request.Method = "POST"
             Request.ContentLength = postBytes.Length
-            Request.Timeout = 5000
+            Request.Timeout = 10000
 
             Dim requestStream As Stream = Request.GetRequestStream()
             requestStream.Write(postBytes, 0, postBytes.Length)
             requestStream.Close()
+
             Try
                 Dim Response As HttpWebResponse = Request.GetResponse()
-
                 Dim responsereader = New StreamReader(Response.GetResponseStream())
-                Return responsereader.ReadToEnd()
+                Dim reponse = responsereader.ReadToEnd()
                 responsereader.Close()
+                If InStr(reponse, "error"":") Then
+                    Dim ResultCommand = Newtonsoft.Json.JsonConvert.DeserializeObject(reponse, GetType(ResultError))
+                    WriteLog("ERR: " & "GET_RPC, Url: " & url & " Commande : " & method)
+                    WriteLog("ERR: GET_ConfigCmd, Retour erreur " & reponse)
+                    WriteLog("ERR: GET_ConfigCmd, Code erreur : " & ResultCommand.error.code & ", message : " & ResultCommand.error.message)
+                    Return ""
+                Else
+                    Return reponse
+                End If
             Catch ex As Exception
                 WriteLog("ERR: " & "GET_RPC, " & ex.Message)
-                WriteLog("ERR: " & "GET_RPC, Url: " & url)
+                WriteLog("ERR: " & "GET_RPC, Url: " & url & " Commande : " & method)
                 Return ""
             End Try
         Catch ex As Exception
             WriteLog("ERR: " & "GET_RPC, " & ex.Message)
-            WriteLog("ERR: " & "GET_RPC, Url: " & url)
+            WriteLog("ERR: " & "GET_RPC, Url: " & url & " Commande : " & method)
             Return ""
         End Try
     End Function

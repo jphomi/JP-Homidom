@@ -239,7 +239,7 @@ Partial Public Class uDevice
                     stkpopup = Nothing
                     BtnHisto.ToolTip = tl
                 End If
-                End If
+            End If
 
             'Liste toutes les zones dans la liste
             Dim _listezone = myService.GetAllZones(IdSrv)
@@ -268,11 +268,13 @@ Partial Public Class uDevice
                         If _listezone.Item(i).ListElement.Item(j).Visible = True Then ch2.IsChecked = True
                         Exit For
                     End If
+
                 Next
                 stk.Children.Add(ImgZone)
                 stk.Children.Add(ch1)
                 stk.Children.Add(ch2)
                 ListZone.Items.Add(stk)
+
             Next
         Catch Ex As Exception
             AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "Erreur: " & Ex.ToString, "Erreur", "New")
@@ -294,6 +296,7 @@ Partial Public Class uDevice
                             Exit For
                         End If
                     End If
+
                 Next
 
                 If trv = True And x1.IsChecked = False Then
@@ -305,8 +308,8 @@ Partial Public Class uDevice
                         If trv = False And x1.IsChecked = True Then myService.AddDeviceToZone(IdSrv, x1.Uid, _DeviceId, x2.IsChecked)
                     End If
                 End If
-            Next
 
+            Next
         Catch ex As Exception
             AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "Erreur dans le programme SaveInZone: " & ex.ToString, "Admin", "SaveInZone")
         End Try
@@ -330,6 +333,7 @@ Partial Public Class uDevice
                         _Driver = myService.ReturnDriverByID(IdSrv, ListeDrivers.Item(i).ID)
                         Exit For
                     End If
+
                 Next
             End If
 
@@ -397,6 +401,7 @@ Partial Public Class uDevice
                                         If a.Count > 1 Then
                                             For g As Integer = 0 To a.Length - 1
                                                 CbAdresse1.Items.Add(a(g))
+
                                             Next
                                             CbAdresse1.IsEditable = False
                                             CbAdresse1.Visibility = Windows.Visibility.Visible
@@ -437,6 +442,7 @@ Partial Public Class uDevice
                                                 If Not InStr(a(g), "#;") > 0 Then  'permet de ne prendre que les valeurs à ne pas lier à adresse1
                                                     CbAdresse2.Items.Add(a(g))
                                                 End If
+
                                             Next
                                             CbAdresse2.IsEditable = False
                                             CbAdresse2.Visibility = Windows.Visibility.Visible
@@ -918,6 +924,7 @@ Partial Public Class uDevice
     Private Sub BtnSave_Click(ByVal sender As System.Object, ByVal e As System.Windows.RoutedEventArgs) Handles BtnSave.Click
         ' lance la sauvegarde et reste sur la fenetre 
         Try
+            refreshtreeviewdevice = TxtID.Text = ""  'si nouveau pas d'id
             'sauvegarde device
             If SaveDevice() Then
                 BtnTest.Visibility = Windows.Visibility.Visible
@@ -928,7 +935,6 @@ Partial Public Class uDevice
                     LabelModele.Visibility = Windows.Visibility.Hidden
                 End If
                 If _DeviceId.Length > 3 Then x = myService.ReturnDeviceByID(IdSrv, _DeviceId)
-                refreshtreeviewdevice = EAction.Nouveau
             End If
 
         Catch ex As Exception
@@ -1122,6 +1128,7 @@ Partial Public Class uDevice
                                             Else
                                                 CbAdresse2.Items.Add(a(g))
                                             End If
+
                                         Next
                                         Exit For
                                     End If
