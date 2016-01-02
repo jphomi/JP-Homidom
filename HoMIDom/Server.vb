@@ -10247,7 +10247,7 @@ Namespace HoMIDom
                 Dim retour As String = ""
                 If String.IsNullOrEmpty(Requete) = True Then
                     If System.IO.File.Exists(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt") Then
-                        Dim SR As New StreamReader(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt")
+                        Dim SR As New StreamReader(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt", Encoding.GetEncoding("ISO-8859-1"))
                         retour = SR.ReadToEnd()
                         retour = HtmlDecode(retour)
                         SR.Close()

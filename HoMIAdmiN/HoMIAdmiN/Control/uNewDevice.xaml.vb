@@ -3,7 +3,7 @@ Imports System.IO
 Imports System.Collections.ObjectModel
 Imports HoMIDom.HoMIDom
 Imports HoMIDom.HoMIDom.Api
-Imports System.Text.RegularExpressions
+
 Public Class uNewDevice
     Public Event CloseMe(ByVal MyObject As Object)
     Public Event CreateNewDevice(ByVal MyObject As Object)

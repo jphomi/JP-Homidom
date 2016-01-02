@@ -540,17 +540,11 @@ Imports System.Text
             End Try
 
             _urlApiJeedom = "http://" & _IPAdressJeedom & ":" & _IPPortJeedom & "/jeedom/core/api/jeeApi.php?"""
-            WriteLog("DBG: Start, connection au serveur " & _urlAPIJeedom)
+            WriteLog("Start, connection au serveur " & _urlAPIJeedom)
 
             If Get_Config() Then
                 _IsConnect = True
-                'lance le time du driver, mini toutes les 10 minutes
-                If _Refresh = 0 Then _Refresh = 600
-                MyTimer.Interval = _Refresh * 1000
-                MyTimer.Enabled = True
-                AddHandler MyTimer.Elapsed, AddressOf TimerTick
-                WriteLog("Driver " & Me.Nom & " démarré")
-
+                WriteLog("Driver " & Me.Nom & " démarré avec succés")
             Else
                 _IsConnect = False
                 WriteLog("ERR: Driver " & Me.Nom & " Erreur démarrage ")
@@ -852,7 +846,6 @@ Imports System.Text
     ''' <summary>Si refresh >0 gestion du timer</summary>
     ''' <remarks>PAS UTILISE CAR IL FAUT LANCER UN TIMER QUI LANCE/ARRETE CETTE FONCTION dans Start/Stop</remarks>
     Private Sub TimerTick(ByVal source As Object, ByVal e As System.Timers.ElapsedEventArgs)
-        Get_AllConfig()
     End Sub
 
 #End Region
@@ -872,12 +865,14 @@ Imports System.Text
             WriteLog("DBG: " & "GET_Config, response: " & response.ToString)
             Dim ResulteqLogic = Newtonsoft.Json.JsonConvert.DeserializeObject(response, GetType(ResulteqLogic))
             Me.eqLogicListe = ResulteqLogic.result
+            WriteLog("GET_Config, equipements récupérés : " & Me.eqLogicListe.Count)
 
             'recherche des scenario
             response = Get_RPC(_urlAPIJeedom & "core/api/jeeApi.php?", "scenario::all", "", "")
             WriteLog("DBG: " & "GET_Config, response: " & response.ToString)
             Dim ResultScenarion = Newtonsoft.Json.JsonConvert.DeserializeObject(response, GetType(ResultScenario))
             Me.ScenarioListe = ResultScenarion.result
+            WriteLog("GET_Config, scénarios récupérés : " & Me.ScenarioListe.Count)
 
             Get_ConfigLibelleDevice()
 
@@ -890,44 +885,52 @@ Imports System.Text
         End Try
     End Function
     Function Get_ConfigLibelleDevice()
-
-        ' mise en forme des libellés equipement actifs pour adresse1
-        Dim IdLib As String = ""
-        Me.eqLogicCommandListeTotal.Clear()
-        For i = 0 To eqLogicListe.Count - 1
-            If eqLogicListe.Item(i).isEnable = "0" Then Continue For
-            IdLib += eqLogicListe.Item(i).id & " # " & eqLogicListe.Item(i).name & " > " & eqLogicListe.Item(i).eqType_name & "|"
-            Get_ConfigCmd(eqLogicListe.Item(i).id)
-            WriteLog("DBG: " & "GET_Config, equipement récupéré id : " & eqLogicListe.Item(i).id & " => " & eqLogicListe.Item(i).name)
-        Next
-
-        For i = 0 To ScenarioListe.Count - 1
-            If ScenarioListe.Item(i).isActive = "0" Then Continue For
-            IdLib += ScenarioListe.Item(i).id & " # " & ScenarioListe.Item(i).name & " > scénario" & "|"
-            WriteLog("DBG: " & "GET_Config, scénario récupéré id : " & ScenarioListe.Item(i).id & " => " & ScenarioListe.Item(i).name)
-        Next
-
-        IdLib = Mid(IdLib, 1, Len(IdLib) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
-        Add_LibelleDevice("ADRESSE1", "Nom de l'équipement", "Nom de l'équipement", IdLib)
-
-        ' mise en forme des libellés commandes pour adresse2
-        Dim idCom As String = ""
-        For i = 0 To Me.eqLogicCommandListeTotal.Count - 1
-            For j = 0 To Me.eqLogicCommandListeTotal.Item(i).cmds.Count - 1
-                If eqLogicCommandListeTotal.Item(i).cmds.Item(j).type = "info" Then
-                    idCom += eqLogicCommandListeTotal.Item(i).cmds.Item(j).eqLogic_id & " # " & " #; " & eqLogicCommandListeTotal.Item(i).cmds.Item(j).id & " # " & eqLogicCommandListeTotal.Item(i).cmds.Item(j).name & " > " & eqLogicCommandListeTotal.Item(i).cmds.Item(j).type & "|"
-                End If
+        Try
+            ' mise en forme des libellés equipement actifs pour adresse1
+            Dim IdLib As String = ""
+            Me.eqLogicCommandListeTotal.Clear()
+            For i = 0 To eqLogicListe.Count - 1
+                If eqLogicListe.Item(i).isEnable = "0" Then Continue For
+                IdLib += eqLogicListe.Item(i).id & " # " & eqLogicListe.Item(i).name & " > " & eqLogicListe.Item(i).eqType_name & "|"
+                Get_ConfigCmd(eqLogicListe.Item(i).id)
+                WriteLog("DBG: " & "GET_ConfigLibelleDevice, equipement récupéré id : " & eqLogicListe.Item(i).id & " => " & eqLogicListe.Item(i).name)
             Next
-        Next
 
-        ' mise en forme des libellés scénarios pour adresse2
-        For i = 0 To ScenarioListe.Count - 1
-            If ScenarioListe.Item(i).isActive = "0" Then Continue For
-            idCom += ScenarioListe.Item(i).id & " # " & " #; " & "1 # RUN > scénario" & "|"
-            idCom += ScenarioListe.Item(i).id & " # " & " #; " & "2 # STOP > scénario" & "|"
-        Next
-        idCom = Mid(idCom, 1, Len(idCom) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
-        Add_LibelleDevice("ADRESSE2", "Nom de la commande", "Nom de la commande", idCom)
+            For i = 0 To ScenarioListe.Count - 1
+                If ScenarioListe.Item(i).isActive = "0" Then Continue For
+                IdLib += ScenarioListe.Item(i).id & " # " & ScenarioListe.Item(i).name & " > scénario" & "|"
+                WriteLog("DBG: " & "GET_ConfigLibelleDevice, scénario récupéré id : " & ScenarioListe.Item(i).id & " => " & ScenarioListe.Item(i).name)
+            Next
+
+            IdLib = Mid(IdLib, 1, Len(IdLib) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
+            Add_LibelleDevice("ADRESSE1", "Nom de l'équipement", "Nom de l'équipement", IdLib)
+
+            WriteLog("GET_ConfigLibelleDevice, nbre de commandes récupérées : " & Me.eqLogicCommandListeTotal.Count)
+
+            ' mise en forme des libellés commandes pour adresse2
+            Dim idCom As String = ""
+            For i = 0 To Me.eqLogicCommandListeTotal.Count - 1
+                For j = 0 To Me.eqLogicCommandListeTotal.Item(i).cmds.Count - 1
+                    If eqLogicCommandListeTotal.Item(i).cmds.Item(j).type = "info" Then
+                        idCom += eqLogicCommandListeTotal.Item(i).cmds.Item(j).eqLogic_id & " # " & " #; " & eqLogicCommandListeTotal.Item(i).cmds.Item(j).id & " # " & eqLogicCommandListeTotal.Item(i).cmds.Item(j).name & " > " & eqLogicCommandListeTotal.Item(i).cmds.Item(j).type & "|"
+                    End If
+                Next
+            Next
+
+            ' mise en forme des libellés scénarios pour adresse2
+            For i = 0 To ScenarioListe.Count - 1
+                If ScenarioListe.Item(i).isActive = "0" Then Continue For
+                idCom += ScenarioListe.Item(i).id & " # " & " #; " & "1 # RUN > scénario" & "|"
+                idCom += ScenarioListe.Item(i).id & " # " & " #; " & "2 # STOP > scénario" & "|"
+            Next
+            idCom = Mid(idCom, 1, Len(idCom) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
+            Add_LibelleDevice("ADRESSE2", "Nom de la commande", "Nom de la commande", idCom)
+        Catch ex As Exception
+
+            WriteLog("ERR: " & "Get_ConfigLibelleDevice, " & ex.Message)
+            WriteLog("ERR: " & "Get_ConfigLibelleDevice, Url: " & _urlAPIJeedom)
+            Return False
+        End Try
 
     End Function
     Function Get_ConfigCmd(ideqLogic As String) As Boolean

@@ -1,6 +1,7 @@
 ﻿Imports System.Data
 Imports System.IO
 Imports System.Collections.ObjectModel
+Imports System.Text
 
 Partial Public Class uLog
     Public Event CloseMe(ByVal MyObject As Object)
@@ -27,6 +28,12 @@ Partial Public Class uLog
                 TargetFile.Write(myService.ReturnLog)
                 TargetFile.Close()
 
+
+                If File.Exists("c:\temp\log.txt") Then
+                    File.Delete("c:\temp\log.txt")
+                End If
+                File.Copy(MyRepAppData & "\log.txt", "c:\temp\log.txt")
+
                 Dim tr As TextReader = New StreamReader(MyRepAppData & "\log.txt")
                 'Dim lineCount As Integer = 1
 
@@ -46,8 +53,8 @@ Partial Public Class uLog
                 While tr.Peek() >= 0
                     Try
                         line = tr.ReadLine()
-
                         If line <> "" Then
+
                             Dim tmp As String() = line.Trim.Split(vbTab)
 
                             If tmp.Length < 6 And tmp.Length > 3 Then
@@ -106,9 +113,15 @@ Partial Public Class uLog
 
     Private Sub CreateGridColumn(ByVal headerText As String)
         Try
+
+            Dim utf8enc As Encoding = New UTF8Encoding(True)
+            Dim encodedString() As Byte
+            encodedString = utf8enc.GetBytes(headerText)
+
             Dim col1 As DataGridTextColumn = New DataGridTextColumn()
-            col1.Header = headerText
-            col1.Binding = New Binding(String.Format("[{0}]", headerText))
+            col1.Header = utf8enc.GetString(encodedString) 'headerText
+            col1.Binding = New Binding(String.Format("[{0}]", utf8enc.GetString(encodedString))) 'headerText))
+
             DGW.Columns.Add(col1)
         Catch ex As Exception
             AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "Erreur Sub CreateGridColumn: " & ex.ToString, "ERREUR", "")
