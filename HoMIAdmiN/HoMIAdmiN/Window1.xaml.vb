@@ -1079,6 +1079,15 @@ Class Window1
                     If IsConnect Then ManagerDrivers.EnableDriver(sender.uid)
                     AffDriver()
                 Case 4 'Disable
+                    ' si driver démarré, arrete serveur avant
+                    If IsConnect Then
+                        If MessageBox.Show("Le driver est démarré. Vous ne pouvez pas faire cette action." & vbCrLf & " Voulez-vous l'arrêter pour continuer ?", "Information", MessageBoxButton.YesNo, MessageBoxImage.Question) = MessageBoxResult.Yes Then
+                            myService.StopDriver(IdSrv, sender.uid)
+                            AffDriver()
+                        Else
+                            Exit Sub
+                        End If
+                    End If
                     Dim x As TemplateDriver = myService.ReturnDriverByID(IdSrv, sender.uid)
                     myService.SaveDriver(IdSrv, sender.uid, x.Nom, False, x.StartAuto, x.IP_TCP, x.Port_TCP, x.IP_UDP, x.Port_UDP, x.COM, x.Refresh, x.Picture, x.Modele, x.AutoDiscover)
                     If IsConnect Then ManagerDrivers.DisableDriver(sender.uid)

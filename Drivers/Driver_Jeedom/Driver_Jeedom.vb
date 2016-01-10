@@ -941,6 +941,7 @@ Imports System.Text
             Next
             idCom = Mid(idCom, 1, Len(idCom) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
             Add_LibelleDevice("ADRESSE2", "Nom de la commande", "Nom de la commande", idCom)
+            Return True
         Catch ex As Exception
 
             WriteLog("ERR: " & "Get_ConfigLibelleDevice, " & ex.Message & "idlogic " & eqlogicname)
@@ -1020,6 +1021,7 @@ Imports System.Text
                     Next
                 End If
             Next
+            Return ""
         Catch ex As Exception
             WriteLog("ERR: " & "GET_Value, " & ex.Message)
             WriteLog("ERR: " & "GET_Value, " & idcmd)
