@@ -909,7 +909,7 @@ Public Class Driver_ZWave
                         m_manager.WriteConfig(m_homeId)
                         WriteLog("Start,  Sauvegarde de la config Zwave")
 						
-						Get_Config()
+                        'Get_Config()
                     End If
                 Else
                     retour = "ERR: Port Com non défini. Impossible d'ouvrir le port !"
@@ -1115,17 +1115,17 @@ Public Class Driver_ZWave
                                     End If
                                 End If
 
-                            Case "SETPOINT"     'Ecrire une valeur vers le device Thermostat
-                                If Not (IsNothing(Parametre1)) Then
+                                'Case "SETPOINT"     'Ecrire une valeur vers le device Thermostat
+                                '    If Not (IsNothing(Parametre1)) Then
 
-                                    Dim ValDimmer As Single = Parametre1
-                                    texteCommande = texteCommande & " avec valeur = " & Val(Parametre1) & " - " & ValDimmer
-                                    If IsMultiLevel Then
-                                        m_manager.SetValue(ValueTemp, ValDimmer)
-                                    Else
-                                        m_manager.SetNodeLevel(m_homeId, NodeTemp.ID, CByte(ValDimmer))
-                                    End If
-                                End If
+                                '        Dim ValDimmer As Single = Parametre1
+                                '        texteCommande = texteCommande & " avec valeur = " & Val(Parametre1) & " - " & ValDimmer
+                                '        If IsMultiLevel Then
+                                '            m_manager.SetValue(ValueTemp, ValDimmer)
+                                '        Else
+                                '            m_manager.SetNodeLevel(m_homeId, NodeTemp.ID, CByte(ValDimmer))
+                                '        End If
+                                '    End If
                         End Select
 
                     Else
@@ -1450,7 +1450,6 @@ Public Class Driver_ZWave
         Sub StartInclusionMode()
             WriteLog("Début de la séquence d'association.")
             m_manager.AddNode(m_homeId, False)
-            Get_Config()
         End Sub
         ''' <summary>
         ''' Place le controller en mode "inclusion securisée"
@@ -1460,7 +1459,6 @@ Public Class Driver_ZWave
             WriteLog("Début de la séquence d'association sécurisée.")
             RemoveFailedNode()  'preferable avant une inclusion sécurisée
             m_manager.AddNode(m_homeId, True)
-            Get_Config()
         End Sub
         ''' <summary>
         ''' Place le controller en mode "exclusion"
@@ -1469,7 +1467,6 @@ Public Class Driver_ZWave
         Sub StartExclusionMode()
             WriteLog("Début de la séquence désassociation.")
             m_manager.RemoveNode(m_homeId)
-            Get_Config()
         End Sub
         ''' <summary>
         ''' Suppresion des noeuds morts
@@ -1486,7 +1483,6 @@ Public Class Driver_ZWave
                     m_manager.RemoveFailedNode(m_homeId, node.ID)
                 Next
                 WriteLog("RemoveFailedNode, Nombre de noeud présent aprés analyse :" & m_nodeList.Count)
-                Get_Config()
             Catch ex As Exception
                 WriteLog("ERR: RemoveFailedNode, Probleme lors de la suppression des noeuds")
             End Try

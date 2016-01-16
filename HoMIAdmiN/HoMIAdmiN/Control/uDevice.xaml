@@ -30,7 +30,7 @@
                         <StackPanel Orientation="Horizontal" >
                             <StackPanel Name="StkDriver">
                                 <Label Foreground="White" Name="LabelDriver"  Width="215">Driver:</Label>
-                                <ComboBox Width="215" Name="CbDriver" Background="DarkGray" BorderBrush="Black" Foreground="White" BorderThickness="2" Height="25" ToolTip="Liste des drivers actifs"/>
+                                <ComboBox Width="215" Name="CbDriver" Background="DarkGray" BorderBrush="Black" Foreground="#FF322727" BorderThickness="2" Height="25" ToolTip="Liste des drivers actifs"  />
                             </StackPanel>
 
                             <StackPanel Name="StkType" Margin="10,0,0,0">
