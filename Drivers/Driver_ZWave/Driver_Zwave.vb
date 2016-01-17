@@ -107,8 +107,6 @@ Public Class Driver_ZWave
 
         Enum CommandClass As Byte
             COMMAND_CLASS_NO_OPERATION = 0                        ' 0x00
-			ZWAVE_CMD_CLASS = 1                                   ' 0x01
-			COMMAND_CLASS_ZENSOR_NET = 2                          ' 0x02
             COMMAND_CLASS_BASIC = 32                              ' 0x20
             COMMAND_CLASS_BASIC_V2 = 32                           ' 0x20
             COMMAND_CLASS_CONTROLLER_REPLICATION = 33             ' 0x21
@@ -213,6 +211,7 @@ Public Class Driver_ZWave
             COMMAND_CLASS_ZIP_GATEWAY = 95                        ' 0x5F
             COMMAND_CLASS_MULTI_CHANNEL = 96                      ' 0x60
             COMMAND_CLASS_MULTI_CHANNEL_V2 = 96                   ' 0x60
+            COMMAND_CLASS_MULTI_CHANNEL_V3 = 96                   ' 0x60
             COMMAND_CLASS_MULTI_CHANNEL_V4 = 96                   ' 0x60
             COMMAND_CLASS_MULTI_INSTANCE = 96                     ' 0x60
             COMMAND_CLASS_MULTI_INSTANCE_V2 = 96                  ' 0x60
