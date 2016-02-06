@@ -364,6 +364,9 @@ Public Class Driver_Arduino_HTTP
                 If (fi Is Nothing) Then WriteLog("DBG: READ TESTXXX  Could not access useUnsafeHeaderParsing field")
                 If (Not Convert.ToBoolean(fi.GetValue(obj))) Then fi.SetValue(obj, True)
 
+                'Add date and hour to urlcommand
+                urlcommande = urlcommande & "__" & Now.ToString("yyyyMMddHHmmss")
+
                 If _DEBUG Then WriteLog("DBG: READ Composant " & Objet.Name & " URL : " & urlcommande)
 
                 Dim request As HttpWebRequest = WebRequest.Create(urlcommande)
@@ -485,6 +488,16 @@ Public Class Driver_Arduino_HTTP
                         WriteLog("ERR: WRITE CONFIG_TYPE_PIN : Ce type de PIN ne peut pas être configuré : " & Objet.Modele.ToString.ToUpper & " (" & Objet.Name & ")")
                         Exit Sub
                 End Select
+            ElseIf Command = "CONFIG_TYPE_PIN_PULLUP" Then
+                Select Case UCase(Objet.Modele)
+                    Case "DIGITAL_IN" : urlcommande = "http://" & Objet.Adresse1 & "/?homidom_CFGUP_" & Objet.Adresse2 & "_0"
+                    Case "DIGITAL_OUT" : urlcommande = "http://" & Objet.Adresse1 & "/?homidom_CFGUP_" & Objet.Adresse2 & "_1"
+                    Case "DIGITAL_PWM" : urlcommande = "http://" & Objet.Adresse1 & "/?homidom_CFGUP_" & Objet.Adresse2 & "_2"
+                    Case "1WIRE" : urlcommande = "http://" & Objet.Adresse1 & "/?homidom_CFGUP_" & Objet.Adresse2 & "_3"
+                    Case Else
+                        WriteLog("ERR: WRITE CONFIG_TYPE_PIN_PULLUP : Ce type de PIN ne peut pas être configuré : " & Objet.Modele.ToString.ToUpper & " (" & Objet.Name & ")")
+                        Exit Sub
+                End Select
             ElseIf Command = "CONFIG_TYPE_PINX" Then
                 urlcommande = "http://" & Objet.Adresse1 & "/?homidom_CFGX_"
 
@@ -504,8 +517,8 @@ Public Class Driver_Arduino_HTTP
                     End Select
                 Next
                 'If last character in url is "_", we remove it
-                If urlcommande.EndsWith("_") Then urlcommande = urlcommande.Substring(0, urlcommande.Length - 2)
-                
+                If urlcommande.EndsWith("_") Then urlcommande = urlcommande.Substring(0, urlcommande.Length - 1)
+
             ElseIf Command = "SETVAR" Then
                 If Not IsNothing(Parametre1) Then
                     Select Case UCase(Objet.Modele)
@@ -545,7 +558,10 @@ Public Class Driver_Arduino_HTTP
                         End Select
 
                     Case "ANALOG_IN" : urlcommande = "http://" & Objet.Adresse1 & "/?homidom_READA_" & Objet.Adresse2
-                    Case "DIGITAL_IN" : urlcommande = "http://" & Objet.Adresse1 & "/?homidom_READD_" & Objet.Adresse2
+                    Case "DIGITAL_IN"
+                        'urlcommande = "http://" & Objet.Adresse1 & "/?homidom_READD_" & Objet.Adresse2
+                        WriteLog("ERR: WRITE : Commande invalide : " & Command & " (pas de commandes Write supportées pour un PIN de type DIGITAL_IN)")
+                        Exit Sub
                     Case "DIGITAL_OUT"
                         Select Case Command
                             Case "ON" : urlcommande = "http://" & Objet.Adresse1 & "/?homidom_ON_" & Objet.Adresse2
@@ -610,11 +626,15 @@ Public Class Driver_Arduino_HTTP
             End If
 
             If urlcommande <> "" Then
+
+                'Add date and hour to urlcommand
+                urlcommande = urlcommande & "__" & Now.ToString("yyyyMMddHHmmss")
+
                 If _DEBUG Then WriteLog("DBG: WRITE Composant " & Objet.Name & " URL : " & urlcommande)
 
-                Dim request As HttpWebRequest = WebRequest.Create(urlcommande)
-                request.Timeout = 3000
-                CType(request, HttpWebRequest).UserAgent = "Other"
+                'Dim request As HttpWebRequest = WebRequest.Create(urlcommande)
+                'request.Timeout = 3000
+                'CType(request, HttpWebRequest).UserAgent = "Other"
 
 
                 'Dim response As WebResponse = request.GetResponse()
@@ -629,25 +649,37 @@ Public Class Driver_Arduino_HTTP
 
 
                 'Get a web response  
-                Dim response As WebResponse
                 Dim responseFromServer As String = ""
-                Try
-                    response = request.GetResponse()
-                    If CType(response, HttpWebResponse).StatusCode = HttpStatusCode.OK Then
-                        Dim dataStream As Stream = response.GetResponseStream()
-                        Dim reader As New StreamReader(dataStream)
-                        responseFromServer = reader.ReadToEnd().ToUpper
-                        WriteLog("DBG: Commande passée à l arduino " & Objet.Name & " : " & urlcommande & " --> " & responseFromServer & " (" & CType(response, HttpWebResponse).StatusDescription & ")")
-                    Else
-                        WriteLog("ERR: Commande passée à l arduino " & Objet.Name & " : " & urlcommande & " --> Réponse incorrecte reçu : " & CType(response, HttpWebResponse).StatusCode & " (" & CType(response, HttpWebResponse).StatusDescription & ")")
-                    End If
-                    response.Close()
-                Catch ex As System.Net.WebException
-                    WriteLog("ERR: Commande passée à l arduino : " & urlcommande & " --> Erreur de communication : " & ex.Message.ToString)
+                For retrycount As Integer = 0 To 2
+                    Try
+                        Dim request As HttpWebRequest = WebRequest.Create(urlcommande)
+                        request.Timeout = 3000
+                        CType(request, HttpWebRequest).UserAgent = "Other"
 
-                    'If ex.Status = WebExceptionStatus.ProtocolError Then
-                    'end if
-                End Try
+                        Dim response As WebResponse
+                        response = request.GetResponse()
+                        If CType(response, HttpWebResponse).StatusCode = HttpStatusCode.OK Then
+                            Dim dataStream As Stream = response.GetResponseStream()
+                            Dim reader As New StreamReader(dataStream)
+                            responseFromServer = reader.ReadToEnd().ToUpper
+                            WriteLog("DBG: Commande passée à l arduino " & Objet.Name & " : " & urlcommande & " --> " & responseFromServer & " (" & CType(response, HttpWebResponse).StatusDescription & ")")
+                        Else
+                            WriteLog("ERR: Commande passée à l arduino " & Objet.Name & " : " & urlcommande & " --> Réponse incorrecte reçu : " & CType(response, HttpWebResponse).StatusCode & " (" & CType(response, HttpWebResponse).StatusDescription & ")")
+                        End If
+                        response.Close()
+                        Exit For
+                    Catch ex As System.Net.WebException
+                        WriteLog("ERR: Commande passée à l arduino : " & urlcommande & " --> Erreur de communication : " & ex.Message.ToString)
+                        If retrycount = 0 Then WriteLog("RETRY 1")
+                        If retrycount = 1 Then WriteLog("RETRY 2")
+                        If retrycount = 2 Then WriteLog("ERR: command send 3 times without success, exit")
+
+
+                        'If ex.Status = WebExceptionStatus.ProtocolError Then
+                        'end if
+                    End Try
+                Next
+
 
                 'Traitement de la réponse
                 If responseFromServer = "" Then
@@ -670,17 +702,17 @@ Public Class Driver_Arduino_HTTP
                         listedevices = _Server.ReturnDeviceByAdresse1TypeDriver(_idsrv, Objet.adresse1, "", Me._ID, True)
 
                         'for each PIN in the response, check if a device correspond in the listdevices and update it if needed
-                        For i As Integer = 0 To responsepin.Length
+                        For i As Integer = 0 To (responsepin.Length - 1)
                             'A1=10 : type A, number 1, value 10
                             Dim responsepin2 As String() = responsepin(i).Split("=")
                             PINtype = Left(responsepin2(0), 1) 'D digital IN, O Digital out, A Analog IN
                             PINnumber = Right(responsepin2(0), responsepin2(0).Length - 1)
                             PINvalue = responsepin2(1).ToUpper 'ON OFF 10 5...
-                            WriteLog("DBG: READX : Reponse reçu de larduino : " & PINtype & ":" & PINnumber & " - " & PINvalue)
+                            WriteLog("DBG: READX : Reponse reçu de larduino : " & PINtype & " : " & PINnumber & " - " & PINvalue)
 
                             'search for the right PIN NUMBER i = adresse2
                             For j = 0 To (listedevices.Count - 1)
-                                If PINnumber = (listedevices.Item(j).Adresse2 - 1) Then
+                                If PINnumber = (listedevices.Item(j).Adresse2) Then
                                     'PIN Found, check if model is the same, then update value
                                     If (PINtype = "D" And listedevices.Item(j).modele = "DIGITAL_IN") Or (PINtype = "O" And listedevices.Item(j).modele = "DIGITAL_OUT") Or (PINtype = "A" And listedevices.Item(j).modele = "ANALOG_IN") Then
                                         'update de la value suivant la commande et le type de composant
@@ -711,6 +743,8 @@ Public Class Driver_Arduino_HTTP
                                 End If
                             Next
                         Next
+                    ElseIf Command = "CONFIG_TYPE_PINX" Then
+                        'no response to use
                     Else
                         Dim responsetab2 As String() = responseFromServer.Split(" ")
                         If responsetab2.Count = 1 Then
@@ -907,7 +941,8 @@ Public Class Driver_Arduino_HTTP
 
             'ajout des commandes avancées pour les devices
             'add_devicecommande("COMMANDE", "DESCRIPTION", nbparametre)
-            add_devicecommande("CONFIG_TYPE_PIN", "configurer le type de PIN sur l arduino suivant les propriétés du composant", 0)
+            add_devicecommande("CONFIG_TYPE_PIN", "configurer le type de PIN sur l arduino suivant les propriétés du composant sans PULL", 0)
+            add_devicecommande("CONFIG_TYPE_PIN_PULLUP", "configurer le type de PIN sur l arduino suivant les propriétés du composant + PULL UP", 0)
             add_devicecommande("PWM", "Envoyer une commande PWM avec une valeur de 0 à 255", 1)
             add_devicecommande("SETVAR", "Envoyer une valeur de type string à une variable sur l arduino", 1)
             add_devicecommande("READX", "Lire les valeurs de toutes les entrées de l'arduino et mettre tous les composants Homidom à jour", 0)

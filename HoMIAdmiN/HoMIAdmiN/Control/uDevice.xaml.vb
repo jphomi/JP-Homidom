@@ -744,6 +744,7 @@ Partial Public Class uDevice
             AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "Erreur uDevice TxtValueMax_TextChanged: " & ex.ToString, "ERREUR", "TxtValueMax_TextChanged")
         End Try
     End Sub
+
     Private Sub TxtRefreshHisto_TextChanged(ByVal sender As System.Object, ByVal e As System.Windows.Controls.TextChangedEventArgs) Handles TxtRefreshHisto.TextChanged
         Try
             If (String.IsNullOrEmpty(TxtRefreshHisto.Text)) Or (String.IsNullOrEmpty(TxtRefreshHisto.Text) = False And IsNumeric(TxtRefreshHisto.Text) = False) Then

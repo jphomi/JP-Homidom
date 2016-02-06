@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Driver_Foobar", "Drivers\Driver_Foobar\Driver_Foobar.vbproj", "{62C5EA60-2FE8-4F56-BC66-BE2D7B14CA5B}"
 EndProject
@@ -113,12 +113,6 @@ EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Driver_ImperiHome", "Drivers_autonomes\Driver_ImperiHome\Driver_ImperiHome.vbproj", "{66D5DC1D-246B-49DA-9856-4ED68966D3C7}"
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Driver_WES", "Drivers_autonomes\Driver_WES\Driver_WES.vbproj", "{25D01A09-60A9-4D63-B18F-CF54D158897C}"
-EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Driver_Homidom", "Drivers\Driver_Homidom\Driver_Homidom.vbproj", "{7BB78B78-3864-4CA7-9C69-9AF0228E167F}"
-EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Driver_InfoClimat", "Drivers\Driver_InfoClimat\Driver_InfoClimat.vbproj", "{3160D167-AD3A-4DD2-8847-2D484C03A8F0}"
-EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Driver_Jeedom", "Drivers\Driver_Jeedom\Driver_Jeedom.vbproj", "{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}"
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Driver_AlertesAtmo", "Drivers\Driver_AlertesAtmo\Driver_AlertesAtmo.vbproj", "{8E61A745-C86C-4EF1-BDDF-F849CA47F52E}"
 EndProject
@@ -620,36 +614,6 @@ Global
 		{25D01A09-60A9-4D63-B18F-CF54D158897C}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{25D01A09-60A9-4D63-B18F-CF54D158897C}.Release|x86.ActiveCfg = Release|x86
 		{25D01A09-60A9-4D63-B18F-CF54D158897C}.Release|x86.Build.0 = Release|x86
-		{7BB78B78-3864-4CA7-9C69-9AF0228E167F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7BB78B78-3864-4CA7-9C69-9AF0228E167F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7BB78B78-3864-4CA7-9C69-9AF0228E167F}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{7BB78B78-3864-4CA7-9C69-9AF0228E167F}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{7BB78B78-3864-4CA7-9C69-9AF0228E167F}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{7BB78B78-3864-4CA7-9C69-9AF0228E167F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7BB78B78-3864-4CA7-9C69-9AF0228E167F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7BB78B78-3864-4CA7-9C69-9AF0228E167F}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{7BB78B78-3864-4CA7-9C69-9AF0228E167F}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{7BB78B78-3864-4CA7-9C69-9AF0228E167F}.Release|x86.ActiveCfg = Release|Any CPU
-		{3160D167-AD3A-4DD2-8847-2D484C03A8F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3160D167-AD3A-4DD2-8847-2D484C03A8F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3160D167-AD3A-4DD2-8847-2D484C03A8F0}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{3160D167-AD3A-4DD2-8847-2D484C03A8F0}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{3160D167-AD3A-4DD2-8847-2D484C03A8F0}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{3160D167-AD3A-4DD2-8847-2D484C03A8F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3160D167-AD3A-4DD2-8847-2D484C03A8F0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3160D167-AD3A-4DD2-8847-2D484C03A8F0}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{3160D167-AD3A-4DD2-8847-2D484C03A8F0}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{3160D167-AD3A-4DD2-8847-2D484C03A8F0}.Release|x86.ActiveCfg = Release|Any CPU
-		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2}.Release|x86.ActiveCfg = Release|Any CPU
 		{8E61A745-C86C-4EF1-BDDF-F849CA47F52E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8E61A745-C86C-4EF1-BDDF-F849CA47F52E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8E61A745-C86C-4EF1-BDDF-F849CA47F52E}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
@@ -665,7 +629,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{62C5EA60-2FE8-4F56-BC66-BE2D7B14CA5B} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
 		{B1154B53-619A-4878-8915-9A98904EEEF5} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
 		{E45EDD1D-4BED-4782-9050-D42EF782C28E} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
 		{B0602976-1274-4BDB-8158-9A655821E14D} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
@@ -707,18 +670,16 @@ Global
 		{7E92B3E9-0C1F-4FD0-BCB8-21A298735F5E} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
 		{FD7B7D66-9812-4583-81D5-C4A51C84C2B0} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
 		{41C380BE-0028-4453-B69F-F1B709D5D391} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
+		{62C5EA60-2FE8-4F56-BC66-BE2D7B14CA5B} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
 		{66D5DC1D-246B-49DA-9856-4ED68966D3C7} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
 		{25D01A09-60A9-4D63-B18F-CF54D158897C} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
-		{7BB78B78-3864-4CA7-9C69-9AF0228E167F} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
-		{3160D167-AD3A-4DD2-8847-2D484C03A8F0} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
-		{A25B5FE3-E3FC-4631-8B85-BF19B7F3BEC2} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
 		{8E61A745-C86C-4EF1-BDDF-F849CA47F52E} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		BuildVersion_IncrementBeforeBuild = True
-		BuildVersion_UseGlobalSettings = True
-		BuildVersion_BuildVersioningStyle = None.None.Increment.None
-		BuildVersion_UpdateFileVersion = True
 		BuildVersion_UpdateAssemblyVersion = True
+		BuildVersion_UpdateFileVersion = True
+		BuildVersion_BuildVersioningStyle = None.None.Increment.None
+		BuildVersion_UseGlobalSettings = True
+		BuildVersion_IncrementBeforeBuild = True
 	EndGlobalSection
 EndGlobal

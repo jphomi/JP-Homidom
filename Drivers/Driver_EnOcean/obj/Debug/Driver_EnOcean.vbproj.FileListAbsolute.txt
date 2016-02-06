@@ -1,9 +1,0 @@
-C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_EnOcean\obj\Debug\Driver_enocean.Resources.resources
-C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_EnOcean\obj\Debug\Driver_EnOcean.vbproj.GenerateResource.Cache
-C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_EnOcean\obj\Debug\Driver_EnOcean.vbprojResolveAssemblyReference.cache
-C:\Users\JP\Documents\GitHub\JP-Homidom\DEBUG\Drivers\Driver_enocean.dll
-C:\Users\JP\Documents\GitHub\JP-Homidom\DEBUG\Drivers\Driver_enocean.pdb
-C:\Users\JP\Documents\GitHub\JP-Homidom\DEBUG\Drivers\Driver_enocean.xml
-C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_EnOcean\obj\Debug\Driver_enocean.dll
-C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_EnOcean\obj\Debug\Driver_enocean.xml
-C:\Users\JP\Documents\GitHub\JP-Homidom\Drivers\Driver_EnOcean\obj\Debug\Driver_enocean.pdb

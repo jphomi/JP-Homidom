@@ -53,11 +53,9 @@
             typeDevice.Add(27, "DevShutter") 'VOLET = 27
             typeDevice.Add(28, "DevRGBLight") 'LAMPERGBW = 28
 
-
-            'device
-            Dim importOk = ImportImperiHome()
-
             'zone
+            ImportImperiHomeZone()
+
             zoneName = New Dictionary(Of String, String)
             zoneName.Add("", "Reserve")
             For Each zone In myService.GetAllZones(IdSrv)
@@ -67,14 +65,19 @@
             If allZoneImperi Is Nothing Then
                 allZoneImperi = New RoomList
                 allZoneImperi.rooms = New List(Of Room)
+            Else
+                Dim zoneFind = New List(Of Room)
+                For Each zone In allZoneImperi.rooms
+                    If zone.id = "ROOM999" Then zoneFind.Add(zone)
+                Next
+                For Each zone In zoneFind
+                    allZoneImperi.rooms.Remove(zone)
+                Next
             End If
-
             Dim tempRoom As Room = New Room
             tempRoom.id = "ROOM999"
             tempRoom.name = "Reserve"
-            If Not allZoneImperi.rooms.Contains(tempRoom) Then
-                allZoneImperi.rooms.Add(tempRoom)
-            End If
+            allZoneImperi.rooms.Add(tempRoom)
 
             For Each zones In zoneName
                 If Not devZone.Keys.Contains(zones.Key) Then
@@ -84,6 +87,9 @@
                     devZone.Add(zones.Key, tempdevzone)
                 End If
             Next
+
+            'device
+            Dim importOk = ImportImperiHomeDevice()
 
             If allDevImperi Is Nothing Then
                 allDevImperi = New DeviceList
@@ -186,8 +192,29 @@
         End Try
 
     End Sub
-  
-    Private Function ImportImperiHome() As Boolean
+
+    Private Function ImportImperiHomeZone() As Boolean
+        Try
+            
+            Dim fileName1 = My.Application.Info.DirectoryPath & "\Drivers\Imperihome\rooms.json"
+
+            If System.IO.File.Exists(fileName1) Then
+                Dim stream = System.IO.File.ReadAllText(fileName1)
+                allZoneImperi = Newtonsoft.Json.JsonConvert.DeserializeObject(stream, GetType(RoomList))
+            Else
+                AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.INFO, "Le fichier " & fileName1 & " n'existe pas, il va etre créé", "INFO", "ImportImperiHome")
+                Return False
+                Exit Function
+            End If
+
+            Return True
+        Catch ex As Exception
+            AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "ERREUR ImportImperiHome: " & ex.ToString, "ERREUR", "ImportImperiHome")
+            Return Nothing
+        End Try
+    End Function
+
+    Private Function ImportImperiHomeDevice() As Boolean
         Try
             Dim fileName = My.Application.Info.DirectoryPath & "\Drivers\Imperihome\devices.json"
 
@@ -199,16 +226,8 @@
                 Return False
                 Exit Function
             End If
-            Dim fileName1 = My.Application.Info.DirectoryPath & "\Drivers\Imperihome\rooms.json"
-
-            If System.IO.File.Exists(fileName1) Then
-                Dim stream = System.IO.File.ReadAllText(fileName1)
-                allZoneImperi = Newtonsoft.Json.JsonConvert.DeserializeObject(stream, GetType(RoomList))
-            Else
-                AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.INFO, "Le fichier " & fileName & " n'existe pas, il va etre créé", "INFO", "ImportImperiHome")
-                Return False
-                Exit Function
-            End If
+            
+            MajAllDevice()
             Return True
         Catch ex As Exception
             AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "ERREUR ImportImperiHome: " & ex.ToString, "ERREUR", "ImportImperiHome")
@@ -393,7 +412,21 @@
             AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "ERREUR Sub uSelectExp BtnOK_Click: " & ex.Message, "ERREUR", "")
         End Try
     End Sub
+    Private Sub MajAllDevice()
+        Try
+            For Each devimperiTemp In allDevImperi.devices
+                Dim comp = ReturnDeviceByID(devimperiTemp.params(0).value)
+                If comp.ID = devimperiTemp.params(0).value Then
+                    'device 
+                    devimperiTemp.name = comp.Name
+                    devimperiTemp.room = searchZone(comp.ID)
+                End If
+            Next
+        Catch ex As Exception
+            AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "ERREUR MajAllDevice: " & ex.ToString, "ERREUR", "MajAllDevice")
 
+        End Try
+    End Sub
     Private Function searchZone(ByVal idDevice As String) As String
         Try
             Dim idzone As String = ""
@@ -469,7 +502,7 @@
 
                     params.Add(New DeviceParam)
                     params(0).key = "Level"
-                    params(0).value = comp.Value
+                    params(0).value = comp.ID
                     params(0).unit = comp.Unit
 
                     params.Add(New DeviceParam)

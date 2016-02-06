@@ -101,28 +101,25 @@ Namespace HoMIDom
         ''' <param name="Server"></param>
         ''' <remarks></remarks>
         Public Sub Execute(ByVal Server As Server)
-            _Server = Server
             Try
-                _ListThread.Clear()
+
+                '_ListThread.Clear()
                 Dim a As String = Me.Nom & "|" & Api.GenerateGUID
 
                 For i As Integer = 0 To _ListActions.Count - 1
-                    Dim _action As New ThreadAction(_Server, _ListActions.Item(i), Me.Nom, a)
-                    Dim y As New Thread(AddressOf _action.Execute)
-                    y.Name = a
-                    y.Start()
-                    _ListThread.Add(y)
-                    y = Nothing
+                    Dim _action As New ThreadAction(Server, _ListActions.Item(i), Me.Nom, a)
+                    'Dim y As New Thread(AddressOf _action.Execute)
+                    'y.Name = a
+                    'y.IsBackground = True
+                    'y.Priority = ThreadPriority.Normal
+                    'y.Start()
+                    '_ListThread.Add(y)
+                    'y = Nothing
+                    ThreadPool.QueueUserWorkItem(AddressOf _action.Execute)
+
                 Next
             Catch ex As Exception
                 _Server.Log(TypeLog.ERREUR, TypeSource.SCRIPT, "Execute macro", ex.ToString)
-                _Server.Log(TypeLog.ERREUR, TypeSource.SCRIPT, "Execute macro", "Nombre de Thread total = " & _ListThread.Count & "/" & _ListThread.Capacity)
-                Dim x = ""
-                For Each thr In _ListThread
-                    x = thr.Name & " ; "
-                    If thr.IsAlive Then thr.Abort()
-                Next
-                _Server.Log(TypeLog.ERREUR, TypeSource.SCRIPT, "Execute macro", "Liste des thread : " & x)
             End Try
         End Sub
     End Class
