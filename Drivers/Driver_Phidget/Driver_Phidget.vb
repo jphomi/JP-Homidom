@@ -2,6 +2,8 @@
 Imports HoMIDom.HoMIDom.Server
 Imports HoMIDom.HoMIDom.Device
 Imports Phidgets
+Imports STRGS = Microsoft.VisualBasic.Strings
+Imports System.Text.RegularExpressions
 
 Public Class Driver_Phidget
     Implements HoMIDom.HoMIDom.IDriver
@@ -12,7 +14,7 @@ Public Class Driver_Phidget
     Dim _ID As String = "10160480-24B7-11E1-ACF1-C9F34824019B"
     Dim _Nom As String = "Phidget InterfaceKit"
     Dim _Enable As Boolean = False
-    Dim _Description As String = "PhidgetInterfaceKit 0/16/16"
+    Dim _Description As String = "PhidgetInterfaceKit USB"
     Dim _StartAuto As Boolean = False
     Dim _Protocol As String = "USB"
     Dim _IsConnect As Boolean = False
@@ -22,7 +24,7 @@ Public Class Driver_Phidget
     Dim _Port_UDP As String = "@"
     Dim _Com As String = "@"
     Dim _Refresh As Integer = 0
-    Dim _Modele As String = "PhidgetInterfaceKit 0/16/16"
+    Dim _Modele As String = "PhidgetInterfaceKit USB"
     Dim _Version As String = My.Application.Info.Version.ToString
     Dim _OsPlatform As String = "3264"
     Dim _Picture As String = ""
@@ -41,10 +43,11 @@ Public Class Driver_Phidget
     Dim _tempsentrereponse As Integer = 1500
     Dim _ignoreadresse As Boolean = False
     Dim _lastetat As Boolean = True
+    Dim _DEBUG As Boolean = False
+
 #End Region
 
 #Region "Declaration"
-    'Dim WithEvents phidgetMan As Phidgets.Manager
     Dim WithEvents phidgetIFK As Phidgets.InterfaceKit
 #End Region
 
@@ -192,12 +195,6 @@ Public Class Driver_Phidget
         End Get
     End Property
 
-    Public Sub Read(ByVal Objet As Object) Implements HoMIDom.HoMIDom.IDriver.Read
-        If _Enable = False Then Exit Sub
-
-        ' Objet.Value = ReadBinaireChannel(Objet.Adresse1)
-    End Sub
-
     Public Property Refresh() As Integer Implements HoMIDom.HoMIDom.IDriver.Refresh
         Get
             Return _Refresh
@@ -264,7 +261,7 @@ Public Class Driver_Phidget
                 Return False
             End If
         Catch ex As Exception
-            _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom & " ExecuteCommand", "exception : " & ex.Message)
+            WriteLog("ERR: " & Me.Nom & " ExecuteCommand, exception : " & ex.Message)
             Return False
         End Try
     End Function
@@ -291,13 +288,12 @@ Public Class Driver_Phidget
     Public Sub Start() Implements HoMIDom.HoMIDom.IDriver.Start
         'cree l'objet
         Try
-            'phidgetMan = New Phidgets.Manager()
             phidgetIFK = New Phidgets.InterfaceKit
             phidgetIFK.open()
-            _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "Phidget InterfaceKit Start", "Carte connectée")
+            WriteLog("Phidget InterfaceKit Start, Carte connectée")
             _IsConnect = True
         Catch ex As Exception
-            _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "Phidget InterfaceKit Start", "Erreur lors du démarrage du driver: " & ex.ToString)
+            WriteLog("ERR: Phidget InterfaceKit Start, Erreur lors du démarrage du driver: " & ex.ToString)
             _IsConnect = False
         End Try
     End Sub
@@ -314,18 +310,11 @@ Public Class Driver_Phidget
     Public Sub [Stop]() Implements HoMIDom.HoMIDom.IDriver.Stop
         'cree l'objet
         Try
-            'RemoveHandler phidgetIFK.Attach, AddressOf phidgetIFK_Attach
-            'RemoveHandler phidgetIFK.Detach, AddressOf phidgetIFK_Detach
-            'RemoveHandler phidgetIFK.Error, AddressOf phidgetIFK_Error
-            'RemoveHandler phidgetIFK.InputChange, AddressOf phidgetIFK_InputChange
-            'RemoveHandler phidgetIFK.OutputChange, AddressOf phidgetIFK_OutputChange
-            'RemoveHandler phidgetIFK.SensorChange, AddressOf phidgetIFK_SensorChange
-
             phidgetIFK.close()
-            _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "Phidget InterfaceKit Stop", "Driver arrêté")
+            WriteLog("Phidget InterfaceKit Stop, Driver arrêté")
             _IsConnect = False
         Catch ex As Exception
-            _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "Phidget InterfaceKit Stop", "Erreur lors de l'arrêt du driver: " & ex.ToString)
+            WriteLog("ERR: Phidget InterfaceKit Stop, Erreur lors de l'arrêt du driver: " & ex.ToString)
             _IsConnect = False
         End Try
     End Sub
@@ -342,9 +331,67 @@ Public Class Driver_Phidget
         End Get
     End Property
 
+    Public Sub Read(ByVal Objet As Object) Implements HoMIDom.HoMIDom.IDriver.Read
+        Try
+            If _Enable = False Then Exit Sub
+            If _IsConnect = False Then
+                WriteLog("ERR: READ, Le driver n'est pas démarré, impossible d'écrire sur le port")
+                Exit Sub
+            End If
+
+            Try ' lecture de la variable debug, permet de rafraichir la variable debug sans redemarrer le service
+                _DEBUG = _Parametres.Item(0).Valeur
+            Catch ex As Exception
+                _DEBUG = False
+                _Parametres.Item(0).Valeur = False
+                WriteLog("ERR: Erreur de lecture de debug : " & ex.Message)
+            End Try
+
+            Dim typadr As String
+            Dim adr1 As Integer
+
+            typadr = Mid(Objet.Adresse1, 1, 1)
+            adr1 = Mid(Objet.Adresse1, InStr(Objet.Adresse1, ":") + 1, 1)
+            WriteLog("DBG: Read Composant " & Objet.Name & " --> " & Objet.Adresse1 & " / " & Objet.type)
+
+            If typadr = "A" Then
+                Select Case Objet.Type
+                    Case "HUMIDITE"   'sensor 1107, 1125H
+                        Objet.Value = Regex.Replace(CStr((phidgetIFK.sensors(adr1).Value * 0.1906) - 40.2), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                    Case "TEMPERATURE"  ' sensor 1124, 1125T
+                        Objet.Value = Regex.Replace(CStr((phidgetIFK.sensors(adr1).Value * 0.2222) - 61.11), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                    Case "BAROMETRE"   'sensor 1115
+                        Objet.Value = Regex.Replace(CStr((phidgetIFK.sensors(adr1).Value / 4) + 10), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                    Case "VOLTAGE"   'sensor 1117, 1123
+                        Objet.Value = Regex.Replace(CStr((phidgetIFK.sensors(adr1).Value * 0.06) - 30), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                    Case Else
+                        Objet.Value = phidgetIFK.sensors(adr1).Value
+                End Select
+            Else
+                Select Case Objet.Type
+                    Case "PLUIECOURANT" ' 1mm par impulsion
+                        If phidgetIFK.inputs(adr1) = True Then
+                            Objet.Value = 1
+                        Else
+                            Objet.Value = 2
+                        End If
+                    Case Else
+                        Objet.Value = phidgetIFK.sensors(adr1).Value
+                End Select
+            End If
+        Catch ex As Exception
+            WriteLog("ERR: READ, " & ex.ToString)
+        End Try
+    End Sub
+
     Public Sub Write(ByVal Objet As Object, ByVal Commande As String, Optional ByVal Parametre1 As Object = Nothing, Optional ByVal Parametre2 As Object = Nothing) Implements HoMIDom.HoMIDom.IDriver.Write
         If _Enable = False Then Exit Sub
-        If _IsConnect = False Then Exit Sub
+        If _IsConnect = False Then
+            WriteLog("ERR: WRITE, Le driver n'est pas démarré, impossible d'écrire sur le port")
+            Exit Sub
+        End If
+
+        WriteLog("DBG: WRITE Device " & Objet.Name & " <-- " & Command())
         Try
             'Select Case Objet.Type
             '    Case "APPAREIL" Or "GENERIQUEBOOLEEN" 'APPAREIL Or GENERIQUEBOOLEAN
@@ -358,7 +405,7 @@ Public Class Driver_Phidget
             End If
             'End Select
         Catch ex As Exception
-            _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "Phidget InterfaceKit Write", "Erreur: " & ex.ToString)
+            WriteLog("ERR: Phidget InterfaceKit Write, Erreur: " & ex.ToString)
         End Try
     End Sub
 
@@ -379,11 +426,11 @@ Public Class Driver_Phidget
         Try
             Dim x As New DeviceCommande
             x.NameCommand = Nom
-            x.DescriptionCommand = description
-            x.CountParam = nbparam
+            x.DescriptionCommand = Description
+            x.CountParam = NbParam
             _DeviceCommandPlus.Add(x)
         Catch ex As Exception
-            _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom & " add_devicecommande", "Exception : " & ex.Message)
+            WriteLog("ERR: " & Me.Nom & " add_devicecommande, Exception : " & ex.Message)
         End Try
     End Sub
 
@@ -401,7 +448,7 @@ Public Class Driver_Phidget
             y0.Parametre = Parametre
             _LabelsDriver.Add(y0)
         Catch ex As Exception
-            _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom & " add_devicecommande", "Exception : " & ex.Message)
+            WriteLog("ERR:" & Me.Nom & " add_devicecommande, Exception : " & ex.Message)
         End Try
     End Sub
 
@@ -419,7 +466,7 @@ Public Class Driver_Phidget
             ld0.Parametre = Parametre
             _LabelsDevice.Add(ld0)
         Catch ex As Exception
-            _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom & " add_devicecommande", "Exception : " & ex.Message)
+            WriteLog("ERR:" & Me.Nom & " add_devicecommande, Exception : " & ex.Message)
         End Try
     End Sub
 
@@ -436,23 +483,41 @@ Public Class Driver_Phidget
             x.Valeur = valeur
             _Parametres.Add(x)
         Catch ex As Exception
-            _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom & " add_devicecommande", "Exception : " & ex.Message)
+            WriteLog("ERR:" & Me.Nom & " add_devicecommande, Exception : " & ex.Message)
         End Try
     End Sub
 
     Public Sub New()
         _Version = Reflection.Assembly.GetExecutingAssembly.GetName.Version.ToString
 
-        _DeviceSupport.Add(ListeDevices.SWITCH)
-        _DeviceSupport.Add(ListeDevices.GENERIQUEBOOLEEN)
-        _DeviceSupport.Add(ListeDevices.CONTACT)
-        _DeviceSupport.Add(ListeDevices.APPAREIL)
+        'Liste des devices compatibles
+        _DeviceSupport.Add(ListeDevices.APPAREIL.ToString)
+        _DeviceSupport.Add(ListeDevices.BAROMETRE.ToString)
+        _DeviceSupport.Add(ListeDevices.BATTERIE.ToString)
+        _DeviceSupport.Add(ListeDevices.COMPTEUR.ToString)
+        _DeviceSupport.Add(ListeDevices.CONTACT.ToString)
+        _DeviceSupport.Add(ListeDevices.DETECTEUR.ToString)
+        _DeviceSupport.Add(ListeDevices.ENERGIEINSTANTANEE.ToString)
+        _DeviceSupport.Add(ListeDevices.GENERIQUEBOOLEEN.ToString)
+        _DeviceSupport.Add(ListeDevices.GENERIQUEVALUE.ToString)
+        _DeviceSupport.Add(ListeDevices.HUMIDITE.ToString)
+        _DeviceSupport.Add(ListeDevices.LAMPE.ToString)
+        _DeviceSupport.Add(ListeDevices.SWITCH.ToString)
+        _DeviceSupport.Add(ListeDevices.TELECOMMANDE.ToString)
+        _DeviceSupport.Add(ListeDevices.TEMPERATURE.ToString)
+        _DeviceSupport.Add(ListeDevices.TEMPERATURECONSIGNE.ToString)
+        _DeviceSupport.Add(ListeDevices.UV.ToString)
+        _DeviceSupport.Add(ListeDevices.VITESSEVENT.ToString)
 
+        'Parametres avancés
+        Add_ParamAvance("Debug", "Activer le Debug complet (True/False)", False)
+
+        'Libellés Device
         Add_LibelleDevice("ADRESSE1", "Adresse", "")
         Add_LibelleDevice("ADRESSE2", "@", "")
         Add_LibelleDevice("SOLO", "@", "")
         Add_LibelleDevice("MODELE", "@", "")
-            'Add_LibelleDevice("REFRESH", "Refresh (sec)", "Valeur de rafraîchissement de la mesure en secondes")
+        'Add_LibelleDevice("REFRESH", "Refresh (sec)", "Valeur de rafraîchissement de la mesure en secondes")
         'Add_LibelleDevice("LASTCHANGEDUREE", "LastChange Durée", "")
     End Sub
 #End Region
@@ -462,36 +527,41 @@ Public Class Driver_Phidget
     'fields to display as well as determine the range of values for the output simulator slider
     Private Sub phidgetIFK_Attach(ByVal sender As Object, ByVal e As Phidgets.Events.AttachEventArgs) Handles phidgetIFK.Attach
         Dim a As String = ""
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "Phidget InterfaceKit Details", "Carte connectée: " & phidgetIFK.Attached.ToString())
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "Phidget InterfaceKit Details", "Nom: " & phidgetIFK.Name)
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "Phidget InterfaceKit Details", "Serial Number: " & sender.SerialNumber.ToString())
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "Phidget InterfaceKit Details", "Version: " & sender.Version.ToString())
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "Phidget InterfaceKit Details", "Nombre d'entrées: " & sender.inputs.Count.ToString())
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "Phidget InterfaceKit Details", "Nombre de sorties: " & phidgetIFK.outputs.Count.ToString())
-        '_Server.Log(TypeLog.INFO, TypeSource.DRIVER, "Phidget 0/16/16 Details", "Nombre de capteurs analogique: " & phidgetIFK.sensors.Count.ToString())
+        WriteLog("Phidget InterfaceKit Details, Carte connectée: " & phidgetIFK.Attached.ToString())
+        WriteLog("Phidget InterfaceKit Details, Nom: " & phidgetIFK.Name)
+        WriteLog("Phidget InterfaceKit Details, Serial Number: " & sender.SerialNumber.ToString())
+        WriteLog("Phidget InterfaceKit Details, Version: " & sender.Version.ToString())
+        WriteLog("Phidget InterfaceKit Details, Nombre d'entrées: " & sender.inputs.Count.ToString())
+        WriteLog("Phidget InterfaceKit Details, Nombre de sorties: " & phidgetIFK.outputs.Count.ToString())
     End Sub
 
     ''ifkit detach event handler... here we display the statu, which will be false as the device is not attached.  We
     ''will also clear the display fields and hide the inputs and outputs.
     Private Sub phidgetIFK_Detach(ByVal sender As Object, ByVal e As Phidgets.Events.DetachEventArgs) Handles phidgetIFK.Detach
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "Phidget InterfaceKit Details", "Carte connectée: " & phidgetIFK.Attached.ToString())
+        WriteLog("Phidget InterfaceKit Details, Carte connectée: " & phidgetIFK.Attached.ToString())
     End Sub
 
     Private Sub phidgetIFK_Error(ByVal sender As Object, ByVal e As Phidgets.Events.ErrorEventArgs) Handles phidgetIFK.Error
-        _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "Phidget InterfaceKit Error", "Erreur: " & e.Description)
+        WriteLog("ERR: Phidget InterfaceKit Error, Erreur: " & e.Description)
     End Sub
 
     'digital input change event handler... here we check or uncheck the corresponding input checkbox based on the index of
     'the digital input that generated the event
     Private Sub phidgetIFK_InputChange(ByVal sender As Object, ByVal e As Phidgets.Events.InputChangeEventArgs) Handles phidgetIFK.InputChange
         traitement(e.Value, e.Index)
-        _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, "Phidget InterfaceKit InputChange", "Entrée N°:" & e.Index & " Value:" & e.Value)
+        WriteLog("DBG: Phidget InterfaceKit InputChange, Entrée N°:" & e.Index & " Value:" & e.Value)
     End Sub
 
     ''digital output change event handler... here we check or uncheck the corresponding output checkbox based on the index of
     ''the output that generated the event
     Private Sub phidgetIFK_OutputChange(ByVal sender As Object, ByVal e As Phidgets.Events.OutputChangeEventArgs) Handles phidgetIFK.OutputChange
-        _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, "Phidget InterfaceKit OutputChange", "Sortie N°:" & e.Index & " Value:" & e.Value)
+        WriteLog("DBG: Phidget InterfaceKit OutputChange, Sortie N°:" & e.Index & " Value:" & e.Value)
+    End Sub
+
+    ''analog output change event handler... here we check or uncheck the corresponding output checkbox based on the index of
+    ''the output that generated the event
+    Private Sub phidgetIFK_ANAOutputChange(ByVal sender As Object, ByVal e As Phidgets.Events.SensorChangeEventArgs) Handles phidgetIFK.SensorChange
+        WriteLog("DBG: AnalogicInputChange Sortie Num: " & e.Index & " Value: " & e.Value)
     End Sub
 
     ''' <summary>Traite les paquets reçus</summary>
@@ -516,19 +586,35 @@ Public Class Driver_Phidget
                 listedevices.Item(0).Value = valeur
 
             ElseIf (listedevices.Count > 1) Then
-                _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "Phidget InterfaceKit Process", "Plusieurs devices correspondent à : " & adresse & ":" & valeur)
+                WriteLog("ERR: Phidget InterfaceKit Process, Plusieurs devices correspondent à : " & adresse & ":" & valeur)
             Else
-                _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "Phidget InterfaceKit Process", "Device non trouvé : " & adresse & ":" & valeur)
+                WriteLog("ERR: Phidget InterfaceKit Process, Device non trouvé : " & adresse & ":" & valeur)
                 'si autodiscover = true ou modedecouverte du serveur actif alors on crée le composant sinon on logue
                 If _AutoDiscover Or _Server.GetModeDecouverte Then
-                    _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, "Phidget InterfaceKit Process", "Device non trouvé, AutoCreation du composant : " & adresse & ":" & valeur)
+                    WriteLog("DBG: Phidget InterfaceKit Process, Device non trouvé, AutoCreation du composant : " & adresse & ":" & valeur)
                     _Server.AddDetectNewDevice(adresse, _ID, "", "", valeur)
                 Else
-                    _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "Phidget InterfaceKit Process", "Device non trouvé : " & adresse & ":" & valeur)
+                    WriteLog("ERR: Phidget InterfaceKit Process, Device non trouvé : " & adresse & ":" & valeur)
                 End If
             End If
         Catch ex As Exception
-            _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "Phidget InterfaceKit traitement", "Exception : " & ex.Message & " --> " & adresse & " : " & valeur)
+            WriteLog("ERR: Phidget InterfaceKit traitement, Exception : " & ex.Message & " --> " & adresse & " : " & valeur)
+        End Try
+    End Sub
+    Private Sub WriteLog(ByVal message As String)
+        Try
+            'utilise la fonction de base pour loguer un event
+            If STRGS.InStr(message, "DBG:") > 0 Then
+                If _DEBUG Then
+                    _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, "Phidget SBC", STRGS.Right(message, message.Length - 5))
+                End If
+            ElseIf STRGS.InStr(message, "ERR:") > 0 Then
+                _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "Phidget SBC", STRGS.Right(message, message.Length - 5))
+            Else
+                _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "Phidget SBC", message)
+            End If
+        Catch ex As Exception
+            _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "Phidget SBC WriteLog", ex.Message)
         End Try
     End Sub
 

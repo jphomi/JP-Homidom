@@ -1155,6 +1155,8 @@ Partial Public Class uDevice
 
                     For Each item In CbAdresse2.Items
                         If TxtAdresse2.Text.ToUpper.Trim = item.ToString.ToUpper.Trim Then
+                            '  JPHomi permet daller sur lenregistrmeent avec syntaxe approchante
+                            ' If InStr(item.ToString.ToUpper.Trim, TxtAdresse2.Text.ToUpper.Trim) > 0 Then
                             flagTrouv = True
                             Exit For
                         End If
