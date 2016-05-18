@@ -1285,6 +1285,7 @@ Public Class Driver_ZWave
                 'liste des devices compatibles
                 _DeviceSupport.Add(ListeDevices.APPAREIL.ToString)
                 _DeviceSupport.Add(ListeDevices.BATTERIE.ToString)
+                _DeviceSupport.Add(ListeDevices.COMPTEUR.ToString)
                 _DeviceSupport.Add(ListeDevices.CONTACT.ToString)
                 _DeviceSupport.Add(ListeDevices.DETECTEUR.ToString)
                 _DeviceSupport.Add(ListeDevices.ENERGIEINSTANTANEE.ToString)

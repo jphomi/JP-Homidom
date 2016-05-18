@@ -801,6 +801,7 @@ Imports HoMIOAuth2
             _DeviceSupport.Add(ListeDevices.TEMPERATURE)
             _DeviceSupport.Add(ListeDevices.BATTERIE)
             _DeviceSupport.Add(ListeDevices.PLUIECOURANT)
+            _DeviceSupport.Add(ListeDevices.PLUIETOTAL)
             _DeviceSupport.Add(ListeDevices.HUMIDITE)
             _DeviceSupport.Add(ListeDevices.PLUIETOTAL)
             _DeviceSupport.Add(ListeDevices.GENERIQUESTRING)

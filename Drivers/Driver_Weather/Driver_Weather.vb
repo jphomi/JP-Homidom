@@ -6,6 +6,7 @@ Imports HoMIDom.HoMIDom.Device
 Imports System.Xml
 Imports System.Net
 Imports System.Threading
+Imports STRGS = Microsoft.VisualBasic.Strings
 
 
 ''' <summary>Driver Google Meteo, le device doit indique sa ville dans son Adresse 1</summary>
@@ -487,6 +488,7 @@ Imports System.Threading
 
             'Parametres avancés
             Add_ParamAvance("Debug", "Activer le Debug complet (True/False)", False)
+            Add_ParamAvance("ApiKey", "Key de l'API du site wunderground.com", False)
 
             'Libellé Driver
             Add_LibelleDriver("HELP", "Aide...", "Pas d'aide actuellement...")
@@ -533,12 +535,14 @@ Imports System.Threading
 
             ' Create a new XmlDocument   
             doc = New XmlDocument()
-            Dim url As New Uri("http://xml.weather.com/weather/local/" & _Obj.adresse1 & "?cc=*&unit=m&dayf=4")
+            Dim url As New Uri("https://xml.weather.com/weather/local/" & _Obj.adresse1 & "?cc=*&unit=m&dayf=4")
+            WriteLog("DBG: " & "Url interrogée " & url.ToString)
             Dim Request As HttpWebRequest = CType(HttpWebRequest.Create(url), System.Net.HttpWebRequest)
             ' Request.UserAgent = "Mozilla/5.0 (windows; U; windows NT 5.1; fr; rv:1.8.0.7) Gecko/20060909 Firefox/1.5.0.7"
             Dim response As Net.HttpWebResponse = CType(Request.GetResponse(), Net.HttpWebResponse)
 
             doc.Load(response.GetResponseStream)
+
 
             nodes = doc.SelectNodes("/weather/cc")
 
@@ -829,6 +833,24 @@ Imports System.Threading
             Return ""
         End Try
     End Function
+
+    Private Sub WriteLog(ByVal message As String)
+        Try
+            'utilise la fonction de base pour loguer un event
+            If STRGS.InStr(message, "DBG:") > 0 Then
+                If _DEBUG Then
+                    _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, Me.Nom, STRGS.Right(message, message.Length - 5))
+                End If
+            ElseIf STRGS.InStr(message, "ERR:") > 0 Then
+                _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom, STRGS.Right(message, message.Length - 5))
+            Else
+                _Server.Log(TypeLog.INFO, TypeSource.DRIVER, Me.Nom, message)
+            End If
+        Catch ex As Exception
+            _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom & " WriteLog", ex.Message)
+        End Try
+    End Sub
+
 #End Region
 
 End Class
