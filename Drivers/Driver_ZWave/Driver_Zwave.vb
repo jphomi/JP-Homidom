@@ -1766,13 +1766,15 @@ Public Class Driver_ZWave
             Dim m_valueString As String = ""
             Dim m_tempString As String = ""
             Dim m_devices As New ArrayList()
-
+            Dim m_index As Integer
 
             m_valueLabel = m_manager.GetValueLabel(m_notification.GetValueID())
             m_nodeId = m_notification.GetNodeId()
             m_instance = m_notification.GetValueID.GetInstance()
+            m_index = m_notification.GetValueID.GetIndex()
             m_valueID = m_notification.GetValueID()
             m_manager.GetValueAsString(m_valueID, m_valueString)
+
             Dim ValeurRecue As Object = Nothing
 
             Try
@@ -1794,8 +1796,9 @@ Public Class Driver_ZWave
                     'permet de gerer la compatibilité du driver avec listbox (ex: "3 # ZMNHAA2 Flush 1 Relay") ds adresse1
                     Dim adr1 As String = ""
                     For i As Integer = 0 To _Adr1Txt.Count - 1
-                        If InStr(m_nodeId & " # ", _Adr1Txt(i)) Then
+                        If InStr(m_nodeId & " # ", _Adr1Txt(i)) > 0 Then
                             adr1 = _Adr1Txt(i)
+                            Exit For
                         End If
                     Next
                     'Recherche si un device affecté
@@ -1908,8 +1911,10 @@ Public Class Driver_ZWave
                         ' L'adresse2 correspond au label de la valeur recherchée
                         ' L'adresse2 peut aussi être vide (pour les notifications de noeud sans label, p.ex. détecteur de mouvement)
                         ' En option, l'adresse2 peut contenir l'instance sous le format label:instance
-                        If (IsNothing(LocalDevice.adresse2) Or (LocalDevice.adresse2 = m_valueLabel) Or (LocalDevice.adresse2 = m_valueLabel & ":" & m_instance)) Then
+                        ' En option, l'adresse2 peut contenir l'index sous le format label:instance.index
+                        'If (IsNothing(LocalDevice.adresse2) Or (LocalDevice.adresse2 = m_valueLabel) Or (LocalDevice.adresse2 = m_valueLabel & ":" & m_instance)) Then 'Then
 
+                        If (IsNothing(LocalDevice.adresse2) Or (LocalDevice.adresse2 = m_valueLabel) Or (LocalDevice.adresse2 = m_valueLabel & ":" & m_instance) Or (LocalDevice.adresse2 = m_valueLabel & ":" & m_instance & "." & m_index)) Then
                             'on maj la value si la durée entre les deux receptions est > à 1.5s
                             If (DateTime.Now - Date.Parse(LocalDevice.LastChange)).TotalMilliseconds > 1500 Then
                                 ' Recuperation de la valeur en fonction du type
@@ -2051,7 +2056,7 @@ Public Class Driver_ZWave
                                                 Select Case readertmp.NodeType
                                                     Case XmlNodeType.Element
                                                         If readertmp.Name = "Value" Then
-                                                            strtmp = readertmp.Item("label") & ":" & readertmp.Item("instance")
+                                                            strtmp = readertmp.Item("label") & ":" & readertmp.Item("instance") & "." & readertmp.Item("index")
                                                             ' ne rajoute que si existe pas. Evite les doublons
                                                             If InStr(str, strtmp) = 0 Then
                                                                 str += valeur & " #; " & strtmp & "|"
