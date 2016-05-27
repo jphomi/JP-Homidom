@@ -1778,7 +1778,7 @@ Public Class Driver_ZWave
             Dim ValeurRecue As Object = Nothing
 
             Try
-                WriteLog("DBG: " & "Receive from " & m_nodeId & ":" & m_instance & " -> " & m_valueLabel & "=" & m_valueString)
+                ' WriteLog("DBG: " & "Receive from " & m_nodeId & ":" & m_instance & " -> " & m_valueLabel & "=" & m_valueString)
                 If Not _IsConnect Then Exit Sub 'si on ferme le port on quitte
 
                 If (_STARTIDLETIME > 0) Then
@@ -1786,23 +1786,27 @@ Public Class Driver_ZWave
                 End If
 
                 ' Log tous les informations en mode debug
-                WriteLog("DBG: " & "Receive from " & m_nodeId & ":" & m_instance & " -> " & m_valueLabel & "=" & m_valueString)
+                WriteLog("DBG: " & "Receive from " & m_nodeId & ":" & m_instance & "." & m_index & " -> " & m_valueLabel & "=" & m_valueString)
 
+
+                ' compatibilité avec combobox si device pas trouve avec ancienne appellation
+                'permet de gerer la compatibilité du driver avec listbox (ex: "3 # ZMNHAA2 Flush 1 Relay") ds adresse1
+                Dim adr1 As String = ""
+                For i As Integer = 0 To _Adr1Txt.Count - 1
+                    If InStr(_Adr1Txt(i), m_nodeId & " # ") > 0 Then
+                        adr1 = _Adr1Txt(i)
+                        Exit For
+                    End If
+                Next
+                
                 'Recherche si un device affecté
-                m_devices = _Server.ReturnDeviceByAdresse1TypeDriver(_IdSrv, m_nodeId, "", Me._ID, True)
-
-                ' compatibilité avec combobox si device pas trouve avec ancienne appelation
-                If (m_devices.Count = 0) Then
-                    'permet de gerer la compatibilité du driver avec listbox (ex: "3 # ZMNHAA2 Flush 1 Relay") ds adresse1
-                    Dim adr1 As String = ""
-                    For i As Integer = 0 To _Adr1Txt.Count - 1
-                        If InStr(m_nodeId & " # ", _Adr1Txt(i)) > 0 Then
-                            adr1 = _Adr1Txt(i)
-                            Exit For
-                        End If
-                    Next
+                m_devices = _Server.ReturnDeviceByAdresse1TypeDriver(_IdSrv, adr1, "", Me._ID, True)
+                If m_devices.Count > 0 Then
+                    WriteLog("DBG: ADR1 : " & adr1 & " -> Nb Device " & m_devices.Count)
+                Else
                     'Recherche si un device affecté
-                    m_devices = _Server.ReturnDeviceByAdresse1TypeDriver(_IdSrv, adr1, "", Me._ID, True)
+                    m_devices = _Server.ReturnDeviceByAdresse1TypeDriver(_IdSrv, m_nodeId, "", Me._ID, True)
+                    WriteLog("DBG: NODE : " & m_nodeId & " -> Nb Device " & m_devices.Count)
                 End If
 
                 ' Pas de composant => ajout automatique dans la liste des nouveaux composants
@@ -1966,6 +1970,7 @@ Public Class Driver_ZWave
                                 If UCase(m_valueLabel) = "BATTERY LEVEL" Then
                                     If m_valueString <= 10 Then WriteLog("ERR: " & LocalDevice.nom & " : Battery vide")
                                 End If
+
                                 WriteLog("DBG: " & "Z-Wave NodeID: " & m_nodeId)
                                 WriteLog("DBG: " & "Z-Wave Label: " & m_valueLabel)
                                 WriteLog("DBG: " & "Z-Wave ValueUnit: " & m_manager.GetValueUnits(m_notification.GetValueID()))
