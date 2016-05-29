@@ -88,7 +88,7 @@ Public Class Driver_ZWave
 		Dim _libelleadr1 as String = ""
         Dim _libelleadr2 As String = ""
         Dim _Adr1Txt As New ArrayList()
-
+        Dim _Getconfig As Boolean = False
 
         ' -----------------   Ajout des declarations pour OpenZWave
         Private g_initFailed As Boolean = False
@@ -647,12 +647,6 @@ Public Class Driver_ZWave
                         Else
                             adr1 = MyDevice.Adresse1
                         End If
-                        Dim adr2 As String = ""
-                        If InStr(MyDevice.Adresse2, "#") > 0 Then
-                            adr2 = Trim(Mid(MyDevice.Adresse2, InStr(MyDevice.Adresse2, "#") + 1, Len(MyDevice.Adresse2)))
-                        Else
-                            adr2 = MyDevice.Adresse2
-                        End If
 
                         ' Traitement de la commande 
                         Select Case UCase(Command)
@@ -719,7 +713,7 @@ Public Class Driver_ZWave
                             Case "PRESSBOUTON"
                                 Dim RetourSet As Boolean
                                 Dim ValueTemp As ZWValueID = Nothing
-                                Dim ParaAdr2 = Split(adr2, ":")
+                                Dim ParaAdr2 = Split(MyDevice.Adresse2, ":")
                                 NodeTemp = GetNode(m_homeId, adr1)
                                 ValueTemp = GetValeur(NodeTemp, Trim(ParaAdr2(0)), Trim(ParaAdr2(1)))
                                 If ValueTemp.GetType() = 5 Then        ' Uniquement Type Button
@@ -741,7 +735,7 @@ Public Class Driver_ZWave
                             Case "SETLIST"
                                 Dim RetourSet As Boolean
                                 Dim ValueTemp As ZWValueID = Nothing
-                                Dim ParaAdr2 = Split(adr2, ":")
+                                Dim ParaAdr2 = Split(MyDevice.Adresse2, ":")
                                 NodeTemp = GetNode(m_homeId, adr1)
                                 ValueTemp = GetValeur(NodeTemp, Trim(ParaAdr2(0)), Trim(ParaAdr2(1)))
                                 If ValueTemp.GetType() = 4 Then        ' Uniquement Type list
@@ -758,7 +752,7 @@ Public Class Driver_ZWave
 
                             Case "SETNEWVAL"
                                 Dim ValueTemp As ZWValueID = Nothing
-                                Dim ParaAdr2 = Split(adr2, ":")
+                                Dim ParaAdr2 = Split(MyDevice.Adresse2, ":")
                                 NodeTemp = GetNode(m_homeId, adr1)
                                 ValueTemp = GetValeur(NodeTemp, Trim(ParaAdr2(0)), Trim(ParaAdr2(1)))
                                 If (ValueTemp.GetType() = 1 Or ValueTemp.GetType() = 2 Or ValueTemp.GetType() = 3) Then        ' Uniquement Type Numérique
@@ -872,6 +866,7 @@ Public Class Driver_ZWave
                 _baudspeed = Left(valuetmp, Len(valuetmp) - 1)
 
                 _networkkey = Parametres.Item(4).Valeur
+                _Getconfig = _Parametres.Item(5).Valeur
 
             Catch ex As Exception
                 _DEBUG = False
@@ -925,10 +920,10 @@ Public Class Driver_ZWave
                             Next
                         End If
                         ' Sauvegarde de la configuration 
-                        m_manager.WriteConfig(m_homeId)
                         WriteLog("Start,  Sauvegarde de la config Zwave")
-						
-                        Get_Config()
+                        m_manager.WriteConfig(m_homeId)
+
+                        If _Getconfig Then Get_Config()
 
                     End If
                 Else
@@ -1039,15 +1034,9 @@ Public Class Driver_ZWave
                 Else
                     adr1 = Objet.Adresse1
                 End If
-                Dim adr2 As String = ""
-                If InStr(Objet.Adresse2, "#") > 0 Then
-                    adr2 = Trim(Mid(Objet.Adresse2, InStr(Objet.Adresse2, "#") + 1, Len(Objet.Adresse2)))
-                Else
-                    adr2 = Objet.Adresse2
-                End If
 
                 NodeTemp = GetNode(m_homeId, adr1)
-                WriteLog("DBG: " & "Write, Commande recue :" & Commande & " sur le noeud " & adr1 & " de type " & adr2)
+                WriteLog("DBG: " & "Write, Commande recue :" & Commande & " sur le noeud " & adr1 & " de type " & Objet.Adresse2)
 
                 If IsNothing(NodeTemp) Then
                     WriteLog("ERR: " & "Write, Noeud non trouvé avec l'adresse : " & adr1)
@@ -1062,15 +1051,15 @@ Public Class Driver_ZWave
                         NodeTemp.CommandClass.Contains(CommandClass.COMMAND_CLASS_DOOR_LOCK) Or
                         NodeTemp.CommandClass.Contains(CommandClass.COMMAND_CLASS_DOOR_LOCK_V2) Or
                         NodeTemp.CommandClass.Contains(CommandClass.COMMAND_CLASS_DOOR_LOCK_V3) Then
-                        WriteLog("DBG: " & "Write, Recherche de : dans l'adresse2 " & adr2)
-                        If InStr(adr2, ":") Then
-                            Dim ParaAdr2 = Split(adr2, ":")
+                        WriteLog("DBG: " & "Write, Recherche de : dans l'adresse2 " & Objet.Adresse2)
+                        If InStr(Objet.Adresse2, ":") Then
+                            Dim ParaAdr2 = Split(Objet.Adresse2, ":")
                             ValueTemp = GetValeur(NodeTemp, Trim(ParaAdr2(0)), Trim(ParaAdr2(1)))
                             If IsNothing(ValueTemp) Then
-                                WriteLog("ERR: " & "Write, Valeur non trouvée avec l'adresse : " & Objet.Adresse1 & " et " & adr2)
+                                WriteLog("ERR: " & "Write, Valeur non trouvée avec l'adresse : " & Objet.Adresse1 & " et " & Objet.Adresse2)
                                 Exit Sub
                             Else
-                                WriteLog("DBG: " & "Write, Valeur trouvée avec l'adresse : " & adr1 & " et " & adr2)
+                                WriteLog("DBG: " & "Write, Valeur trouvée avec l'adresse : " & adr1 & " et " & Objet.Adresse2)
                                 IsMultiLevel = True
                             End If
                         Else
@@ -1139,7 +1128,7 @@ Public Class Driver_ZWave
                                 If Not (IsNothing(Parametre1)) Then
                                     Dim ValDimmer As Single = Parametre1    'Integer
 
-                                    If InStr(adr2, "Wake-up Interval:") > 0 Then
+                                    If InStr(Objet.Adresse2, "Wake-up Interval:") > 0 Then
                                         If ValDimmer < 60 Then    'Pour Wake Up Interval
                                             ValDimmer = 60
                                         ElseIf ValDimmer > 86400 Then
@@ -1149,10 +1138,10 @@ Public Class Driver_ZWave
                                     texteCommande = texteCommande & " avec valeur = " & Val(Parametre1) & " - " & ValDimmer
 
                                     If IsMultiLevel Then
-                                        If InStr(adr2, "Wake-up Interval:") > 0 Then
+                                        If InStr(Objet.Adresse2, "Wake-up Interval:") > 0 Then
                                             m_manager.SetValue(ValueTemp, CInt(ValDimmer))
 
-                                        ElseIf InStr(adr2, "Basic:") > 0 Then
+                                        ElseIf InStr(Objet.Adresse2, "Basic:") > 0 Then
                                             m_manager.SetValue(ValueTemp, CByte(ValDimmer))
                                             ' m_manager.SetNodeLevel(m_homeId, NodeTemp.ID, CByte(ValDimmer))
                                         Else
@@ -1307,6 +1296,7 @@ Public Class Driver_ZWave
                 Add_ParamAvance("StartIdleTime", "Durée durant laquelle le driver ne traite aucun message lors de son démarrage (en secondes).", 10)
                 Add_ParamAvance("BaudRate", "Vitesse,Nbre bits, Parité, Nbre bit stop ( défaut 96008N1 )", "96008N1")
                 Add_ParamAvance("NetworkKey", "Clef pour réseau sécurisé", "0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10")
+                Add_ParamAvance("GetConfig", "Permet d'avoir la configuration du réseau ZWave au paramétrage (True/False)", True)
 
                 'ajout des commandes avancées pour les devices
                 Add_DeviceCommande("SetNewVal", "Nouvelle valeur : Byte, Integer, Decimal : ", 1)
@@ -1656,15 +1646,13 @@ Public Class Driver_ZWave
                                 node.Product = m_manager.GetNodeProductName(m_homeId, node.ID)
                                 node.Location = m_manager.GetNodeLocation(m_homeId, node.ID)
                                 node.Name = m_manager.GetNodeName(m_homeId, node.ID)
-                                If _DEBUG Then
-                                    WriteLog("DBG: " & "NotificationHandler - ID: " & node.ID & ", Nom: " & node.Name & ", Manufacturer: " & node.Manufacturer)
-                                    WriteLog("DBG: " & "NotificationHandler - Produit: " & node.Product & ", Label : " & node.Label)
-                                    WriteLog("DBG: " & "NotificationHandler - Nb noeuds: " & m_nodeList.Count & ", Location: " & node.Location & ", Nb values: " & node.Values.Count)
-                                End If
-                            Else
-                                ' Message si le noeud n'est pas le controleur
-                                WriteLog("ERR: " & "NotificationHandler - Erreur dans NodeNaming  : node " & m_notification.GetNodeId() & " non trouvé")
-                            End If
+                                WriteLog("DBG: " & "NotificationHandler - ID: " & node.ID & ", Nom: " & node.Name & ", Manufacturer: " & node.Manufacturer)
+                                WriteLog("DBG: " & "NotificationHandler - Produit: " & node.Product & ", Label : " & node.Label)
+                                WriteLog("DBG: " & "NotificationHandler - Nb noeuds: " & m_nodeList.Count & ", Location: " & node.Location & ", Nb values: " & node.Values.Count)
+                           Else
+                            ' Message si le noeud n'est pas le controleur
+                            WriteLog("ERR: " & "NotificationHandler - Erreur dans NodeNaming  : node " & m_notification.GetNodeId() & " non trouvé")
+                        End If
                         End If
 
 
@@ -1788,26 +1776,28 @@ Public Class Driver_ZWave
                 ' Log tous les informations en mode debug
                 WriteLog("DBG: " & "Receive from " & m_nodeId & ":" & m_instance & "." & m_index & " -> " & m_valueLabel & "=" & m_valueString)
 
-
+                'Recherche si un device affecté
+                m_devices = _Server.ReturnDeviceByAdresse1TypeDriver(_IdSrv, m_nodeId, "", Me._ID, True)
+                WriteLog("DBG: NODE : " & m_nodeId & " -> Nb Device " & m_devices.Count)
+                '               Else
+                'Recherche si un device affecté
                 ' compatibilité avec combobox si device pas trouve avec ancienne appellation
                 'permet de gerer la compatibilité du driver avec listbox (ex: "3 # ZMNHAA2 Flush 1 Relay") ds adresse1
                 Dim adr1 As String = ""
                 For i As Integer = 0 To _Adr1Txt.Count - 1
-                    If InStr(_Adr1Txt(i), m_nodeId & " # ") > 0 Then
+                    If InStr(1, _Adr1Txt(i), m_nodeId & " # ") > 0 Then
                         adr1 = _Adr1Txt(i)
                         Exit For
                     End If
                 Next
-                
-                'Recherche si un device affecté
-                m_devices = _Server.ReturnDeviceByAdresse1TypeDriver(_IdSrv, adr1, "", Me._ID, True)
-                If m_devices.Count > 0 Then
-                    WriteLog("DBG: ADR1 : " & adr1 & " -> Nb Device " & m_devices.Count)
-                Else
-                    'Recherche si un device affecté
-                    m_devices = _Server.ReturnDeviceByAdresse1TypeDriver(_IdSrv, m_nodeId, "", Me._ID, True)
-                    WriteLog("DBG: NODE : " & m_nodeId & " -> Nb Device " & m_devices.Count)
+
+                Dim m_devicestmp As New ArrayList()
+                m_devicestmp = _Server.ReturnDeviceByAdresse1TypeDriver(_IdSrv, adr1, "", Me._ID, True)
+                If m_devicestmp.Count > 0 Then
+                    WriteLog("DBG: ADR1 : " & adr1 & " -> Nb Device " & m_devicestmp.Count)
+                    m_devices.AddRange(m_devicestmp)
                 End If
+                WriteLog("DBG: m_devices total -> Nb Device " & m_devices.Count)
 
                 ' Pas de composant => ajout automatique dans la liste des nouveaux composants
                 If (m_devices.Count = 0 And _AutoDiscover) Then
@@ -1831,10 +1821,11 @@ Public Class Driver_ZWave
                     'Ex. ZWaveDevice (1:7:1) Everspring ST814 Temperature and Humidity Sensor - Battery Level (128.0)
                     '    ZWaveDevice (1:12:1) Aeon Labs Multi Sensor - Temperature (49.1)
                     '    ZWaveDevice (1:2:1) Everspring SM103 Door/Window Sensor - Sensor (48.0)
-                    Dim m_deviceName As String = String.Format("ZWaveDevice ({0}:{1}:{2}) {3} {4} - {5} ({6}.{7})",
+                    Dim m_deviceName As String = String.Format("ZWaveDevice ({0}:{1}:{2}.{3}) {4} {5} - {6} ({7} {8})",
                                                                m_manager.GetControllerNodeId(m_notification.GetHomeId()),
                                                                m_nodeId,
                                                                m_instance,
+                                                               m_index,
                                                                m_manufacturerName,
                                                                m_productName,
                                                                m_valueLabel, m_valueID.GetCommandClassId, m_valueID.GetIndex())
@@ -1852,7 +1843,7 @@ Public Class Driver_ZWave
                         Dim m_device As New HoMIDom.HoMIDom.NewDevice
                         m_device.ID = System.Guid.NewGuid.ToString() 'génération d'un nouveau GUID
                         m_device.Adresse1 = m_nodeId 'ID du node
-                        m_device.Adresse2 = m_valueLabel 'type de composant
+                        m_device.Adresse2 = m_valueLabel & "." & m_index 'type de composant
                         m_device.IdDriver = Me.ID
                         m_device.Type = String.Empty 'TEMPERATURE, HUMIDITE, ... 
                         m_device.Ignore = False
@@ -2008,11 +1999,13 @@ Public Class Driver_ZWave
                         NodeTempID = NodeTemp.ID
                         _libelleadr1 += NodeTemp.ID & " # " & NodeTemp.Product & "|"
                         _Adr1Txt.Add(NodeTemp.ID & " # " & NodeTemp.Product)
+                        WriteLog("DBG: _libelleadr1, " & _libelleadr1)
 
                         'recherche des parametres de l'equipement
                         response = LectureNoeudConfigXml(ficcfg, NodeTemp.ID)
                         If response <> "" Then
                             _libelleadr2 += response
+                            WriteLog("DBG: _libelleadr2, " & response)
                         End If
                     Next
                     _libelleadr1 = Mid(_libelleadr1, 1, Len(_libelleadr1) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
@@ -2047,7 +2040,7 @@ Public Class Driver_ZWave
                     While Nodes.MoveNext()
                         valnode = Nodes.Current.OuterXml
                         ' recherche de l'id demandé
-                        If InStr(valnode, "Node id=""" & valeur & """") > 0 Then
+                        If InStr(1, valnode, "Node id=""" & valeur & """") > 0 Then
                             Dim reader As XmlReader = XmlReader.Create(New StringReader(valnode))
                             reader.ReadToDescendant("CommandClasses")
                             While reader.Read()
@@ -2063,7 +2056,7 @@ Public Class Driver_ZWave
                                                         If readertmp.Name = "Value" Then
                                                             strtmp = readertmp.Item("label") & ":" & readertmp.Item("instance") & "." & readertmp.Item("index")
                                                             ' ne rajoute que si existe pas. Evite les doublons
-                                                            If InStr(str, strtmp) = 0 Then
+                                                            If InStr(1, str, strtmp) = 0 Then
                                                                 str += valeur & " #; " & strtmp & "|"
                                                                 WriteLog("DBG: Str : " & strtmp)
                                                             End If
