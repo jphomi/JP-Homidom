@@ -10260,7 +10260,7 @@ Namespace HoMIDom
                         Dim cnt As Integer = CInt(Requete)
                         If cnt < 8 Then cnt = 0
 
-                        Dim lignes() As String = IO.File.ReadAllLines(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt")
+                        Dim lignes() As String = IO.File.ReadAllLines(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt", Encoding.GetEncoding("ISO-8859-1"))
                         Dim cnt1 As Integer = lignes.Length - cnt
 
                         If cnt1 <= 0 Then cnt1 = 0

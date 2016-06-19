@@ -1,6 +1,7 @@
 ﻿Imports System.IO
 Imports System.Xml
 Imports System.Web.HttpUtility
+Imports System.Text
 
 Public Class WLog
     Dim _IsClient As Boolean = False
@@ -91,19 +92,53 @@ Public Class WLog
     ''' <remarks></remarks>
     Function ReturnLog(Optional ByVal Requete As String = "") As String
         Try
+            'Dim retour As String = ""
+            'If String.IsNullOrEmpty(Requete) = True Then
+            '    Dim SR As New StreamReader(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt", FileMode.Open)
+            '    retour = HtmlDecode(retour)
+            '    SR.Close()
+            '    SR.Dispose()
+            '    SR = Nothing
+            'Else
+            '    'creation d'une nouvelle instance du membre xmldocument
+            '    Dim XmlDoc As XmlDocument = New XmlDocument()
+            '    XmlDoc.Load(_MonRepertoire & "\logs\log.xml")
+            'End If
             Dim retour As String = ""
             If String.IsNullOrEmpty(Requete) = True Then
-                Dim SR As New StreamReader(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt", FileMode.Open)
-                retour = SR.ReadToEnd()
-                retour = HtmlDecode(retour)
-                SR.Close()
-                SR.Dispose()
-                SR = Nothing
+                If System.IO.File.Exists(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt") Then
+                    Dim SR As New StreamReader(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt", Encoding.GetEncoding("ISO-8859-1"))
+                    retour = SR.ReadToEnd()
+                    retour = HtmlDecode(retour)
+                    SR.Close()
+                Else
+                    retour = ""
+                End If
             Else
-                'creation d'une nouvelle instance du membre xmldocument
-                Dim XmlDoc As XmlDocument = New XmlDocument()
-                XmlDoc.Load(_MonRepertoire & "\logs\log.xml")
+                If IsNumeric(Requete) Then
+                    Dim cnt As Integer = CInt(Requete)
+                    If cnt < 8 Then cnt = 0
+
+                    Dim lignes() As String = IO.File.ReadAllLines(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt", Encoding.GetEncoding("ISO-8859-1"))
+                    Dim cnt1 As Integer = lignes.Length - cnt
+
+                    If cnt1 <= 0 Then cnt1 = 0
+
+                    For i As Integer = 0 To lignes.Length - 1
+                        If i >= cnt1 Then
+                            retour &= lignes(i)
+                        End If
+                    Next
+
+                    retour = HtmlDecode(retour)
+                Else
+                    'creation d'une nouvelle instance du membre xmldocument
+                    Dim XmlDoc As XmlDocument = New XmlDocument()
+                    XmlDoc.Load(_MonRepertoire & "\logs\log.xml")
+                End If
+
             End If
+
             If retour.Length > 1000000 Then
                 Dim retour2 As String = Mid(retour, retour.Length - 1000001, 1000000)
                 retour = "Erreur, trop de ligne à traiter depuis le log seules les dernières lignes seront affichées, merci de consulter le fichier sur le serveur par en avoir la totalité!!" & vbCrLf & vbCrLf & retour2
