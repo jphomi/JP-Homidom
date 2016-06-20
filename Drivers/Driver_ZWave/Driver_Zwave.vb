@@ -2033,10 +2033,16 @@ Public Class Driver_ZWave
             Try
                 'recherche des equipements
                 If m_nodeList.Count Then
+                    If Not My.Computer.FileSystem.FileExists(nomfileconfig) Then
+                        Return False
+                        Exit Function
+                    End If
+
                     _Adr1Txt.Clear()
                     Dim _libelleadr1 As String = ""
                     Dim _libelleadr2 As String = ""
                     Dim NodeTempID As Byte
+                    Dim response As String = ""
 
                     For Each NodeTemp As Node In m_nodeList
                         NodeTempID = NodeTemp.ID
@@ -2045,7 +2051,7 @@ Public Class Driver_ZWave
                         WriteLog("DBG: _libelleadr1, " & _libelleadr1)
 
                         'recherche des parametres de l'equipement
-                        Dim response As String = ""
+                        response = ""
                         response = LectureNoeudConfigXml(nomfileconfig, NodeTemp.ID)
                         If response <> "" Then
                             _libelleadr2 += response

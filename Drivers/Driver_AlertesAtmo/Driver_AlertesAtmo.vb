@@ -268,13 +268,6 @@ Imports System.Web
             ListePollen.Add("SAUL", "SAULE")
             ListePollen.Add("TILL", "TILLEUL")
             WriteLog("DBG: CodePollen, " & ListePollen.Count & " pollens chargés")
-
-            'Dim listtmp As String = ""
-            'For i As Integer = 1 To ListePollen.Count
-            '    listtmp += ListePollen.Item(i) + "|"
-            'Next
-            'Add_LibelleDevice("ADRESSE2", "Param de l'équipement", "Param de l'équipement", listtmp)
-
         Catch ex As Exception
             WriteLog("ERR: CodePollen, Exception : " & ex.Message)
         End Try
@@ -966,8 +959,6 @@ Imports System.Web
             End If
 
             WriteLog("DBG: Getpollen codpollen : " & codpollen)
-            '      Dim reqparam As String = ""
-            '    Dim responsebodystr As String = ""
             Try
                 Dim adrs As String = "http://api-pollens.stallergenes.fr/alerts/api/2.0/json?_dc=1465335925196&key=57082094f0dd01.18829603&dp=1465335925&dpu=1465333284&pollens=" & codpollen & "&departments=" & departement
                 WriteLog("DBG: Getpollen url : " & adrs)
@@ -984,7 +975,7 @@ Imports System.Web
                     For Each _alerts In DataPollenRnsa.data.alerts
                         For Each _pollen In _alerts.pollens
                             indicestr = indicestr & _pollen.name & ", Niveau " & _pollen.level & " / 3"
-                            i += 1
+                            i += 1  'evite d'avoir un saut de ligne à la fin
                             If _alerts.pollens.Count = i Then
                                 indicestr = indicestr
                             Else
