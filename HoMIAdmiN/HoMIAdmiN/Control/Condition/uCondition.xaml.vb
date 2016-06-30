@@ -8,11 +8,13 @@ Public Class uCondition
     Dim _IdDevice As String = ""
     Dim _PropertyDevice As String = ""
     Dim _Value As Object = Nothing
+    Dim _IdVariable As String = ""
     Dim _IsFirst As Boolean
     Dim MyMenuItem As New MenuItem
     Dim mycontextmnu As New ContextMenu
 
     Dim ListeDevices As List(Of TemplateDevice)
+    Dim ListeVariables As New List(Of Variable)
 
     Public Event DeleteCondition(ByVal uid As String)
     Public Event UpCondition(ByVal uid As String)
@@ -29,10 +31,20 @@ Public Class uCondition
                         LblTitre.Content &= " DateTime"
                         StkDevice.Visibility = Visibility.Hidden
                         StkDevice.Children.Clear()
+                        StkVariable.Visibility = Visibility.Hidden
+                        StkVariable.Children.Clear()
                     Case Action.TypeCondition.Device
                         LblTitre.Content &= " Composant"
                         StkTime.Visibility = Visibility.Hidden
                         StkTime.Children.Clear()
+                        StkVariable.Visibility = Visibility.Hidden
+                        StkVariable.Children.Clear()
+                    Case Action.TypeCondition.Variable
+                        LblTitre.Content &= " Variable"
+                        StkTime.Visibility = Visibility.Hidden
+                        StkTime.Children.Clear()
+                        StkDevice.Visibility = Visibility.Hidden
+                        StkDevice.Children.Clear()
                 End Select
             Catch ex As Exception
                 AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "Erreur uCondition TypeCondition: " & ex.ToString, "ERREUR", "")
@@ -207,6 +219,20 @@ Public Class uCondition
         End Set
     End Property
 
+    Public Property IdVariable As String
+        Get
+            Return _IdVariable
+        End Get
+        Set(ByVal value As String)
+            Try
+                _IdVariable = value
+                CbVariable.Text = CbVariable.SelectedValue
+
+            Catch ex As Exception
+                AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "Erreur uCondition IdVariable: " & ex.ToString, "ERREUR", "")
+            End Try
+        End Set
+    End Property
     Private Sub BtnUp_MouseDown(ByVal sender As System.Object, ByVal e As System.Windows.Input.MouseButtonEventArgs) Handles BtnUp.MouseDown
         RaiseEvent UpCondition(Me.Uid)
     End Sub
@@ -260,6 +286,14 @@ Public Class uCondition
             AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "Erreur uCondition CbDevice_DropDownClosed: " & ex.ToString, "ERREUR", "")
         End Try
     End Sub
+    Private Sub CbVariable_DropDownClosed(sender As Object, e As EventArgs) Handles CbVariable.DropDownClosed
+        Try
+            CbPropertyVariable.Items.Add("Value")
+            CbPropertyVariable.SelectedIndex = 0
+        Catch ex As Exception
+            AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "Erreur uCondition CbVariables_DropDownClosed: " & ex.ToString, "ERREUR", "")
+        End Try
+    End Sub
 
     Public Sub New()
 
@@ -268,8 +302,11 @@ Public Class uCondition
 
         Try
             ListeDevices = myService.GetAllDevices(IdSrv)
+            ListeVariables = myService.GetAllVariables(IdSrv)
             CbDevice.ItemsSource = ListeDevices
             CbDevice.DisplayMemberPath = "Name"
+            CbVariable.ItemsSource = ListeVariables
+            CbVariable.DisplayMemberPath = "Nom"
 
             Dim y98 As New MenuItem
             y98.Header = "Effectuer un calcul"
@@ -1092,5 +1129,10 @@ Public Class uCondition
             If _flag = False Then AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "Erreur uCondition TxtValue_TextChanged: " & ex.ToString, "ERREUR", "")
         End Try
     End Sub
+
+
+
+
+
 
 End Class

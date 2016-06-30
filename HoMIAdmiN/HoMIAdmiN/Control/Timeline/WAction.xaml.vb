@@ -7,6 +7,7 @@ Public Class WActionParametrage
     Dim mycontextmnu As New ContextMenu
     Dim mycontextmnu2 As New ContextMenu
     Dim ListeDevices As List(Of TemplateDevice)
+    Dim ListeVariables As List(Of Variable)
 
     Public Property ObjAction As Object
         Get
@@ -1084,6 +1085,25 @@ Public Class WActionParametrage
         Catch ex As Exception
             AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "Erreur WAction BtnCondiDevice_MouseLeftButtonDown: " & ex.ToString, "ERREUR", "")
         End Try
+    End Sub
+    Private Sub BtnCondiVariable_MouseLeftButtonDown(sender As Object, e As MouseButtonEventArgs) Handles BtnCondiVariable.MouseLeftButtonDown
+        Try
+            Dim x As New uCondition
+            x.TypeCondition = Action.TypeCondition.Variable
+            x.Uid = HoMIDom.HoMIDom.Api.GenerateGUID
+            AddHandler x.DeleteCondition, AddressOf DeleteCondition
+            AddHandler x.UpCondition, AddressOf UpCondition
+            If StkCondition.Children.Count = 0 Then
+                x.IsFirst = True
+            Else
+                x.IsFirst = False
+            End If
+            StkCondition.Children.Add(x)
+            _ListuConditions.Add(x)
+        Catch ex As Exception
+            AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "Erreur WAction BtnCondiVariable_MouseLeftButtonDown: " & ex.ToString, "ERREUR", "")
+        End Try
+
     End Sub
 
     Private Sub DeleteCondition(ByVal uid As String)

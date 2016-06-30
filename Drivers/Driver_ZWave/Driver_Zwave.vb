@@ -833,9 +833,10 @@ Public Class Driver_ZWave
 
             'récupération des paramétres avancés
             Try
-                _DEBUG = _Parametres.Item(0).Valeur
+                _DEBUG = Parametres.Item(0).Valeur
                 _AFFICHELOG = Parametres.Item(1).Valeur
-                If (Parametres.Count > 2) Then _STARTIDLETIME = Parametres.Item(2).Valeur
+                _STARTIDLETIME = Parametres.Item(2).Valeur
+
                 'parametrage port serie
                 Dim valuetmp As String
                 valuetmp = Parametres.Item(3).Valeur
@@ -865,8 +866,7 @@ Public Class Driver_ZWave
                 _baudspeed = Left(valuetmp, Len(valuetmp) - 1)
 
                 _networkkey = Parametres.Item(4).Valeur
-                _Getconfig = _Parametres.Item(5).Valeur
-
+                _Getconfig = Parametres.Item(5).Valeur
             Catch ex As Exception
                 _DEBUG = False
                 _AFFICHELOG = False
@@ -919,10 +919,11 @@ Public Class Driver_ZWave
                             Next
                         End If
 
-                        _NomFileConfigZWave = Convert.ToString(m_homeId, 16).ToString & ".xml"
+                        _NomFileConfigZWave = Convert.ToString(m_homeId, 16).ToString
                         'rajoute des 0 si nécessaire devant l'id du controleur pour avoir une chaine de 8 de long
-                        _NomFileConfigZWave.PadLeft(8, "0")
-                        _NomFileConfigZWave = My.Application.Info.DirectoryPath & "\drivers\zwave\zwcfg_0x" & _NomFileConfigZWave
+                        _NomFileConfigZWave = _NomFileConfigZWave.PadLeft(8, "0")
+                        _NomFileConfigZWave = My.Application.Info.DirectoryPath & "\drivers\zwave\zwcfg_0x" & _NomFileConfigZWave & ".xml"
+                        WriteLog("DBG: Start,  _NomFileConfigZWave " & _NomFileConfigZWave)
 
                         ' Sauvegarde de la configuration 
                         WriteLog("Start,  Sauvegarde de la config Zwave")
@@ -938,7 +939,7 @@ Public Class Driver_ZWave
                         If _Getconfig Then
                             Get_Config(_NomFileConfigZWave)
                             'recharge la config toutes les 10 mn
-                            MyTimer.Interval = 600 * 1000
+                            MyTimer.Interval = 600 * 100 '1000
                             MyTimer.Enabled = True
                             AddHandler MyTimer.Elapsed, AddressOf TimerTick
                         End If
@@ -1035,6 +1036,7 @@ Public Class Driver_ZWave
                 Dim ValueTemp As ZWValueID = Nothing
                 Dim TempVersion As Byte = 0
                 Dim IsMultiLevel As Boolean = False
+                _DEBUG = _Parametres.Item(0).Valeur
 
                 If _Enable = False Then
                     WriteLog("ERR: " & "Write, Erreur: Impossible de traiter la commande car le driver n'est pas activé (Enable)")
@@ -1264,6 +1266,15 @@ Public Class Driver_ZWave
                 ld0.NomChamp = UCase(Nom)
                 ld0.Tooltip = Tooltip
                 ld0.Parametre = Parametre
+
+                'permet de remplacer un libelle lors du refresh de la config du driver
+                For i As Integer = 0 To _LabelsDevice.Count - 1
+                    If _LabelsDevice.Item(i).ToString = Nom Then
+                        _LabelsDevice.RemoveAt(i)
+                        WriteLog("_LabelsDevice.Item(i).ToString : " & _LabelsDevice.Item(i).ToString)
+                        Exit For
+                    End If
+                Next
                 _LabelsDevice.Add(ld0)
             Catch ex As Exception
                 WriteLog("ERR: " & "Add_LibelleDevice, Exception : " & ex.Message)
@@ -1788,6 +1799,9 @@ Public Class Driver_ZWave
         ''' <param name="m_notification"></param>
         Private Sub traiteValeur(ByVal m_notification As ZWNotification) ', Optional ByVal FromEvent As Boolean = False)
 
+
+            _DEBUG = _Parametres.Item(0).Valeur
+
             Dim m_valueLabel As String = ""
             Dim m_instance As Integer = 0
             Dim m_nodeId As Integer = 0
@@ -2035,17 +2049,16 @@ Public Class Driver_ZWave
                 If m_nodeList.Count Then
                     If Not My.Computer.FileSystem.FileExists(nomfileconfig) Then
                         Return False
+                        WriteLog("ERR: " & "GET_Config, fichier" & nomfileconfig & " inexistant")
                         Exit Function
                     End If
 
                     _Adr1Txt.Clear()
                     Dim _libelleadr1 As String = ""
                     Dim _libelleadr2 As String = ""
-                    Dim NodeTempID As Byte
                     Dim response As String = ""
 
                     For Each NodeTemp As Node In m_nodeList
-                        NodeTempID = NodeTemp.ID
                         _libelleadr1 += NodeTemp.ID & " # " & NodeTemp.Product & "|"
                         _Adr1Txt.Add(NodeTemp.ID & " # " & NodeTemp.Product)
                         WriteLog("DBG: _libelleadr1, " & _libelleadr1)
@@ -2063,6 +2076,8 @@ Public Class Driver_ZWave
 
                     _libelleadr2 = Mid(_libelleadr2, 1, Len(_libelleadr2) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
                     Add_LibelleDevice("ADRESSE2", "Param de l'équipement", "Param de l'équipement", _libelleadr2)
+                    WriteLog("_libelleadr1 : " & _libelleadr1)
+                    WriteLog("_libelleadr2 : " & _libelleadr2)
                 End If
                 Return True
             Catch ex As Exception
@@ -2109,17 +2124,22 @@ Public Class Driver_ZWave
                                                             ' ne rajoute que si existe pas. Evite les doublons
                                                             If InStr(1, str, strtmp) = 0 Then
                                                                 str += nodeid & " #; " & strtmp & "|"
-                                                                WriteLog("DBG: Str : " & strtmp)
+                                                                WriteLog("DBG: Str : " & str)
                                                             End If
                                                         End If
                                                 End Select
                                             End While
+                                            readertmp = Nothing
                                         End If
                                 End Select
                             End While
                             Exit While
+                            reader = Nothing
                         End If
                     End While
+                    Nodes = Nothing
+                    nav = Nothing
+                    xmldoc = Nothing
                     Return str
                 Else
                     WriteLog("ERR: " & "LectureNoeudConfigXml, fichier " & fichierxml & " introuvable")
