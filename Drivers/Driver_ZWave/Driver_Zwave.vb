@@ -939,7 +939,7 @@ Public Class Driver_ZWave
                         If _Getconfig Then
                             Get_Config(_NomFileConfigZWave)
                             'recharge la config toutes les 10 mn
-                            MyTimer.Interval = 600 * 100 '1000
+                            MyTimer.Interval = 600 * 1000
                             MyTimer.Enabled = True
                             AddHandler MyTimer.Elapsed, AddressOf TimerTick
                         End If
@@ -1266,15 +1266,6 @@ Public Class Driver_ZWave
                 ld0.NomChamp = UCase(Nom)
                 ld0.Tooltip = Tooltip
                 ld0.Parametre = Parametre
-
-                'permet de remplacer un libelle lors du refresh de la config du driver
-                For i As Integer = 0 To _LabelsDevice.Count - 1
-                    If _LabelsDevice.Item(i).ToString = Nom Then
-                        _LabelsDevice.RemoveAt(i)
-                        WriteLog("_LabelsDevice.Item(i).ToString : " & _LabelsDevice.Item(i).ToString)
-                        Exit For
-                    End If
-                Next
                 _LabelsDevice.Add(ld0)
             Catch ex As Exception
                 WriteLog("ERR: " & "Add_LibelleDevice, Exception : " & ex.Message)
@@ -1657,7 +1648,6 @@ Public Class Driver_ZWave
                             m_nodeList.Add(node)
                         End If
 
-
                     Case ZWNotification.Type.NodeRemoved
                         If m_notification.GetNodeId() <> m_manager.GetControllerNodeId(m_homeId) Then
                             WriteLog("NotificationHandler - Suppression du noeud " & m_notification.GetNodeId())
@@ -1667,6 +1657,7 @@ Public Class Driver_ZWave
                                     Exit For
                                 End If
                             Next
+                            If _Getconfig Then Get_Config(_NomFileConfigZWave)
                         End If
 
                     Case ZWNotification.Type.NodeProtocolInfo
@@ -2071,13 +2062,25 @@ Public Class Driver_ZWave
                             WriteLog("DBG: _libelleadr2, " & response)
                         End If
                     Next
-                    _libelleadr1 = Mid(_libelleadr1, 1, Len(_libelleadr1) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
-                    Add_LibelleDevice("ADRESSE1", "Nom de l'équipement", "Nom de l'équipement", _libelleadr1)
 
-                    _libelleadr2 = Mid(_libelleadr2, 1, Len(_libelleadr2) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
-                    Add_LibelleDevice("ADRESSE2", "Param de l'équipement", "Param de l'équipement", _libelleadr2)
-                    WriteLog("_libelleadr1 : " & _libelleadr1)
-                    WriteLog("_libelleadr2 : " & _libelleadr2)
+
+                    ' evite les doublons 
+                    Dim ld0 As New HoMIDom.HoMIDom.Driver.cLabels
+                    For i As Integer = 0 To _LabelsDevice.Count - 1
+                        ld0 = _LabelsDevice(i)
+                        Select Case ld0.NomChamp
+                            Case "ADRESSE1"
+                                _libelleadr1 = Mid(_libelleadr1, 1, Len(_libelleadr1) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
+                                ld0.Parametre = _libelleadr1
+                                _LabelsDevice(i) = ld0
+                            Case "ADRESSE2"
+                                _libelleadr2 = Mid(_libelleadr2, 1, Len(_libelleadr2) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
+                                ld0.Parametre = _libelleadr2
+                                _LabelsDevice(i) = ld0
+                        End Select
+                    Next
+
+
                 End If
                 Return True
             Catch ex As Exception

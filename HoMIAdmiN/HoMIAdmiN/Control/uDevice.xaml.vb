@@ -423,8 +423,13 @@ Partial Public Class uDevice
                                     StkAdr2.Visibility = Windows.Visibility.Collapsed
                                     CbAdresse2.Visibility = Windows.Visibility.Collapsed
                                     CbAdresse2.Tag = "Driver"
+                                    TxtAdresse2.Visibility = Windows.Visibility.Collapsed
+                                    TxtAdresse2.Tag = 0
+                                    LabelAdresse2.Visibility = Windows.Visibility.Collapsed
                                 Else
-                                    LabelAdresse2.Content = _Driver.LabelsDevice.Item(k).LabelChamp
+                                    LabelAdresse2.Visibility = Windows.Visibility.Visible
+                                    StkAdr2.Visibility = Windows.Visibility.Visible
+                                    If String.IsNullOrEmpty(_Driver.LabelsDevice.Item(k).LabelChamp) = False Then LabelAdresse2.Content = _Driver.LabelsDevice.Item(k).LabelChamp
                                     If String.IsNullOrEmpty(_Driver.LabelsDevice.Item(k).Tooltip) = False Then
                                         LabelAdresse2.ToolTip = _Driver.LabelsDevice.Item(k).Tooltip
                                         TxtAdresse2.ToolTip = _Driver.LabelsDevice.Item(k).Tooltip
@@ -439,7 +444,6 @@ Partial Public Class uDevice
                                                         CbAdresse2.Items.Add(Trim(Mid(a(g), InStr(a(g), "#;") + 2)))
                                                     End If
                                                 Next
-                                                '    CbAdresse2.IsEditable = False
                                             End If
                                             CbAdresse2.Visibility = Windows.Visibility.Visible
                                             CbAdresse2.Tag = "Driver"
@@ -461,7 +465,7 @@ Partial Public Class uDevice
                                     End If
 
 
-                                    StkAdr2.Visibility = Windows.Visibility.Visible
+                                    ' StkAdr2.Visibility = Windows.Visibility.Visible
                                 End If
                             Case "SOLO"
                                 If _Driver.LabelsDevice.Item(k).LabelChamp = "@" Then
@@ -1084,7 +1088,6 @@ Partial Public Class uDevice
                                 If String.IsNullOrEmpty(_Driver.LabelsDevice.Item(k).Parametre) = False Then
                                     a = _Driver.LabelsDevice.Item(k).Parametre.Split("|")
                                     For g As Integer = 0 To a.Length - 1
-                                        MsgBox(a(g))
                                         If InStr(a(g), "#;") > 0 Then  'permet de lier une valeur de adresse2 avec adresse1
                                             If (InStr(a(g), tmpstr) > 0) And (Len(Trim(tmpstr)) = Len(Trim(Mid(a(g), 1, InStr(a(g), " #;") + 3)))) Then
                                                 CbAdresse2.Items.Add(Trim(Mid(a(g), InStr(a(g), "#;") + 2)))
@@ -1165,7 +1168,6 @@ Partial Public Class uDevice
                                     If InStr(a(g), "#;") > 0 Then  'permet de lier une valeur de adresse2 avec adresse1
                                         If (InStr(a(g), tmpstr) > 0) And (Len(Trim(tmpstr)) = Len(Trim(Mid(a(g), 1, InStr(a(g), " #;") + 3)))) Then
                                             CbAdresse2.Items.Add(Trim(Mid(a(g), InStr(a(g), "#;") + 2)))
-                                            '  MsgBox(CbAdresse2.Items(CbAdresse2.Items.Count - 1))
                                         End If
                                     Else
                                         CbAdresse2.Items.Add(a(g))

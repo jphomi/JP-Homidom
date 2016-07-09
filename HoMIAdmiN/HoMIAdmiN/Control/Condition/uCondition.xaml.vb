@@ -8,6 +8,7 @@ Public Class uCondition
     Dim _IdDevice As String = ""
     Dim _PropertyDevice As String = ""
     Dim _Value As Object = Nothing
+    Dim _ValueVar As Object = Nothing
     Dim _IdVariable As String = ""
     Dim _IsFirst As Boolean
     Dim MyMenuItem As New MenuItem
@@ -226,7 +227,8 @@ Public Class uCondition
         Set(ByVal value As String)
             Try
                 _IdVariable = value
-                CbVariable.Text = CbVariable.SelectedValue
+                CbVariable.Text = value
+                ' TxtValueVar.Text = value.ToString
 
             Catch ex As Exception
                 AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "Erreur uCondition IdVariable: " & ex.ToString, "ERREUR", "")
@@ -603,15 +605,19 @@ Public Class uCondition
 
                 _DateTime = _myconditiontime
                 _Signe = CbSigne1.SelectedIndex
-            Else
-                If CbDevice.SelectedIndex >= 0 Then
-                    '_IdDevice = myService.GetAllDevices(IdSrv).Item(CbDevice.SelectedIndex).ID
-                    _IdDevice = ListeDevices.Item(CbDevice.SelectedIndex).ID
-                    _PropertyDevice = CbPropertyDevice.Text
-                    _Signe = CbSigne2.SelectedIndex
-                    _Value = TxtValue.Text
+            End If
+            If (_TypeCondition = Action.TypeCondition.Device) And (CbDevice.SelectedIndex >= 0) Then
 
-                End If
+                '_IdDevice = myService.GetAllDevices(IdSrv).Item(CbDevice.SelectedIndex).ID
+                _IdDevice = ListeDevices.Item(CbDevice.SelectedIndex).ID
+                _PropertyDevice = CbPropertyDevice.Text
+                _Signe = CbSigne2.SelectedIndex
+                _Value = TxtValue.Text
+            End If
+            If _TypeCondition = Action.TypeCondition.Variable Then
+                _IdVariable = ListeVariables.Item(CbVariable.SelectedIndex).ID
+                _Signe = CbSigne2.SelectedIndex
+                _ValueVar = TxtValueVar.Text
             End If
         Catch ex As Exception
             AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "Erreur uCondition uCondition_MouseLeave: " & ex.ToString, "ERREUR", "")
@@ -658,6 +664,7 @@ Public Class uCondition
             AfficheMessageAndLog(HoMIDom.HoMIDom.Server.TypeLog.ERREUR, "Erreur uCondition CbDevice_SelectionChanged: " & ex.ToString, "ERREUR", "")
         End Try
     End Sub
+
 
 #Region "Gestion Date/time"
     Private Sub BtnPHr_Click(ByVal sender As System.Object, ByVal e As System.Windows.RoutedEventArgs) Handles BtnPHr.Click
