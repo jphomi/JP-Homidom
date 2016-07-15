@@ -97,7 +97,7 @@ Driver_Zwave
 </member><member name="M:Driver_Zwave.Driver_ZWave.Driver_ZWave.SoftReset">
 	<summary>Reset le controleur Z-Wave sans effacer les parametres de configuration, soft reset </summary>
 	<remarks></remarks>
-</member><member name="M:Driver_Zwave.Driver_ZWave.Driver_ZWave.StartInclusionMode">
+</member><member name="M:Driver_Zwave.Driver_ZWave.Driver_ZWave.CheckStateNode">
 	<summary>
  Place le controller en mode "inclusion"
  </summary>
@@ -112,14 +112,14 @@ Driver_Zwave
  Place le controller en mode "exclusion"
  </summary>
 	<remarks></remarks>
-</member><member name="M:Driver_Zwave.Driver_ZWave.Driver_ZWave.RemoveFailedNode">
-	<summary>
- Suppresion des noeuds morts
- </summary>
-	<remarks></remarks>
 </member><member name="M:Driver_Zwave.Driver_ZWave.Driver_ZWave.StopAssociation">
 	<summary>
  Annule la commande en cours : permet de sortir du mode "inclusion/exclusion" *** experimental ***
+ </summary>
+	<remarks></remarks>
+</member><member name="M:Driver_Zwave.Driver_ZWave.Driver_ZWave.RemoveFailedNode(System.Byte)">
+	<summary>
+ Suppresion des noeuds morts
  </summary>
 	<remarks></remarks>
 </member><member name="M:Driver_Zwave.Driver_ZWave.Driver_ZWave.NotificationHandler(OpenZWaveDotNet.ZWNotification)">
