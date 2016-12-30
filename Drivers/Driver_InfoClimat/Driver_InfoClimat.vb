@@ -1,8 +1,18 @@
 ﻿Imports HoMIDom
 Imports HoMIDom.HoMIDom.Server
 Imports HoMIDom.HoMIDom.Device
-Imports System.Net
+
+Imports System.Text
+Imports System.String
+Imports System.Text.RegularExpressions
+Imports System.Collections.Generic
 Imports STRGS = Microsoft.VisualBasic.Strings
+Imports System.Net
+Imports HoMIOAuth2
+Imports System.Security.Cryptography
+
+' Auteur : jphomi
+' Date : 01/01/2017
 
 <Serializable()> Public Class Driver_InfoClimat
     Implements HoMIDom.HoMIDom.IDriver
@@ -39,7 +49,7 @@ Imports STRGS = Microsoft.VisualBasic.Strings
     Dim _AutoDiscover As Boolean = False
 
     'A ajouter dans les ppt du driver
-    Dim _urlInfoClimat As String = "http://www.infoclimat.fr/public-api/gfs/json?_ll=44.400001525878906,2.48000001907349&_auth=VkwCFVMtV3VTfgYxBXNSewdvBzIMelB3B3tVNgBpUy4BZlczA2AAYgBvAGNQZVZgUWcOZg83UmIDaQJlDWYHe1YqAmRTLlcxUzQGZAU1UmYHNAdnDDJQYQdkVTUAblM0AWtXLAN%2FAGIAaABnUGVWYFF9DnEPLVJrA38Ceg1nB2xWKwJkUzFXPVMiBmUFNlJvByoHZQwxUHcHe1UzAGlTNQFiVzMDZABgAGwAYFBjVn1RfQ5rDzZSbAM0AjANYwcwVjYCM1NlVzxTOAZtBT1SeAc3B2AMMlBrB2JVMgBkUzgBfVcsAxkAEQByACJQIlY3USQOcw9lUjQDNA%3D%3D&_c=27eed1e18d73eff96fc681e0330bfcce"
+    Dim _urlInfoClimat As String = "http://www.infoclimat.fr"
 
     'param avancé
     Dim _DEBUG As Boolean = False
@@ -48,7 +58,7 @@ Imports STRGS = Microsoft.VisualBasic.Strings
 
 #Region "Variables Internes"
     'Insérer ici les variables internes propres au driver et non communes
-
+    Dim Auth As Authentication
 
 #End Region
 
@@ -448,19 +458,21 @@ Imports STRGS = Microsoft.VisualBasic.Strings
 
             Try
                 _DEBUG = _Parametres.Item(0).Valeur
-                _IPAdress = _Parametres.Item(1).Valeur
+                '  _IPAdress = _Parametres.Item(1).Valeur
             Catch ex As Exception
                 _DEBUG = False
                 _Parametres.Item(0).Valeur = False
                 WriteLog("ERR: Erreur dans les paramétres avancés. utilisation des valeur par défaut : " & ex.Message)
             End Try
 
-            _urlInfoClimat = "http://www.infoclimat.fr/public-api/gfs/json?_ll=44.400001525878906,2.48000001907349&_auth=VkwCFVMtV3VTfgYxBXNSewdvBzIMelB3B3tVNgBpUy4BZlczA2AAYgBvAGNQZVZgUWcOZg83UmIDaQJlDWYHe1YqAmRTLlcxUzQGZAU1UmYHNAdnDDJQYQdkVTUAblM0AWtXLAN%2FAGIAaABnUGVWYFF9DnEPLVJrA38Ceg1nB2xWKwJkUzFXPVMiBmUFNlJvByoHZQwxUHcHe1UzAGlTNQFiVzMDZABgAGwAYFBjVn1RfQ5rDzZSbAM0AjANYwcwVjYCM1NlVzxTOAZtBT1SeAc3B2AMMlBrB2JVMgBkUzgBfVcsAxkAEQByACJQIlY3USQOcw9lUjQDNA%3D%3D&_c=27eed1e18d73eff96fc681e0330bfcce"
+            _urlInfoClimat = "http://srx-nginx-2.infoclimat.fr"
             WriteLog("DBG: Start, connection au serveur " & _urlInfoClimat)
-            Dim url As New Uri(_urlInfoClimat)
-            Dim Request As HttpWebRequest = CType(HttpWebRequest.Create(url), System.Net.HttpWebRequest)
-            Dim response As Net.HttpWebResponse = CType(Request.GetResponse(), Net.HttpWebResponse)
-            WriteLog("DBG: Start, connection au serveur " & response.ToString)
+            'Dim url As New Uri(_urlInfoClimat)
+            'Dim Request As HttpWebRequest = CType(HttpWebRequest.Create(url), System.Net.HttpWebRequest)
+            'Dim response As Net.HttpWebResponse = CType(Request.GetResponse(), Net.HttpWebResponse)
+            '            GET_VALUES(_urlInfoClimat, "socialauth.in", "Mlt6oDI0iIoOiylfiqgnCkrS")
+            GetRefreshToken("fr.infoclimat", "https://accounts.google.com/o/oauth2/token")
+            'WriteLog("DBG: Start, connection au serveur " & response.ToString)
 
 
 
@@ -680,7 +692,187 @@ Imports STRGS = Microsoft.VisualBasic.Strings
 #Region "Fonctions internes"
     'Insérer ci-dessous les fonctions propres au driver et nom communes (ex: start)
 
+    Private Function GenerateApiKey(keyappli As String) As String
+        Try
+            Dim NumAndroid As String = "406186F87E650000"
+            Dim str As String = NumAndroid + "s2Ubrepu@-Aw"
 
+            Dim dateref As Date = #1/1/1970#
+            Dim TimeComputer As Long = DateDiff(DateInterval.Second, dateref, DateTime.Today)
+
+            Dim key As String = Md5Key(str & TimeComputer & "station-meteo")
+
+            'HexaToByteArray
+            Dim buffer(key.Length / 2 - 1) As Byte
+            Dim i As Integer
+            For i = 0 To key.Length - 2 Step 2
+                buffer(i / 2) = 2 * (Convert.ToByte(key.Substring(i, 1), 16) And 124) + Convert.ToByte(key.Substring(i + 1, 1), 16)
+                '     WriteLog("GeneratorKey, " & i & " key.Substring(i, 2) " & key.Substring(i, 2) & ", buffer(i / 2) " & buffer(i / 2) & " | i / 2 " & i / 2)
+            Next
+
+            key = Convert.ToBase64String(buffer)
+            key = key.Replace("+", "-")
+            key = key.Replace("/", "_")
+            key = key.Replace("=", "")
+            key = key & "|" & TimeComputer & "/" & NumAndroid
+
+            WriteLog("GenerateApiKey, " & key)
+            Return key
+        Catch ex As Exception
+            WriteLog("ERR: " & Me.Nom & " GenerateApiKey, " & ex.Message)
+            Return ""
+        End Try
+    End Function
+
+    Private Function Md5Key(str As String) As String
+        Try
+            Using md5Hash As MD5 = MD5.Create()
+                ' Convert the input string to a byte array and compute the hash.
+                Dim data As Byte() = md5Hash.ComputeHash(Encoding.UTF8.GetBytes(str))
+                Dim sBuilder As New StringBuilder()
+
+                Dim i As Integer
+                For i = 0 To data.Length - 1
+                    sBuilder.Append(data(i).ToString("X"))
+                Next i
+                ' Return the hexadecimal string.
+                Return sBuilder.ToString()
+            End Using
+
+        Catch ex As Exception
+            WriteLog("ERR: " & Me.Nom & " Md5Key, " & ex.Message)
+            Return ""
+        End Try
+    End Function
+
+    Private Function GetRefreshToken(ByVal clientOauth As String, ByVal httpsOauth As String) As Boolean
+        Try
+            GenerateApiKey("")
+
+            Dim client As New Net.WebClient
+            Dim reqparm As New Specialized.NameValueCollection
+            Dim OAuth2 = New HoMIOAuth2.HoMIOAuth2(_IdSrv, _Server.GetIPSOAP, _Server.GetPortSOAP, "fr.infoclimat.GCMIntentService")
+            reqparm.Add("grant_type", "refresh_token")
+            reqparm.Add("refresh_token", Auth.refresh_token)
+            '            reqparm.Add("client_id", OAuth2.GetClientFile(clientOauth).web.client_id)
+            '           reqparm.Add("client_secret", OAuth2.GetClientFile(clientOauth).web.client_secret)
+            reqparm.Add("client_id", "505071246058-6i3hf3rhd1s0qst492e23g9sq5t9koiv.apps.googleusercontent.com")
+            reqparm.Add("client_secret", "xrNQTx9ELsxmyUBfh35ntpfR")
+            Dim responsebytes = client.UploadValues(httpsOauth, "POST", reqparm)
+            Dim responsebody = (New System.Text.UTF8Encoding).GetString(responsebytes)
+            Auth = Newtonsoft.Json.JsonConvert.DeserializeObject(responsebody, GetType(Authentication))
+
+            If Auth.expires_in > 0 And Auth.refresh_token <> Nothing Then
+                Dim stream = Newtonsoft.Json.JsonConvert.SerializeObject(Auth)
+                System.IO.File.WriteAllText(My.Application.Info.DirectoryPath & "\config\reponse_accesstoken_" & clientOauth & ".json", stream)
+                WriteLog("DBG: " & Me.Nom & " GetRefreshToken, Requête " & httpsOauth & " OK")
+                WriteLog("DBG: " & Me.Nom & " GetRefreshToken, Connect : " & responsebody.ToString)
+            Else
+                WriteLog("ERR: " & Me.Nom & " GetRefreshToken, Non connecté")
+            End If
+            Return True
+        Catch ex As Exception
+            WriteLog("ERR: " & Me.Nom & " GetRefreshToken, " & ex.Message)
+            Return True
+        End Try
+    End Function
+
+    Private Sub GET_VALUES(adrs As String, user As String, password As String)
+
+        Try
+
+            Dim client As New Net.WebClient
+            client.Credentials = New NetworkCredential(user, password)
+
+            ' adrs = _urlIPX & "api/xdevices.json?Get=all"
+            WriteLog("DBG: " & "GET_VALUES Url: " & adrs)
+
+            Dim responsebody As String = ""
+
+            responsebody = client.DownloadString(adrs)
+            While client.IsBusy
+            End While
+            WriteLog("DBG: GetValue inputs : " & responsebody.ToString)
+            Dim jsonObj = Newtonsoft.Json.JsonConvert.DeserializeObject(Of Dictionary(Of String, String))(responsebody)
+
+            WriteLog("DBG: " & "GET_VALUES Url: " & adrs)
+            WriteLog("DBG: " & "GET_VALUES responsebody: " & responsebody)
+
+            'If jsonObj.Count > 1 Then  ' cas IPX800 V4
+            '    For numberkey = 0 To jsonObj.Count - 1
+            '        ValueIPX.Add(jsonObj.Item(jsonObj.Keys(numberkey).ToString), jsonObj.Keys(numberkey).ToString)
+            '        WriteLog("DBG: GetValue " & jsonObj.Keys(numberkey).ToString & " , " & ValueIPX.Item(ValueIPX.Count))
+            '    Next
+            '    _IPXVersion = jsonObj.Item(jsonObj.Keys(0).ToString)
+            'Else
+            '    'cas IPX800 V3
+            '    adrs = _urlIPX & "api/xdevices.json?cmd=10"
+            '    WriteLog("DBG: " & "GET_VALUES Url: " & adrs)
+            '    responsebody = client.DownloadString(adrs)
+            '    While client.IsBusy
+            '    End While
+            '    WriteLog("DBG: GetValue inputs : " & responsebody.ToString)
+            '    jsonObj = (Newtonsoft.Json.JsonConvert.DeserializeObject(Of Dictionary(Of String, String))(responsebody))
+            '    For numberkey = 0 To jsonObj.Count - 1
+            '        If Not ValueIPX.Contains(jsonObj.Keys(numberkey).ToString) Then
+            '            ValueIPX.Add(jsonObj.Item(jsonObj.Keys(numberkey).ToString), jsonObj.Keys(numberkey).ToString)
+            '        End If
+            '        WriteLog("DBG: GetValue " & jsonObj.Keys(numberkey).ToString & " , " & ValueIPX.Item(ValueIPX.Count))
+            '    Next
+            '    _IPXVersion = jsonObj.Item(jsonObj.Keys(0).ToString)
+
+            '    adrs = _urlIPX & "api/xdevices.json?cmd=20"
+            '    WriteLog("DBG: " & "GET_VALUES Url: " & adrs)
+            '    responsebody = client.DownloadString(adrs)
+            '    While client.IsBusy
+            '    End While
+            '    WriteLog("DBG: GetValue inputs : " & responsebody.ToString)
+            '    jsonObj = Newtonsoft.Json.JsonConvert.DeserializeObject(Of Dictionary(Of String, String))(responsebody)
+            '    For numberkey = 1 To jsonObj.Count - 1
+            '        If Not ValueIPX.Contains(jsonObj.Keys(numberkey).ToString) Then
+            '            ValueIPX.Add(jsonObj.Item(jsonObj.Keys(numberkey).ToString), jsonObj.Keys(numberkey).ToString)
+            '        End If
+            '        WriteLog("DBG: GetValue " & jsonObj.Keys(numberkey).ToString & " , " & ValueIPX.Item(ValueIPX.Count))
+            '    Next
+
+            '    adrs = _urlIPX & "api/xdevices.json?cmd=30"
+            '    WriteLog("DBG: " & "GET_VALUES Url: " & adrs)
+            '    responsebody = client.DownloadString(adrs)
+            '    While client.IsBusy
+            '    End While
+            '    WriteLog("DBG: GetValue inputs : " & responsebody.ToString)
+            '    jsonObj = Newtonsoft.Json.JsonConvert.DeserializeObject(Of Dictionary(Of String, String))(responsebody)
+            '    For numberkey = 1 To jsonObj.Count - 1
+            '        If Not ValueIPX.Contains(jsonObj.Keys(numberkey).ToString) Then
+            '            ValueIPX.Add(jsonObj.Item(jsonObj.Keys(numberkey).ToString), jsonObj.Keys(numberkey).ToString)
+            '        End If
+            '        WriteLog("DBG: GetValue " & jsonObj.Keys(numberkey).ToString & " , " & ValueIPX.Item(ValueIPX.Count))
+            '    Next
+
+            '    adrs = _urlIPX & "api/xdevices.json?cmd=40"
+            '    WriteLog("DBG: " & "GET_VALUES Url: " & adrs)
+            '    responsebody = client.DownloadString(adrs)
+            '    While client.IsBusy
+            '    End While
+            '    WriteLog("DBG: GetValue inputs : " & responsebody.ToString)
+            '    jsonObj = Newtonsoft.Json.JsonConvert.DeserializeObject(Of Dictionary(Of String, String))(responsebody)
+            '    For numberkey = 1 To jsonObj.Count - 1
+            '        If Not ValueIPX.Contains(jsonObj.Keys(numberkey).ToString) Then
+            '            ValueIPX.Add(jsonObj.Item(jsonObj.Keys(numberkey).ToString), jsonObj.Keys(numberkey).ToString)
+            '        End If
+            '        WriteLog("DBG: GetValue " & jsonObj.Keys(numberkey).ToString & " , " & ValueIPX.Item(ValueIPX.Count))
+            '    Next
+            'End If
+            'If ValueIPX.Count < 89 Then
+            '    WriteLog("DBG: GetValue effectué, " & ValueIPX.Count & " données récupérées")
+            '    WriteLog("DBG: GetValue, le temps du refresh du driver est peut être trop faible")
+            'End If
+            '_UpdateInProcess = False
+        Catch ex As Exception
+            WriteLog("ERR: " & "GET_VALUES Url: " & adrs)
+            WriteLog("ERR: " & ex.Message)
+        End Try
+    End Sub
     Private Sub WriteLog(ByVal message As String)
         Try
             'utilise la fonction de base pour loguer un event
