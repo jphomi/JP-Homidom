@@ -756,16 +756,19 @@ Public Class Driver_ZWave
                                 End If
                                 WriteLog("DBG: " & Me.Nom & " ExecuteCommand, Passage par la commande SetList ")
 
-                            Case "SETNEWVAL"
-                                '     Dim ValueTemp As ZWValueID = Nothing
-                                '     Dim ParaAdr2 = Split(MyDevice.Adresse2, ":")
-                                '     NodeTemp = GetNode(m_homeId, adr1)
-                                '     ValueTemp = GetValeur(NodeTemp, Trim(ParaAdr2(0)), Trim(ParaAdr2(1)))
-                                '   If (ValueTemp.GetType() = 1 Or ValueTemp.GetType() = 2 Or ValueTemp.GetType() = 3) Then        ' Uniquement Type Numérique
-                                Write(MyDevice, "SETNEWVAL", Param(0))
-                                '        Else
-                                '        WriteLog("ERR: " & Me.Nom & " ExecuteCommand, Parametre " & Param(0) & " erreur : Uniquement pour type Byte, Integer , Decimal " & NodeTemp.ID)
-                                '        End If
+                            Case "SETPOINT"
+                                Write(MyDevice, "SETPOINT", Param(0))
+
+                                '  Case "SETNEWVAL"
+                                '  '     Dim ValueTemp As ZWValueID = Nothing
+                                '  '     Dim ParaAdr2 = Split(MyDevice.Adresse2, ":")
+                                '   '     NodeTemp = GetNode(m_homeId, adr1)
+                                '   '     ValueTemp = GetValeur(NodeTemp, Trim(ParaAdr2(0)), Trim(ParaAdr2(1)))
+                                '   '   If (ValueTemp.GetType() = 1 Or ValueTemp.GetType() = 2 Or ValueTemp.GetType() = 3) Then        ' Uniquement Type Numérique
+                                '    Write(MyDevice, "SETNEWVAL", Param(0))
+                                '    '        Else
+                                '    '        WriteLog("ERR: " & Me.Nom & " ExecuteCommand, Parametre " & Param(0) & " erreur : Uniquement pour type Byte, Integer , Decimal " & NodeTemp.ID)
+                                '    '        End If
                             Case "RED"
                                 Write(MyDevice, "RED", Param(0))
                             Case "GREEN"
@@ -1160,7 +1163,8 @@ Public Class Driver_ZWave
                                         End If
                                     End If
 
-                                Case (UCase(Commande) = "SETNEWVAL" Or UCase(Commande) = "RED" Or UCase(Commande) = "GREEN" Or UCase(Commande) = "BLUE")  'Ecrire une valeur vers le device physique
+                                    '                                Case (UCase(Commande) = "SETNEWVAL" Or UCase(Commande) = "RED" Or UCase(Commande) = "GREEN" Or UCase(Commande) = "BLUE")  'Ecrire une valeur vers le device physique
+                                Case (UCase(Commande) = "SETPOINT" Or UCase(Commande) = "RED" Or UCase(Commande) = "GREEN" Or UCase(Commande) = "BLUE")  'Ecrire une valeur vers le device physique
                                     If Not IsNothing(Parametre1) Then
                                         Dim ValDimmer As Single
                                         If IsNumeric(Parametre1) Then ValDimmer = Parametre1
@@ -1222,7 +1226,7 @@ Public Class Driver_ZWave
                             texteCommande = UCase(Commande)
 
                             Select Case UCase(Commande)
-                                Case "SETNEWVAL"     'Ecrire une valeur vers le device physique
+                                Case "SETPOINT"     'Ecrire une valeur vers le device physique
                                     If Not (IsNothing(Parametre1)) Then
                                         Dim ValDimmer As Single
                                         If IsNumeric(Parametre1) Then ValDimmer = Parametre1
@@ -1267,22 +1271,68 @@ Public Class Driver_ZWave
                                             End Select
                                         End If
                                     End If
+                             'Case "SETPOINT"     'Ecrire une valeur vers le device Thermostat
+                            '    If Not (IsNothing(Parametre1)) Then
+
+                            '        Dim ValDimmer As Single = Parametre1
+                            '        texteCommande = texteCommande & " avec valeur = " & Val(Parametre1) & " - " & ValDimmer
+                            '        If IsMultiLevel Then
+                            '            m_manager.SetValue(ValueTemp, ValDimmer)
+                            '        Else
+                            '            m_manager.SetNodeLevel(m_homeId, NodeTemp.ID, CByte(ValDimmer))
+                            '        End If
+                            '    End If
+
+                                    'Case "SETNEWVAL"     'Ecrire une valeur vers le device physique
+                                    '    If Not (IsNothing(Parametre1)) Then
+                                    '        Dim ValDimmer As Single
+                                    '        If IsNumeric(Parametre1) Then ValDimmer = Parametre1
+                                    '        Select Case True  ' gestion des modes de chauffage
+                                    '            Case (UCase(Parametre1) = "CONFORT" Or UCase(Parametre1) = "CONF")
+                                    '                ValDimmer = 95
+                                    '            Case (UCase(Parametre1) = "CONFORT-1" Or UCase(Parametre1) = "CONF-1")
+                                    '                ValDimmer = 45
+                                    '            Case (UCase(Parametre1) = "CONFORT-2" Or UCase(Parametre1) = "CONF-2")
+                                    '                ValDimmer = 35
+                                    '            Case (UCase(Parametre1) = "ECO" Or UCase(Parametre1) = "EC")
+                                    '                ValDimmer = 25
+                                    '            Case (UCase(Parametre1) = "HORSGEL" Or UCase(Parametre1) = "HG")
+                                    '                ValDimmer = 15
+                                    '            Case UCase(Parametre1) = "ARRET"
+                                    '                ValDimmer = 5
+                                    '        End Select
+                                    '        If InStr(Objet.Adresse2, "Wake-up Interval:") > 0 Then
+                                    '            If ValDimmer < 60 Then    'Pour Wake Up Interval
+                                    '                ValDimmer = 60
+                                    '            ElseIf ValDimmer > 86400 Then
+                                    '                ValDimmer = 86400
+                                    '            End If
+                                    '        End If
+                                    '        texteCommande = texteCommande & " avec valeur = " & ValDimmer
+
+                                    '        If IsMultiLevel Then
+                                    '            Select Case True
+                                    '                Case InStr(Objet.Adresse2, "Wake-up Interval:") > 0
+                                    '                    m_manager.SetValue(ValueTemp, CInt(ValDimmer))
+                                    '                Case InStr(Objet.Adresse2, "Heating 1:") > 0
+                                    '                    m_manager.SetValue(ValueTemp, CInt(ValDimmer))
+                                    '                Case InStr(Objet.Adresse2, "Basic:") > 0
+                                    '                    m_manager.SetValue(ValueTemp, CByte(ValDimmer))
+                                    '                Case InStr(Objet.Adresse2, "Cooling 1:") > 0
+                                    '                    m_manager.SetValue(ValueTemp, CInt(ValDimmer))
+                                    '                Case InStr(Objet.Adresse2, "Dry Air:") > 0
+                                    '                    m_manager.SetValue(ValueTemp, CInt(ValDimmer))
+                                    '                Case InStr(Objet.Adresse2, "Auto Changeover:") > 0
+                                    '                Case Else
+                                    '                    m_manager.SetValue(ValueTemp, ValDimmer)
+                                    '            End Select
+                                    '        End If
+                                    '    End If
                             End Select
                         Case Else
                             WriteLog("ERR: " & "Write, Erreur: Le type " & Objet.Type.ToString & " à l'adresse " & Objet.Adresse1 & " n'est pas compatible")
                     End Select
                 End If
-                'Case "SETPOINT"     'Ecrire une valeur vers le device Thermostat
-                '    If Not (IsNothing(Parametre1)) Then
-
-                '        Dim ValDimmer As Single = Parametre1
-                '        texteCommande = texteCommande & " avec valeur = " & Val(Parametre1) & " - " & ValDimmer
-                '        If IsMultiLevel Then
-                '            m_manager.SetValue(ValueTemp, ValDimmer)
-                '        Else
-                '            m_manager.SetNodeLevel(m_homeId, NodeTemp.ID, CByte(ValDimmer))
-                '        End If
-                '    End If
             Catch ex As Exception
                 WriteLog("ERR: " & "Write, Exception : " & ex.Message)
             End Try
@@ -1413,7 +1463,8 @@ Public Class Driver_ZWave
                 Add_ParamAvance("GetConfig", "Permet d'avoir la configuration du réseau ZWave au paramétrage (True/False)", True)
 
                 'ajout des commandes avancées pour les devices
-                Add_DeviceCommande("SetNewVal", "Nouvelle valeur", 1)
+                Add_DeviceCommande("SetPoint", "Nouvelle consigne", 1)
+                '                Add_DeviceCommande("SetNewVal", "Nouvelle valeur", 1)
                 Add_DeviceCommande("ALL_LIGHT_ON", "", 0)
                 Add_DeviceCommande("ALL_LIGHT_OFF", "", 0)
                 Add_DeviceCommande("SetName", "Nom du composant", 0)
