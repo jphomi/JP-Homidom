@@ -2403,7 +2403,11 @@ Public Class uWidgetEmpty
     Private Function GetStatusPicture(ByVal Filename As String, ByVal Value As Object) As String
         Try
             Dim _file As String = Filename.ToLower
-            If _file.EndsWith("-defaut.png") = True Or _file.Contains("composant_") = True Then
+            If Trim(_file) = "" Then
+                _file = _dev.Picture
+            End If
+
+            If (_file.EndsWith("-defaut.png") = True) Or (_file.Contains("composant_") = True) Then
                 ' Lorsque l'utilisateur n'a pas modifié l'image par défaut automatiquement
                 ' générée sur le serveur à la création du device, on sélectionne l'image à afficher
                 ' sur le widget client en sélectionnant une image reflétant la valeur ou l'état du device
@@ -2419,23 +2423,28 @@ Public Class uWidgetEmpty
                     Case HoMIDom.HoMIDom.Device.ListeDevices.BAROMETRE
                         GetStatusPicture = _MonRepertoire & "\Images\Devices\barometre-defaut.png"
                     Case HoMIDom.HoMIDom.Device.ListeDevices.BATTERIE
-                        If TypeOf Value Is Boolean Then
-                            If Value = True Then GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-100.png" Else GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-0.png"
-                        ElseIf IsNumeric(Value) Then 'TypeOf Value Is Integer Or TypeOf Value Is Long Or TypeOf Value Is Single Or TypeOf Value Is Double Then
-                            If CSng(Value) > 80 Then
-                                GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-100.png"
-                            ElseIf CSng(Value) > 60 Then
-                                GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-75.png"
-                            ElseIf CSng(Value) > 40 Then
-                                GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-50.png"
-                            ElseIf CSng(Value) > 20 Then
-                                GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-25.png"
-                            Else
-                                GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-0.png"
-                            End If
-                        Else
-                            If STRGS.UCase(Value) = "LOW" Or STRGS.UCase(Value) = "0%" Then GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-0.png" Else GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-100.png"
-                        End If
+                        Select Case True
+                            Case TypeOf Value Is Boolean
+                                'If TypeOf Value Is Boolean Then
+                                If Value = True Then GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-100.png" Else GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-0.png"
+                                '  ElseIf IsNumeric(Value) Then 'TypeOf Value Is Integer Or TypeOf Value Is Long Or TypeOf Value Is Single Or TypeOf Value Is Double Then
+                            Case IsNumeric(Value)
+                                Select Case True
+                                    Case CSng(Value) > 80
+                                        GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-100.png"
+                                    Case CSng(Value) > 60
+                                        GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-75.png"
+                                    Case CSng(Value) > 40
+                                        GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-50.png"
+                                    Case CSng(Value) > 20
+                                        GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-25.png"
+                                    Case Else
+                                        GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-75.png"
+                                        '   End If
+                                End Select
+                            Case Else
+                                If STRGS.UCase(Value) = "LOW" Or STRGS.UCase(Value) = "0%" Then GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-0.png" Else GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-100.png"
+                        End Select
 
                     Case HoMIDom.HoMIDom.Device.ListeDevices.COMPTEUR
                         GetStatusPicture = _MonRepertoire & "\Images\Devices\compteur-defaut.png"
@@ -2522,7 +2531,13 @@ Public Class uWidgetEmpty
                     Case Else
                         GetStatusPicture = Filename
                 End Select
-            ElseIf _file.Contains("_on") = True Or _file.Contains("_off") = True Then
+            Else
+                'par défaut on charge le nom de l'image
+                GetStatusPicture = _file ' _dev.Picture ' _file
+            End If
+
+
+            If (_file.Contains("_on") = True) Or (_file.Contains("_off") = True) Then
                 ' On recherche s'il existe des images de type double état (ON/OFF) et si oui:
                 ' - affiche l 'image xxxx_on.jpg si la valeur numérique est différent de zéro (ou False)
                 ' - affiche l 'image xxxx_off.jpg si la valeur numérique est de zéro (ou False)
@@ -2531,9 +2546,6 @@ Public Class uWidgetEmpty
                 Else
                     GetStatusPicture = _file.Replace("_off", "_on")
                 End If
-            Else
-                ' Lorsqu'il y a une autre image, on la charge simplement
-                GetStatusPicture = _file
             End If
 
             If _dev.Name.ToUpper = "HOMI_JOUR" Then
