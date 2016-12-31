@@ -10249,18 +10249,9 @@ Namespace HoMIDom
                 If String.IsNullOrEmpty(Requete) = True Then
                     If System.IO.File.Exists(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt") Then
                         Dim SR As New StreamReader(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt", Encoding.GetEncoding("ISO-8859-1"))
-                        Do
-                            If SR.EndOfStream Then Exit Do
-                            Dim line As String = Trim(SR.ReadLine())
-                            If line <> "" Then
-                                If retour = "" Then
-                                    retour = retour + line
-                                Else
-                                    retour = retour + vbCrLf + line
-                                End If
-                            End If
-                        Loop
+                        retour = SR.ReadToEnd
                         retour = HtmlDecode(retour)
+
                         SR.Close()
                         SR.Dispose()
                         SR = Nothing
