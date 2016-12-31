@@ -196,7 +196,7 @@
     <Compile Include="UserControls\uMedia.xaml.vb">
       <DependentUpon>uMedia.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UserControls\UWidgetLog.xaml.vb">
+    <Compile Include="Widget\UWidgetLog.xaml.vb">
       <DependentUpon>UWidgetLog.xaml</DependentUpon>
     </Compile>
     <Compile Include="WCalendar.xaml.vb">
@@ -302,7 +302,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UserControls\UWidgetLog.xaml">
+    <Page Include="Widget\UWidgetLog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -705,7 +705,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UseGlobalSettings="True" BuildVersion_IncrementBeforeBuild="True" />
+      <UserProperties BuildVersion_IncrementBeforeBuild="True" BuildVersion_UseGlobalSettings="True" BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

@@ -533,7 +533,7 @@ Imports System.Text
             'Libellé Device
             Add_LibelleDevice("ADRESSE1", "Nom du paramètre", "", "Débit montant|Débit descendant|Protocole")
             Add_LibelleDevice("ADRESSE2", "@", "")
-            Add_LibelleDevice("REFRESH", "@", "")
+            Add_LibelleDevice("REFRESH", "Rafraichissement valeur en sec", "")
             ' Libellés Device inutiles
             Add_LibelleDevice("SOLO", "@", "")
             Add_LibelleDevice("MODELE", "@", "")

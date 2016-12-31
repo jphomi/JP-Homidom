@@ -530,11 +530,11 @@ Namespace HoMIDom
             ''' <remarks></remarks>
             Parenthese = 2
 
-            Variable = 3
-            ''' <summary>
+             ''' <summary>
             ''' Parenthèse (non utilisé)
             ''' </summary>
             ''' <remarks></remarks>
+           Variable = 3
 
         End Enum
 

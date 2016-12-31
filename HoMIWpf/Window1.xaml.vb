@@ -573,7 +573,8 @@ Class Window1
                 System.IO.Directory.CreateDirectory(System.Environment.GetFolderPath(System.Environment.SpecialFolder.CommonApplicationData) & "\HoMIWpF")
             End If
 
-            _MonRepertoireAppData = System.Environment.GetFolderPath(System.Environment.SpecialFolder.CommonApplicationData) & "\HoMIWpF"
+            '            _MonRepertoireAppData = System.Environment.CurrentDirectory 'System.Environment.GetFolderPath(System.Environment.SpecialFolder.CommonApplicationData) & "\HoMIWpF"
+
             If Not System.IO.Directory.Exists(_MonRepertoireAppData & "\Config") Then
                 System.IO.Directory.CreateDirectory(_MonRepertoireAppData & "\Config")
                 Dim oSource As DirectoryInfo = New DirectoryInfo(_MonRepertoire & "\Config")
@@ -819,6 +820,9 @@ Class Window1
 
         'Copy du fichier de config avant chargement
         Try
+            Log(TypeLog.INFO, TypeSource.CLIENT, "LoadConfig", "Répertoire application :" & _MonRepertoire)
+            Log(TypeLog.INFO, TypeSource.CLIENT, "LoadConfig", "Répertoire des données :" & _MonRepertoireAppData)
+
             If SaveDiffBackup = False Then
                 If File.Exists(Fichier.Replace(".xml", ".bak")) = True Then File.Delete(Fichier.Replace(".xml", ".bak"))
             End If
@@ -2816,6 +2820,7 @@ Class Window1
             elmt.Visibility = Windows.Visibility.Visible
             elmt.ColorBackGround = New SolidColorBrush(Color.FromArgb(127, 80, 80, 80))
             elmt.TailleStatus = 20
+
             _ListElement.Add(elmt)
 
             elmt.IsHitTestVisible = True 'True:bouge pas False:Bouge
@@ -3264,11 +3269,9 @@ Class Window1
 
 #Region "Menu"
 
-    Private Sub ViewLog_Click(ByVal sender As System.Object, ByVal e As System.Windows.RoutedEventArgs) Handles ViewLogSrv.Click ',ViewLogClient.Click
+    Private Sub ViewLog_Click(ByVal sender As System.Object, ByVal e As System.Windows.RoutedEventArgs) Handles ViewLogSrv.Click, ViewLogClient.Click
         Try
             Me.Cursor = Cursors.Wait
-
-
 
             ChkMove.Visibility = Windows.Visibility.Collapsed
             ChkEdit.Visibility = Windows.Visibility.Collapsed
