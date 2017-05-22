@@ -97,7 +97,22 @@ Driver_Zwave
 </member><member name="M:Driver_Zwave.Driver_ZWave.Driver_ZWave.SoftReset">
 	<summary>Reset le controleur Z-Wave sans effacer les parametres de configuration, soft reset </summary>
 	<remarks></remarks>
+</member><member name="M:Driver_Zwave.Driver_ZWave.Driver_ZWave.SauverConfigZwave">
+	<summary>
+ Sauve la config du réseau zwave
+ </summary>
+	<remarks></remarks>
 </member><member name="M:Driver_Zwave.Driver_ZWave.Driver_ZWave.CheckStateNode">
+	<summary>
+ Place le controller en mode "inclusion"
+ </summary>
+	<remarks></remarks>
+</member><member name="M:Driver_Zwave.Driver_ZWave.Driver_ZWave.ReplaceFailNode(System.Byte,System.Boolean)">
+	<summary>
+ Place le controller en mode "inclusion"
+ </summary>
+	<remarks></remarks>
+</member><member name="M:Driver_Zwave.Driver_ZWave.Driver_ZWave.StartInclusionMode">
 	<summary>
  Place le controller en mode "inclusion"
  </summary>
