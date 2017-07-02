@@ -1020,22 +1020,22 @@ Class Window1
                             Case "isempty" : x.IsEmpty = list.Item(j).Attributes.Item(k).Value
                             Case "type"
                                 Select Case list.Item(j).Attributes.Item(k).Value
-                                    Case uWidgetEmpty.TypeOfWidget.Empty.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Empty
-                                    Case uWidgetEmpty.TypeOfWidget.Device.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Device
-                                    Case uWidgetEmpty.TypeOfWidget.Media.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Media
-                                    Case uWidgetEmpty.TypeOfWidget.Web.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Web
                                     Case uWidgetEmpty.TypeOfWidget.Camera.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Camera
-                                    Case uWidgetEmpty.TypeOfWidget.Volet.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Volet
+                                    Case uWidgetEmpty.TypeOfWidget.Chart.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Chart
+                                    Case uWidgetEmpty.TypeOfWidget.Device.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Device
+                                    Case uWidgetEmpty.TypeOfWidget.Empty.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Empty
+                                    Case uWidgetEmpty.TypeOfWidget.Gauge.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Gauge
+                                    Case uWidgetEmpty.TypeOfWidget.Image.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Image
+                                    Case uWidgetEmpty.TypeOfWidget.KeyPad.ToString : x.Type = uWidgetEmpty.TypeOfWidget.KeyPad
+                                    Case uWidgetEmpty.TypeOfWidget.Label.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Label
+                                    Case uWidgetEmpty.TypeOfWidget.Media.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Media
+                                    Case uWidgetEmpty.TypeOfWidget.Meteo.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Meteo
                                     Case uWidgetEmpty.TypeOfWidget.Moteur.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Moteur
                                     Case uWidgetEmpty.TypeOfWidget.Prise.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Prise
                                     Case uWidgetEmpty.TypeOfWidget.Rss.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Rss
-                                    Case uWidgetEmpty.TypeOfWidget.Meteo.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Meteo
-                                    Case uWidgetEmpty.TypeOfWidget.KeyPad.ToString : x.Type = uWidgetEmpty.TypeOfWidget.KeyPad
-                                    Case uWidgetEmpty.TypeOfWidget.Label.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Label
-                                    Case uWidgetEmpty.TypeOfWidget.Image.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Image
-                                    Case uWidgetEmpty.TypeOfWidget.Gauge.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Gauge
-                                    Case uWidgetEmpty.TypeOfWidget.Chart.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Chart
                                     Case uWidgetEmpty.TypeOfWidget.Thermostat.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Thermostat
+                                    Case uWidgetEmpty.TypeOfWidget.Volet.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Volet
+                                    Case uWidgetEmpty.TypeOfWidget.Web.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Web
                                 End Select
                             Case "caneditvalue" : x.CanEditValue = list.Item(j).Attributes.Item(k).Value
                             Case "zoneid" : x.ZoneId = list.Item(j).Attributes.Item(k).Value
@@ -3681,21 +3681,23 @@ Class Window1
             MnuMacro.Items.Clear()
             If IsConnect Then
                 For Each _mac As Macro In myService.GetAllMacros(IdSrv)
-                    Dim mnu As New MenuItem
-                    mnu.Tag = _mac.ID
-                    mnu.Header = _mac.Nom
-                    mnu.FontSize = 14
-                    mnu.Foreground = Brushes.White
-                    mnu.Height = 40
-                    mnu.Background = MnuMacro.Background
-                    Dim imagePath As String = "/HoMIWpF;component/Images/Macro_64.png"
-                    Dim icon As Image = New Image
-                    icon.Width = 32
-                    icon.Height = 32
-                    icon.Source = New BitmapImage(New Uri(imagePath, UriKind.RelativeOrAbsolute))
-                    mnu.Icon = icon
-                    AddHandler mnu.Click, AddressOf MnuExecuteMacro
-                    MnuMacro.Items.Add(mnu)
+                    If _mac.Enable Then ' n'affiche que les macros actives
+                        Dim mnu As New MenuItem
+                        mnu.Tag = _mac.ID
+                        mnu.Header = _mac.Nom
+                        mnu.FontSize = 14
+                        mnu.Foreground = Brushes.White
+                        mnu.Height = 40
+                        mnu.Background = MnuMacro.Background
+                        Dim imagePath As String = "/HoMIWpF;component/Images/Macro_64.png"
+                        Dim icon As Image = New Image
+                        icon.Width = 32
+                        icon.Height = 32
+                        icon.Source = New BitmapImage(New Uri(imagePath, UriKind.RelativeOrAbsolute))
+                        mnu.Icon = icon
+                        AddHandler mnu.Click, AddressOf MnuExecuteMacro
+                        MnuMacro.Items.Add(mnu)
+                    End If
                 Next
             End If
             MnuMacro.UpdateLayout()
