@@ -15,7 +15,7 @@
         <Image Height="40" HorizontalAlignment="Left" Margin="5,5,0,0" Name="ImageIcon" Stretch="Fill" VerticalAlignment="Top" Width="40" />
         <StackPanel Grid.Column="1" HorizontalAlignment="Left" Margin="2,0,0,0">
             <Label Name="LblSource" Content="###############" Foreground="LightGray" FontWeight="Bold" />
-                <TextBlock  Name="LblMessage" Text="##################################################################################################" Foreground="LightGray"  MaxWidth="350" TextWrapping="Wrap" />
+            <TextBlock  Name="LblMessage" Text="########################################################" Foreground="LightGray"  MaxWidth="350" TextWrapping="Wrap" />
             <Label Name="LblTime" Content="###############" Foreground="LightGray"  />
         </StackPanel>
 

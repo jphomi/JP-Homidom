@@ -273,6 +273,42 @@
                                             <Image Width="40" Height="40"  Source="/HoMIWpF;component/Images/ajouter_32.png" />
                                         </MenuItem.Icon>
                                     </MenuItem>
+                                    <MenuItem Name="NewWidgetGauge" Header="Nouveau Widget Gauge" FontSize="14" Foreground="White">
+                                        <MenuItem.Background>
+                                            <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                                                <GradientStop Color="Black" Offset="0" />
+                                                <GradientStop Color="#FF4B4B4B" Offset="0.663" />
+                                            </LinearGradientBrush>
+                                        </MenuItem.Background>
+
+                                        <MenuItem.Icon>
+                                            <Image Width="40" Height="40"  Source="/HoMIWpF;component/Images/ajouter_32.png" />
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Name="NewWidgetChart" Header="Nouveau Widget Chart" FontSize="14" Foreground="White">
+                                        <MenuItem.Background>
+                                            <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                                                <GradientStop Color="Black" Offset="0" />
+                                                <GradientStop Color="#FF4B4B4B" Offset="0.663" />
+                                            </LinearGradientBrush>
+                                        </MenuItem.Background>
+
+                                        <MenuItem.Icon>
+                                            <Image Width="40" Height="40"  Source="/HoMIWpF;component/Images/ajouter_32.png" />
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Name="NewWidgetThermostat" Header="Nouveau Widget Thermostat" FontSize="14" Foreground="White">
+                                        <MenuItem.Background>
+                                            <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                                                <GradientStop Color="Black" Offset="0" />
+                                                <GradientStop Color="#FF4B4B4B" Offset="0.663" />
+                                            </LinearGradientBrush>
+                                        </MenuItem.Background>
+
+                                        <MenuItem.Icon>
+                                            <Image Width="40" Height="40"  Source="/HoMIWpF;component/Images/ajouter_32.png" />
+                                        </MenuItem.Icon>
+                                    </MenuItem>
                                     <MenuItem Name="NewWidgetCamera" Header="Nouveau Widget Camera" FontSize="14" Foreground="White">
                                         <MenuItem.Background>
                                             <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
@@ -347,7 +383,7 @@
                                     <MenuItem.Icon>
                                     <Image Width="40" Height="40" Source="/HoMIWpF;component/Images/Log_32.png" />
                                 </MenuItem.Icon>
-                                    <MenuItem Name="ViewLogClient" Header="Client" FontSize="12" Tag="1" Foreground="White" >
+                                    <!--<MenuItem Name="ViewLogClient" Header="Client" FontSize="12" Tag="1" Foreground="White" >
                                         <MenuItem.Background>
                                             <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
                                                 <GradientStop Color="Black" Offset="0" />
@@ -358,7 +394,7 @@
                                         <MenuItem.Icon>
                                         <Image Width="40" Height="40" Source="/HoMIWpF;component/Images/pc.png" />
                                     </MenuItem.Icon>
-                                </MenuItem>
+                                </MenuItem>-->
                                     <MenuItem Name="ViewLogSrv" Header="Serveur" FontSize="12" Tag="0" Foreground="White">
                                         <MenuItem.Background>
                                             <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
@@ -372,7 +408,7 @@
                                     </MenuItem.Icon>
                                 </MenuItem>
                             </MenuItem>
-                                <MenuItem Name="ViewCalendar" Header="Calendrier" FontSize="12" Foreground="White" Visibility="Collapsed">
+                                <MenuItem Name="ViewCalendar" Header="Calendrier" FontSize="12" Foreground="White">
                                     <MenuItem.Background>
                                         <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
                                             <GradientStop Color="Black" Offset="0" />

@@ -120,7 +120,7 @@ Class Window1
             Return _ShowTimeFromServer
         End Get
         Set(ByVal value As Boolean)
-            _ShowTimeFromServer = False
+            _ShowTimeFromServer = value
         End Set
     End Property
 
@@ -573,8 +573,7 @@ Class Window1
                 System.IO.Directory.CreateDirectory(System.Environment.GetFolderPath(System.Environment.SpecialFolder.CommonApplicationData) & "\HoMIWpF")
             End If
 
-            '            _MonRepertoireAppData = System.Environment.CurrentDirectory 'System.Environment.GetFolderPath(System.Environment.SpecialFolder.CommonApplicationData) & "\HoMIWpF"
-
+            _MonRepertoireAppData = System.Environment.GetFolderPath(System.Environment.SpecialFolder.CommonApplicationData) & "\HoMIWpF"
             If Not System.IO.Directory.Exists(_MonRepertoireAppData & "\Config") Then
                 System.IO.Directory.CreateDirectory(_MonRepertoireAppData & "\Config")
                 Dim oSource As DirectoryInfo = New DirectoryInfo(_MonRepertoire & "\Config")
@@ -820,9 +819,6 @@ Class Window1
 
         'Copy du fichier de config avant chargement
         Try
-            Log(TypeLog.INFO, TypeSource.CLIENT, "LoadConfig", "Répertoire application :" & _MonRepertoire)
-            Log(TypeLog.INFO, TypeSource.CLIENT, "LoadConfig", "Répertoire des données :" & _MonRepertoireAppData)
-
             If SaveDiffBackup = False Then
                 If File.Exists(Fichier.Replace(".xml", ".bak")) = True Then File.Delete(Fichier.Replace(".xml", ".bak"))
             End If
@@ -1037,6 +1033,9 @@ Class Window1
                                     Case uWidgetEmpty.TypeOfWidget.KeyPad.ToString : x.Type = uWidgetEmpty.TypeOfWidget.KeyPad
                                     Case uWidgetEmpty.TypeOfWidget.Label.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Label
                                     Case uWidgetEmpty.TypeOfWidget.Image.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Image
+                                    Case uWidgetEmpty.TypeOfWidget.Gauge.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Gauge
+                                    Case uWidgetEmpty.TypeOfWidget.Chart.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Chart
+                                    Case uWidgetEmpty.TypeOfWidget.Thermostat.ToString : x.Type = uWidgetEmpty.TypeOfWidget.Thermostat
                                 End Select
                             Case "caneditvalue" : x.CanEditValue = list.Item(j).Attributes.Item(k).Value
                             Case "zoneid" : x.ZoneId = list.Item(j).Attributes.Item(k).Value
@@ -1102,6 +1101,9 @@ Class Window1
                             Case "clearafterenter" : x.ClearAfterEnter = list.Item(j).Attributes.Item(k).Value
                             Case "showclavier" : x.ShowClavier = list.Item(j).Attributes.Item(k).Value
                             Case "httprefresh" : x.HttpRefresh = list.Item(j).Attributes.Item(k).Value
+                            Case "periode" : x.Periode = list.Item(j).Attributes.Item(k).Value
+                            Case "typechart" : x.TypeChart = list.Item(j).Attributes.Item(k).Value
+                            Case "thermostat" : x.IDKeyPad = list.Item(j).Attributes.Item(k).Value
                         End Select
                     Next
 
@@ -1546,6 +1548,27 @@ Class Window1
                         writer.WriteValue(_ListElement.Item(i).ShowPassWord)
                         writer.WriteEndAttribute()
                     End If
+                    If _ListElement.Item(i).Type = uWidgetEmpty.TypeOfWidget.Gauge Then
+                        writer.WriteStartAttribute("idkeypad")
+                        writer.WriteValue(_ListElement.Item(i).IDKeyPad)
+                        writer.WriteEndAttribute()
+                    End If
+                    If _ListElement.Item(i).Type = uWidgetEmpty.TypeOfWidget.Chart Then
+                        writer.WriteStartAttribute("idkeypad")
+                        writer.WriteValue(_ListElement.Item(i).IDKeyPad)
+                        writer.WriteEndAttribute()
+                        writer.WriteStartAttribute("periode")
+                        writer.WriteValue(_ListElement.Item(i).Periode)
+                        writer.WriteEndAttribute()
+                        writer.WriteStartAttribute("typechart")
+                        writer.WriteValue(_ListElement.Item(i).TypeChart)
+                        writer.WriteEndAttribute()
+                    End If
+                    If _ListElement.Item(i).Type = uWidgetEmpty.TypeOfWidget.Thermostat Then
+                        writer.WriteStartAttribute("thermostat")
+                        writer.WriteValue(_ListElement.Item(i).IDKeyPad)
+                        writer.WriteEndAttribute()
+                    End If
                     writer.WriteStartAttribute("httprefresh")
                     writer.WriteValue(_ListElement.Item(i).HttpRefresh)
                     writer.WriteEndAttribute()
@@ -1820,9 +1843,9 @@ Class Window1
         Try
             LblTime.Content = Now.ToLongDateString & " "
             If IsConnect And ShowTimeFromServer Then
-                LblTime.Content &= myService.GetTime
+                LblTime.Content &= myService.GetTime & " / Serveur"
             Else
-                LblTime.Content &= Now.ToLongTimeString
+                LblTime.Content &= Now.ToLongTimeString & "/ Local"
             End If
 
             If _AsTimeOutPage Then
@@ -2376,6 +2399,8 @@ Class Window1
                     y.ShowClavier = _ListElement.Item(i).ShowClavier
                     y.Min = _ListElement.Item(i).Min
                     y.Max = _ListElement.Item(i).Max
+                    y.Periode = _ListElement.Item(i).Periode
+                    y.TypeChart = _ListElement.Item(i).TypeChart
 
                     AddHandler y.ShowZone, AddressOf ElementShowZone
                     AddHandler y.ShowTemplate, AddressOf ShowTemplate
@@ -2820,7 +2845,6 @@ Class Window1
             elmt.Visibility = Windows.Visibility.Visible
             elmt.ColorBackGround = New SolidColorBrush(Color.FromArgb(127, 80, 80, 80))
             elmt.TailleStatus = 20
-
             _ListElement.Add(elmt)
 
             elmt.IsHitTestVisible = True 'True:bouge pas False:Bouge
@@ -3006,6 +3030,135 @@ Class Window1
         End Try
     End Sub
 
+    Private Sub NewWidgetGauge_Click(ByVal sender As System.Object, ByVal e As System.Windows.RoutedEventArgs) Handles NewWidgetGauge.Click
+        Try
+            ' Remettre à zéro les modes édition + déplacement
+            ChkMove.IsChecked = False
+            ChkEdit.IsChecked = False
+            Deplacement_Click(Me, e)
+
+            'Ajouter un nouveau Control
+            Dim x As New ContentControl
+            x.Width = 214
+            x.Height = 305
+            x.Style = mybuttonstyle
+            x.Tag = True
+            x.Uid = System.Guid.NewGuid.ToString()
+
+            'Ajoute l'élément dans la liste
+            Dim elmt As New uWidgetEmpty
+            elmt.Show = True
+            elmt.Uid = x.Uid
+            elmt.ZoneId = _CurrentIdZone
+            elmt.Width = 214
+            elmt.Height = 287
+            elmt.Rotation = 0
+            elmt.X = 300
+            elmt.Y = 300
+            elmt.IsEmpty = True
+            elmt.Type = uWidgetEmpty.TypeOfWidget.Gauge
+            elmt.ShowStatus = False
+            elmt.Etiquette = "Widget " & Canvas1.Children.Count + 1
+            elmt.ColorBackGround = New SolidColorBrush(Color.FromArgb(255, 0, 0, 0))
+            elmt.Visibility = Windows.Visibility.Visible
+            _ListElement.Add(elmt)
+
+            elmt.IsHitTestVisible = True 'True:bouge pas False:Bouge
+            x.Content = elmt
+            Canvas1.Children.Add(x)
+            Canvas.SetLeft(x, 300)
+            Canvas.SetTop(x, 300)
+        Catch ex As Exception
+            AfficheMessageAndLog(FctLog.TypeLog.ERREUR, "Erreur NewWidgetGauge: " & ex.Message, "Erreur", "NewWidgetGauge")
+        End Try
+    End Sub
+
+    Private Sub NewWidgetChart_Click(ByVal sender As System.Object, ByVal e As System.Windows.RoutedEventArgs) Handles NewWidgetChart.Click
+        Try
+            ' Remettre à zéro les modes édition + déplacement
+            ChkMove.IsChecked = False
+            ChkEdit.IsChecked = False
+            Deplacement_Click(Me, e)
+
+            'Ajouter un nouveau Control
+            Dim x As New ContentControl
+            x.Width = 214
+            x.Height = 305
+            x.Style = mybuttonstyle
+            x.Tag = True
+            x.Uid = System.Guid.NewGuid.ToString()
+
+            'Ajoute l'élément dans la liste
+            Dim elmt As New uWidgetEmpty
+            elmt.Show = True
+            elmt.Uid = x.Uid
+            elmt.ZoneId = _CurrentIdZone
+            elmt.Width = 214
+            elmt.Height = 287
+            elmt.Rotation = 0
+            elmt.X = 300
+            elmt.Y = 300
+            elmt.IsEmpty = True
+            elmt.Type = uWidgetEmpty.TypeOfWidget.Chart
+            elmt.ShowStatus = False
+            elmt.Etiquette = "Widget " & Canvas1.Children.Count + 1
+            elmt.ColorBackGround = New SolidColorBrush(Color.FromArgb(255, 0, 0, 0))
+            elmt.Visibility = Windows.Visibility.Visible
+            _ListElement.Add(elmt)
+
+            elmt.IsHitTestVisible = True 'True:bouge pas False:Bouge
+            x.Content = elmt
+            Canvas1.Children.Add(x)
+            Canvas.SetLeft(x, 300)
+            Canvas.SetTop(x, 300)
+        Catch ex As Exception
+            AfficheMessageAndLog(FctLog.TypeLog.ERREUR, "Erreur NewWidgetGauge: " & ex.Message, "Erreur", "NewWidgetGauge")
+        End Try
+    End Sub
+
+    Private Sub NewWidgetThermostat_Click(ByVal sender As System.Object, ByVal e As System.Windows.RoutedEventArgs) Handles NewWidgetThermostat.Click
+        Try
+            ' Remettre à zéro les modes édition + déplacement
+            ChkMove.IsChecked = False
+            ChkEdit.IsChecked = False
+            Deplacement_Click(Me, e)
+
+            'Ajouter un nouveau Control
+            Dim x As New ContentControl
+            x.Width = 130
+            x.Height = 220
+            x.Style = mybuttonstyle
+            x.Tag = True
+            x.Uid = System.Guid.NewGuid.ToString()
+
+            'Ajoute l'élément dans la liste
+            Dim elmt As New uWidgetEmpty
+            elmt.Show = True
+            elmt.Uid = x.Uid
+            elmt.ZoneId = _CurrentIdZone
+            elmt.Width = 130
+            elmt.Height = 220
+            elmt.Rotation = 0
+            elmt.X = 300
+            elmt.Y = 300
+            elmt.IsEmpty = True
+            elmt.Type = uWidgetEmpty.TypeOfWidget.Thermostat
+            elmt.ShowStatus = False
+            elmt.Etiquette = "Widget " & Canvas1.Children.Count + 1
+            elmt.ColorBackGround = New SolidColorBrush(Color.FromArgb(255, 0, 0, 0))
+            elmt.Visibility = Windows.Visibility.Visible
+            _ListElement.Add(elmt)
+
+            elmt.IsHitTestVisible = True 'True:bouge pas False:Bouge
+            x.Content = elmt
+            Canvas1.Children.Add(x)
+            Canvas.SetLeft(x, 300)
+            Canvas.SetTop(x, 300)
+        Catch ex As Exception
+            AfficheMessageAndLog(FctLog.TypeLog.ERREUR, "Erreur NewWidgetThermostat: " & ex.Message, "Erreur", "NewWidgetThermostat")
+        End Try
+    End Sub
+
     Private Sub NewWidgetLabel_Click(ByVal sender As System.Object, ByVal e As System.Windows.RoutedEventArgs) Handles NewWidgetLabel.Click
         Try
             ' Remettre à zéro les modes édition + déplacement
@@ -3093,7 +3246,6 @@ Class Window1
             AfficheMessageAndLog(FctLog.TypeLog.ERREUR, "Erreur NewWidgetLabel_Click: " & ex.Message, "Erreur", "NewWidgetLabel_Click")
         End Try
     End Sub
-
 
     Private Sub NewWidgetCamera_Click(ByVal sender As System.Object, ByVal e As System.Windows.RoutedEventArgs) Handles NewWidgetCamera.Click
         Try
@@ -3269,9 +3421,11 @@ Class Window1
 
 #Region "Menu"
 
-    Private Sub ViewLog_Click(ByVal sender As System.Object, ByVal e As System.Windows.RoutedEventArgs) Handles ViewLogSrv.Click, ViewLogClient.Click
+    Private Sub ViewLog_Click(ByVal sender As System.Object, ByVal e As System.Windows.RoutedEventArgs) Handles ViewLogSrv.Click ',ViewLogClient.Click
         Try
             Me.Cursor = Cursors.Wait
+
+
 
             ChkMove.Visibility = Windows.Visibility.Collapsed
             ChkEdit.Visibility = Windows.Visibility.Collapsed

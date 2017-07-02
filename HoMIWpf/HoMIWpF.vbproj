@@ -80,12 +80,32 @@
     <ApplicationIcon>icone.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="De.TorstenMandelkow.MetroChart">
+      <HintPath>..\RELEASE_HoMIWpF\De.TorstenMandelkow.MetroChart.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="HoMIDom, Version=1.2.28.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\RELEASE\HoMIDom.dll</HintPath>
+    </Reference>
     <Reference Include="Jarloo.Calendar">
       <HintPath>..\RELEASE_HoMIWpF\Jarloo.Calendar.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Microsoft.AspNet.SignalR.Client">
-      <HintPath>..\RELEASE_HoMIWpF\Microsoft.AspNet.SignalR.Client.dll</HintPath>
+    <Reference Include="Livecharts, Version=0.8.0.0, Culture=neutral, PublicKeyToken=c5935629d38af058, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\RELEASE_HoMIWpF\Livecharts.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="LiveCharts.Wpf, Version=0.8.0.0, Culture=neutral, PublicKeyToken=3b585c2a5f1a92c1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\RELEASE_HoMIWpF\LiveCharts.Wpf.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.AspNet.SignalR.Client, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\RELEASE\Microsoft.AspNet.SignalR.Client.dll</HintPath>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
       <Private>False</Private>
     </Reference>
     <Reference Include="MjpegProcessor">
@@ -110,6 +130,11 @@
     </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Windows.Forms.DataVisualization" />
+    <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\RELEASE_HoMIWpF\System.Windows.Interactivity.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -193,10 +218,19 @@
     </Compile>
     <Compile Include="UserControls\DynamicImageButton.vb" />
     <Compile Include="UserControls\ImageButton.vb" />
+    <Compile Include="UserControls\uChart.xaml.vb">
+      <DependentUpon>uChart.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\uGauge.xaml.vb">
+      <DependentUpon>uGauge.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UserControls\uMedia.xaml.vb">
       <DependentUpon>uMedia.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Widget\UWidgetLog.xaml.vb">
+    <Compile Include="UserControls\uThermostat.xaml.vb">
+      <DependentUpon>uThermostat.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\UWidgetLog.xaml.vb">
       <DependentUpon>UWidgetLog.xaml</DependentUpon>
     </Compile>
     <Compile Include="WCalendar.xaml.vb">
@@ -298,11 +332,23 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="UserControls\uChart.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UserControls\uGauge.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="UserControls\uMedia.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Widget\UWidgetLog.xaml">
+    <Page Include="UserControls\uThermostat.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UserControls\UWidgetLog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -539,13 +585,6 @@
     <Resource Include="Images\temperature.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\HoMIDom\HoMIDom.vbproj">
-      <Project>{1F0CE8B5-5BA9-4704-8B5E-52682635F803}</Project>
-      <Name>HoMIDom</Name>
-      <Private>False</Private>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\parametres-icone-3667-128.png" />
     <Resource Include="Images\vide-icone-128.png" />
   </ItemGroup>
@@ -703,7 +742,13 @@
     <Resource Include="Images\Value_NotChange.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Images\Homidom_logo_128.png" />
+    <Resource Include="Images\bar-chart-icon-30633.png" />
+    <Resource Include="Images\calendar-day-512.png" />
+    <Resource Include="Images\calendar-month-512.png" />
+    <Resource Include="Images\Calendar-year-512.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\Thermostat.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <ProjectExtensions>

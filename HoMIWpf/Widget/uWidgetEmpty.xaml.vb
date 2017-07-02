@@ -6,6 +6,7 @@ Imports System.Windows.Media.Animation
 Imports System.IO
 Imports STRGS = Microsoft.VisualBasic.Strings
 
+
 Public Class uWidgetEmpty
     Public Enum TypeOfWidget
         Empty = 0
@@ -20,6 +21,9 @@ Public Class uWidgetEmpty
         Moteur = 9
         Image = 10
         Prise = 11
+        Gauge = 12
+        Chart = 13
+        Thermostat = 14
         Device = 99
     End Enum
 
@@ -106,6 +110,17 @@ Public Class uWidgetEmpty
 
     'Variable Widget Prise
     Dim _PRISE As uPrise = Nothing
+
+    'Variables Widget Gauge
+    Dim _Gauge As uGauge = Nothing
+
+    'Variables Chart
+    Dim _Chart As uChart = Nothing
+    Dim _Periode As Integer = 0
+    Dim _TypeChart As Integer = 0
+
+    'Variables Widget Thermostat                 
+    Dim _THERMOSTAT As uThermostat = Nothing
 
     'Variable Min/Max
     Dim _Min As Integer
@@ -474,6 +489,34 @@ Public Class uWidgetEmpty
                         ShowStatus = False
                         ShowPicture = True
                         ShowEtiquette = False
+                    Case TypeOfWidget.Gauge
+                        CanEditValue = False
+                        StkEmptyetDevice.Visibility = Windows.Visibility.Collapsed
+                        StkTool.Visibility = Windows.Visibility.Visible
+                        _Gauge = New uGauge("")
+                        If _Show = False Then Exit Property
+                        StkTool.Children.Add(_Gauge)
+                    Case TypeOfWidget.Chart
+                        CanEditValue = False
+                        StkEmptyetDevice.Visibility = Windows.Visibility.Collapsed
+                        StkTool.Visibility = Windows.Visibility.Visible
+                        _Chart = New uChart(Id)
+                        _Chart.Periode = Periode
+                        _Chart.TypeChart = TypeChart
+                        AddHandler _Chart.PeriodeChange, AddressOf PeriodeChange
+                        AddHandler _Chart.TypeChartChange, AddressOf TypeChartChange
+                        If _Show = False Then Exit Property
+                        StkTool.Children.Add(_Chart)
+
+                    Case TypeOfWidget.Thermostat
+                        CanEditValue = False
+                        StkEmptyetDevice.Visibility = Windows.Visibility.Collapsed
+                        StkTool.Visibility = Windows.Visibility.Visible
+                        _THERMOSTAT = New uThermostat("")
+                        AddHandler _THERMOSTAT.ChangeValueThermo, AddressOf ChangeValueThermo
+                        If _Show = False Then Exit Property
+                        StkTool.Children.Add(_THERMOSTAT)
+
                     Case Else
 
                 End Select
@@ -1098,6 +1141,46 @@ Public Class uWidgetEmpty
     End Property
 #End Region
 
+#Region "Property Chart"
+    Public Property Periode As Integer
+        Get
+            Return _Periode
+        End Get
+        Set(value As Integer)
+            If _Periode <> value Then
+                If _Chart IsNot Nothing Then
+                    _Chart.Periode = value
+                End If
+                _Periode = value
+                SaveWidgetToLst()
+            End If
+        End Set
+    End Property
+
+    Public Property TypeChart As Integer
+        Get
+            Return _TypeChart
+        End Get
+        Set(value As Integer)
+            If _TypeChart <> value Then
+                If _Chart IsNot Nothing Then
+                    _Chart.TypeChart = value
+                End If
+                _TypeChart = value
+                SaveWidgetToLst()
+            End If
+        End Set
+    End Property
+
+    Sub PeriodeChange(e As uChart.Periodes)
+        Periode = e
+    End Sub
+
+    Sub TypeChartChange(e As uChart.TypeCharts)
+        TypeChart = e
+    End Sub
+#End Region
+
     Public Sub New()
 
         ' Cet appel est requis par le Concepteur Windows Form.
@@ -1269,6 +1352,15 @@ Public Class uWidgetEmpty
                         If Me.Type = TypeOfWidget.Volet And _VOLET IsNot Nothing Then
                             _VOLET.Value = _dev.Value
                         End If
+                        If Me.Type = TypeOfWidget.Gauge And _Gauge IsNot Nothing Then
+                            _Gauge.Value = _dev.Value
+                        End If
+                        If Me.Type = TypeOfWidget.Chart And _Chart IsNot Nothing Then
+                            _Chart.IDDevice = _dev.ID
+                        End If
+                        If Me.Type = TypeOfWidget.Thermostat And _THERMOSTAT IsNot Nothing Then
+                            _THERMOSTAT.Value = _dev.Value
+                        End If
                         If Me.Type = TypeOfWidget.Moteur And _MOTEUR IsNot Nothing Then
                             If _dev.Value.GetType.ToString.ToUpper.Contains("BOOLEAN") Then
                                 If _dev.Value Then
@@ -1370,6 +1462,15 @@ Public Class uWidgetEmpty
                 Case TypeOfWidget.Camera
                     _Camera.Width = Me.ActualWidth
                     _Camera.Height = Me.ActualHeight
+                Case TypeOfWidget.Gauge
+                    _Gauge.Width = Me.ActualWidth
+                    _Gauge.Height = Me.ActualHeight
+                Case TypeOfWidget.Chart
+                    _Chart.Width = Me.ActualWidth
+                    _Chart.Height = Me.ActualHeight
+                Case TypeOfWidget.Thermostat
+                    _THERMOSTAT.Width = Me.ActualWidth
+                    _THERMOSTAT.Height = Me.ActualHeight - 20
                 Case TypeOfWidget.Volet
                     _VOLET.Width = Me.ActualWidth
                     _VOLET.Height = Me.ActualHeight - 30
@@ -1908,7 +2009,9 @@ Public Class uWidgetEmpty
             Dim y As New HoMIDom.HoMIDom.DeviceAction.Parametre
 
             If _dev IsNot Nothing Then
-                If _dev.Type <> HoMIDom.HoMIDom.Device.ListeDevices.VOLET Then
+                If _dev.Type = HoMIDom.HoMIDom.Device.ListeDevices.TEMPERATURECONSIGNE Then
+                    x.Nom = "SETPOINT"
+                ElseIf _dev.Type <> HoMIDom.HoMIDom.Device.ListeDevices.VOLET Then
                     x.Nom = "DIM"
                 Else
                     x.Nom = "OUVERTURE"
@@ -1983,6 +2086,45 @@ Public Class uWidgetEmpty
                     _FlagBlock = True
                     myService.ChangeValueOfDevice(IdSrv, _dev.ID, _value)
                     _FlagBlock = False
+                End If
+            End If
+
+            If StkPopup.Children.Count > 0 Then
+                If Popup1.IsOpen = True Then
+                    Popup1.IsOpen = False
+                End If
+            End If
+        Catch ex As Exception
+            AfficheMessageAndLog(FctLog.TypeLog.ERREUR, "Erreur uWidgetEmpty.ChangeValue: " & ex.Message, "Erreur", " uWidgetEmpty.ChangeValue")
+            _FlagBlock = False
+        End Try
+    End Sub
+
+    Private Sub ChangeValueThermo(ByVal Value As Integer)
+        Try
+            Dim _value As Object = Nothing
+            Dim _flag As Boolean = False
+
+            _CurrentValue = Nothing
+
+            If _dev IsNot Nothing And String.IsNullOrEmpty(Value) = False Then
+                If _dev.Type = HoMIDom.HoMIDom.Device.ListeDevices.GENERIQUEVALUE Or HoMIDom.HoMIDom.Device.ListeDevices.TEMPERATURECONSIGNE Then
+                    If IsNumeric(Value) Then
+                        _value = Value
+                        _flag = True
+                    Else
+                        MessageBox.Show("Erreur: La valeur saisie doit être numérique", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error)
+                        _flag = False
+                    End If
+                End If
+
+                If _flag = True Then
+                    _FlagBlock = True
+                    myService.ChangeValueOfDevice(IdSrv, _dev.ID, _value)
+                    _FlagBlock = False
+                    '      If _dev.Type = HoMIDom.HoMIDom.Device.ListeDevices.TEMPERATURECONSIGNE Then
+                    ValueChange(Value)
+                    ' End If
                 End If
             End If
 
@@ -2215,7 +2357,7 @@ Public Class uWidgetEmpty
                         ' sur l 'icône de la zone pour faire un refresh manuel
                         'frmMere.ShowZone(frmMere._CurrentIdZone)
                     End If
-                    X.Close()
+                    x.Close()
 
                 Catch ex As Exception
                     AfficheMessageAndLog(FctLog.TypeLog.ERREUR, "Erreur uWidgetEmpty.Stk1_MouseDown: " & ex.Message, "Erreur", " uWidgetEmpty.Stk1_MouseDown")
@@ -2294,6 +2436,19 @@ Public Class uWidgetEmpty
         End Try
     End Sub
 
+    Private Sub SaveWidgetToLst()
+        Try
+            For i As Integer = 0 To _ListElement.Count - 1
+                If _ListElement.Item(i).Uid = Me.Uid And _ListElement.Item(i).ZoneId = Me.ZoneId Then
+                    _ListElement.Item(i) = Me
+                    Exit For
+                End If
+            Next
+        Catch ex As Exception
+            AfficheMessageAndLog(FctLog.TypeLog.ERREUR, "Erreur uWidgetEmpty.SaveWidgetToLst: " & ex.ToString, "Erreur", " uWidgetEmpty.SaveWidgetToLst")
+        End Try
+    End Sub
+
     Private Sub uWidgetEmpty_SizeChanged(ByVal sender As Object, ByVal e As System.Windows.SizeChangedEventArgs) Handles Me.SizeChanged
         Try
             If _Show = False Then Exit Sub
@@ -2318,6 +2473,16 @@ Public Class uWidgetEmpty
                 Case TypeOfWidget.KeyPad
                     Exit Sub
                 Case TypeOfWidget.Label
+                    Exit Sub
+                Case TypeOfWidget.Gauge
+                    Exit Sub
+                Case TypeOfWidget.Chart
+                    _Chart.Width = Me.ActualWidth
+                    _Chart.Height = Me.ActualHeight
+
+                Case TypeOfWidget.Thermostat
+                    _THERMOSTAT.Width = Me.ActualWidth
+                    _THERMOSTAT.Height = Me.ActualHeight - 20
                     Exit Sub
             End Select
 
@@ -2394,6 +2559,9 @@ Public Class uWidgetEmpty
             _VOLET = Nothing
             _MOTEUR = Nothing
             _PRISE = Nothing
+            _Gauge = Nothing
+            _Chart = Nothing
+            _THERMOSTAT = Nothing
         Catch ex As Exception
             AfficheMessageAndLog(FctLog.TypeLog.ERREUR, "Erreur uWidgetEmpty.Unloaded: " & ex.Message, "Erreur", " uWidgetEmpty.Unloaded")
         End Try
@@ -2403,11 +2571,7 @@ Public Class uWidgetEmpty
     Private Function GetStatusPicture(ByVal Filename As String, ByVal Value As Object) As String
         Try
             Dim _file As String = Filename.ToLower
-            If Trim(_file) = "" Then
-                _file = _dev.Picture
-            End If
-
-            If (_file.EndsWith("-defaut.png") = True) Or (_file.Contains("composant_") = True) Then
+            If _file.EndsWith("-defaut.png") = True Or _file.Contains("composant_") = True Then
                 ' Lorsque l'utilisateur n'a pas modifié l'image par défaut automatiquement
                 ' générée sur le serveur à la création du device, on sélectionne l'image à afficher
                 ' sur le widget client en sélectionnant une image reflétant la valeur ou l'état du device
@@ -2423,28 +2587,23 @@ Public Class uWidgetEmpty
                     Case HoMIDom.HoMIDom.Device.ListeDevices.BAROMETRE
                         GetStatusPicture = _MonRepertoire & "\Images\Devices\barometre-defaut.png"
                     Case HoMIDom.HoMIDom.Device.ListeDevices.BATTERIE
-                        Select Case True
-                            Case TypeOf Value Is Boolean
-                                'If TypeOf Value Is Boolean Then
-                                If Value = True Then GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-100.png" Else GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-0.png"
-                                '  ElseIf IsNumeric(Value) Then 'TypeOf Value Is Integer Or TypeOf Value Is Long Or TypeOf Value Is Single Or TypeOf Value Is Double Then
-                            Case IsNumeric(Value)
-                                Select Case True
-                                    Case CSng(Value) > 80
-                                        GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-100.png"
-                                    Case CSng(Value) > 60
-                                        GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-75.png"
-                                    Case CSng(Value) > 40
-                                        GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-50.png"
-                                    Case CSng(Value) > 20
-                                        GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-25.png"
-                                    Case Else
-                                        GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-75.png"
-                                        '   End If
-                                End Select
-                            Case Else
-                                If STRGS.UCase(Value) = "LOW" Or STRGS.UCase(Value) = "0%" Then GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-0.png" Else GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-100.png"
-                        End Select
+                        If TypeOf Value Is Boolean Then
+                            If Value = True Then GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-100.png" Else GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-0.png"
+                        ElseIf IsNumeric(Value) Then 'TypeOf Value Is Integer Or TypeOf Value Is Long Or TypeOf Value Is Single Or TypeOf Value Is Double Then
+                            If CSng(Value) > 80 Then
+                                GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-100.png"
+                            ElseIf CSng(Value) > 60 Then
+                                GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-75.png"
+                            ElseIf CSng(Value) > 40 Then
+                                GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-50.png"
+                            ElseIf CSng(Value) > 20 Then
+                                GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-25.png"
+                            Else
+                                GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-0.png"
+                            End If
+                        Else
+                            If STRGS.UCase(Value) = "LOW" Or STRGS.UCase(Value) = "0%" Then GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-0.png" Else GetStatusPicture = _MonRepertoire & "\Images\Devices\batterie-100.png"
+                        End If
 
                     Case HoMIDom.HoMIDom.Device.ListeDevices.COMPTEUR
                         GetStatusPicture = _MonRepertoire & "\Images\Devices\compteur-defaut.png"
@@ -2531,13 +2690,7 @@ Public Class uWidgetEmpty
                     Case Else
                         GetStatusPicture = Filename
                 End Select
-            Else
-                'par défaut on charge le nom de l'image
-                GetStatusPicture = _file ' _dev.Picture ' _file
-            End If
-
-
-            If (_file.Contains("_on") = True) Or (_file.Contains("_off") = True) Then
+            ElseIf _file.Contains("_on") = True Or _file.Contains("_off") = True Then
                 ' On recherche s'il existe des images de type double état (ON/OFF) et si oui:
                 ' - affiche l 'image xxxx_on.jpg si la valeur numérique est différent de zéro (ou False)
                 ' - affiche l 'image xxxx_off.jpg si la valeur numérique est de zéro (ou False)
@@ -2546,6 +2699,9 @@ Public Class uWidgetEmpty
                 Else
                     GetStatusPicture = _file.Replace("_off", "_on")
                 End If
+            Else
+                ' Lorsqu'il y a une autre image, on la charge simplement
+                GetStatusPicture = _file
             End If
 
             If _dev.Name.ToUpper = "HOMI_JOUR" Then

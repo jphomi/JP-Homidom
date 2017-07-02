@@ -32,9 +32,7 @@
         End Get
         Set(value As String)
             _typesource = value
-            Select Case Trim(value.ToUpper)
-                Case "CLIENT"
-                    ImageIcon.Source = New BitmapImage(New Uri("/HoMIWpF;component/Images/Homidom_logo_128.png", UriKind.RelativeOrAbsolute))
+            Select Case value.ToUpper
                 Case "INFO"
                     ImageIcon.Source = New BitmapImage(New Uri("/HoMIWpF;component/Images/info.png", UriKind.RelativeOrAbsolute))
                 Case "ACTION"
@@ -67,6 +65,7 @@
         End Get
         Set(value As String)
             _fonction = value
+            LblMessage.Text = value & ": " & _message
         End Set
     End Property
 
@@ -76,7 +75,7 @@
         End Get
         Set(value As String)
             _message = value
-            LblMessage.Text = _fonction & " : " & value
+            LblMessage.Text = value & ": " & _message
         End Set
     End Property
 
