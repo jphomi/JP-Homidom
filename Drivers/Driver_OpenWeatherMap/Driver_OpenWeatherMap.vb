@@ -1203,32 +1203,26 @@ Imports STRGS = Microsoft.VisualBasic.Strings
             listedevices = _Server.ReturnDeviceByAdresse1TypeDriver(_IdSrv, _Obj.Adresse1, "HUMIDITE", Me._ID, True)
             For i = 0 To listedevices.Count - 1
                 listedevices.Item(i).Value = Replace(_StrHum, ".", ",")
-                ' listedevices.Item(i).Value = Regex.Replace(CStr(_StrHum), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
             Next
             listedevices = _Server.ReturnDeviceByAdresse1TypeDriver(_IdSrv, _Obj.Adresse1, "BAROMETRE", Me._ID, True)
             For i = 0 To listedevices.Count - 1
                 listedevices.Item(i).Value = Replace(_StrBar, ".", ",")
-                'listedevices.Item(i).Value = Regex.Replace(CStr(_StrBar), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
             Next
             listedevices = _Server.ReturnDeviceByAdresse1TypeDriver(_IdSrv, _Obj.Adresse1, "DIRECTIONVENT", Me._ID, True)
             For i = 0 To listedevices.Count - 1
                 listedevices.Item(i).Value = Replace(_StrDirVent, ".", ",")
-                'listedevices.Item(i).Value = Regex.Replace(CStr(_StrDirVent), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
             Next
             listedevices = _Server.ReturnDeviceByAdresse1TypeDriver(_IdSrv, _Obj.Adresse1, "UV", Me._ID, True)
             For i = 0 To listedevices.Count - 1
                 listedevices.Item(i).Value = Replace(_StrUv, ".", ",")
-                'listedevices.Item(i).Value = Regex.Replace(CStr(_StrUv), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
             Next
             listedevices = _Server.ReturnDeviceByAdresse1TypeDriver(_IdSrv, _Obj.Adresse1, "VITESSEVENT", Me._ID, True)
             For i = 0 To listedevices.Count - 1
                 listedevices.Item(i).Value = Replace(_StrVitVent, ".", ",")
-                'listedevices.Item(i).Value = Regex.Replace(CStr(_StrVitVent), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
             Next
             listedevices = _Server.ReturnDeviceByAdresse1TypeDriver(_IdSrv, _Obj.Adresse1, "TEMPERATURE", Me._ID, True)
             For i = 0 To listedevices.Count - 1
                 listedevices.Item(i).Value = Replace(_StrTemp, ".", ",")
-                'listedevices.Item(i).Value = Regex.Replace(CStr(_StrTemp), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
             Next
 
             _StrBar = ""
