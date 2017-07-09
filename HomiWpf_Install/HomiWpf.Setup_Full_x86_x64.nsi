@@ -162,17 +162,17 @@ ShowUnInstDetails show
 
 ; --- définition des variables de la boite de dialogue personalisé 
 Var Dialog
-Var chkInstallAsService_Handle
+;Var chkInstallAsService_Handle
 Var optInstallAsService
-Var chkStartService_Handle
-Var optStartService
-Var chkStartServiceGUI_Handle
-Var optStartServiceGUI
+;Var chkStartService_Handle
+;Var optStartService
+;Var chkStartServiceGUI_Handle
+;Var optStartServiceGUI
 Var chkCreateStartMenuShortcuts_Handle
 Var optCreateStartMenuShortcuts
-Var txtCfgIpSoap_Handle
-Var txtCfgPortSoap_Handle
-Var txtCfgIdSrv_Handle
+;Var txtCfgIpSoap_Handle
+;Var txtCfgPortSoap_Handle
+;Var txtCfgIdSrv_Handle
 
 ; Request application privileges for Windows Vista
 RequestExecutionLevel admin
@@ -182,8 +182,8 @@ Var IsComposantChecked
 
 ; --- définition des variables personalisées
 Var IsHomidomInstalled ;indique si HoMIDom est déja installé
-Var IsHomidomInstalledAsService ;indique si HoMIServicE est installé en tant que service windows
-Var IsHomidomInstalledAsServiceNSSM
+;Var IsHomidomInstalledAsService ;indique si HoMIServicE est installé en tant que service windows
+;Var IsHomidomInstalledAsServiceNSSM
 ;Var IsHomidomServiceRunning ;indique si le service HoMIServicE est démarré
 ;Var IsHomidomAppRunning ;indique si une app Homidom est en cours d'execution (Admin,WPF, )
 Var HomidomInstalledVersion ;Numéro de version Homidom.dll
@@ -715,12 +715,12 @@ Function nsDialogsPageLeave
 !insertmacro Log_String "Function nsDialogsPageLeave"
           ${NSD_GetState} $chkCreateStartMenuShortcuts_Handle $optCreateStartMenuShortcuts
           
-         ${NSD_GetText} $txtCfgIpSoap_Handle $cfg_ipsoap
-         !insertmacro Log_String "IPSOAP=$cfg_ipsoap"
-         ${NSD_GetText} $txtCfgPortSoap_Handle $cfg_portsoap
-         !insertmacro Log_String "PORTSOAP=$cfg_portsoap"
-         ${NSD_GetText} $txtCfgIdSrv_Handle $cfg_idsrv
-         !insertmacro Log_String "IDSRV=$cfg_idsrv"
+     ;    ${NSD_GetText} $txtCfgIpSoap_Handle $cfg_ipsoap
+      ;   !insertmacro Log_String "IPSOAP=$cfg_ipsoap"
+      ;   ${NSD_GetText} $txtCfgPortSoap_Handle $cfg_portsoap
+     ;    !insertmacro Log_String "PORTSOAP=$cfg_portsoap"
+     ;    ${NSD_GetText} $txtCfgIdSrv_Handle $cfg_idsrv
+     ;    !insertmacro Log_String "IDSRV=$cfg_idsrv"
 FunctionEnd
 
 Function WriteUnInstaller
