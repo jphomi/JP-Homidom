@@ -396,6 +396,10 @@ Imports HoMIDom.HoMIDom
                     Return False
                 Else
                     Write(MyDevice, Command, Param(0))
+                    '       If InStr(Command, "=") Then
+                    'Write(MyDevice, Mid(Command, 1, InStr(Command, "=") - 1), Mid(Command, InStr(Command, "=") + 1), Len(Command) - InStr(Command, "=") + 1)
+                    '    End If
+
                     Select Case UCase(Command)
                         Case ""
                         Case Else
@@ -512,6 +516,7 @@ Imports HoMIDom.HoMIDom
                     Objet.Value = Parametre1
                 End If
             End If
+
         Catch ex As Exception
             _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom & " Write", ex.Message)
         End Try
@@ -635,7 +640,7 @@ Imports HoMIDom.HoMIDom
 
             'ajout des commandes avancées pour les devices
             'add_devicecommande("COMMANDE", "DESCRIPTION", nbparametre)
-            
+
             'Libellé Driver
             Add_LibelleDriver("HELP", "Aide...", "Pas d'aide actuellement...")
 
