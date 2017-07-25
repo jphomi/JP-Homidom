@@ -47,6 +47,8 @@ Imports OpenWebNet
     Dim _DeviceCommandPlus As New List(Of HoMIDom.HoMIDom.Device.DeviceCommande)
     Dim _AutoDiscover As Boolean = False
 
+    Dim _DEBUG As Boolean = False
+
 #End Region
 
 #Region "Variables internes"
@@ -295,32 +297,55 @@ Imports OpenWebNet
     ''' <summary>Démarrer le du driver</summary>
     ''' <remarks></remarks>
     Public Sub Start() Implements HoMIDom.HoMIDom.IDriver.Start
+
         Try
+            _DEBUG = _Parametres.Item(0).Valeur
+
             'test IP/port
             If _IP_TCP <> "" And _Port_TCP <> "" Then
                 If Not My.Computer.Network.Ping(_IP_TCP) Then
                     _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "OpenWebNet Start", "L'adresse IP " & _IP_TCP & " ne répond pas au ping, connexion impossible")
                     Exit Sub
+                Else
+                    If _DEBUG Then _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, "OpenWebNet Start", "L'adresse IP " & _IP_TCP & " a été trouvée")
                 End If
             Else
                 _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "OpenWebNet Start", "L'adresse IP et/ou le port ne sont pas renseignés")
                 Exit Sub
             End If
 
-            GatewayCommand = New WebServer(_IP_TCP, _Port_TCP, OpenSocketType.Command)
-            GatewayCommand.Connect()
-            If Not GatewayCommand.IsConnected Then
-                _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "OpenWebNet Start", "GatewayCommand: Erreur lors de la connexion IP")
+            Try
+                GatewayCommand = New WebServer(_IP_TCP, _Port_TCP, OpenSocketType.Command)
+                GatewayCommand.Connect()
+                If Not GatewayCommand.IsConnected Then
+                    _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "OpenWebNet Start", "GatewayCommand: Erreur lors de la connexion IP " & _IP_TCP & ":" & _Port_TCP)
+                    _IsConnect = False
+                    Exit Sub
+                Else
+                    If _DEBUG Then _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, "OpenWebNet Start", "GatewayCommand connecté")
+                End If
+            Catch ex As Exception
+                _IsConnect = False
+                _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "OpenWebNet Start", "GatewayCommand: Erreur lors de la connexion IP " & _IP_TCP & ":" & _Port_TCP)
                 Exit Sub
-            End If
+            End Try
 
-            GatewayMonitor = New WebServer(_IP_TCP, _Port_TCP, OpenSocketType.Monitor)
-            GatewayMonitor.Connect()
-            If GatewayMonitor.IsConnected Then
-                GatewayCommand.Disconnect()
-                _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "OpenWebNet Start", "GatewayMonitor: Erreur lors de la connexion IP")
+            Try
+                GatewayMonitor = New WebServer(_IP_TCP, _Port_TCP, OpenSocketType.Monitor)
+                GatewayMonitor.Connect()
+                If Not GatewayMonitor.IsConnected Then
+                    GatewayCommand.Disconnect()
+                    _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "OpenWebNet Start", "GatewayMonitor: Erreur lors de la connexion IP " & _IP_TCP & ":" & _Port_TCP)
+                    _IsConnect = False
+                    Exit Sub
+                Else
+                    If _DEBUG Then _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, "OpenWebNet Start", "GatewayMonitor connecté")
+                End If
+            Catch ex As Exception
+                _IsConnect = False
+                _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, "OpenWebNet Start", "GatewayMonitor: Erreur lors de la connexion IP " & _IP_TCP & ":" & _Port_TCP)
                 Exit Sub
-            End If
+            End Try
 
             AddHandler GatewayCommand.DataReceived, AddressOf GatewayCommand_DataReceived
             AddHandler GatewayCommand.MessageReceived, AddressOf GatewayCommand_MessageReceived
@@ -537,6 +562,10 @@ Imports OpenWebNet
             _DeviceSupport.Add(ListeDevices.LAMPE)
             _DeviceSupport.Add(ListeDevices.VOLET)
 
+            'Parametres avancés
+            Add_ParamAvance("Debug", "Activer le Debug complet (True/False)", False)
+
+            'Libellé Device
             Add_LibelleDevice("ADRESSE1", "Adresse (WHERE)", "")
             Add_LibelleDevice("ADRESSE2", "@", "")
             Add_LibelleDevice("SOLO", "@", "")
@@ -559,15 +588,15 @@ Imports OpenWebNet
 
 #Region "Fonctions internes"
     Private Sub GatewayCommand_DataReceived(ByVal sender As Object, ByVal e As OpenWebNetDataEventArgs)
-        _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, "OpenWebNet Gateway_DataReceived", "Command: " & e.Data)
+        If _DEBUG Then _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, "OpenWebNet Gateway_DataReceived", "Command: " & e.Data)
     End Sub
 
     Private Sub GatewayCommand_MessageReceived(ByVal sender As Object, ByVal e As OpenWebNetDataEventArgs)
-        _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, "OpenWebNet Gateway_MessageReceived", "Command: " & e.Data)
+        If _DEBUG Then _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, "OpenWebNet Gateway_MessageReceived", "Command: " & e.Data)
     End Sub
 
     Private Sub GatewayMonitor_DataReceived(ByVal sender As Object, ByVal e As OpenWebNetDataEventArgs)
-        _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, "OpenWebNet Gateway_DataReceived", "Monitor: " & e.Data)
+        If _DEBUG Then _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, "OpenWebNet Gateway_DataReceived", "Monitor: " & e.Data)
 
         Dim a() As String = e.Data.Split("*")
         If a.Length >= 4 Then
@@ -609,7 +638,7 @@ Imports OpenWebNet
     End Sub
 
     Private Sub GatewayMonitor_MessageReceived(ByVal sender As Object, ByVal e As OpenWebNetDataEventArgs)
-        _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, "OpenWebNet Gateway_MessageReceived", "Monitor: " & e.Data)
+        If _DEBUG Then _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, "OpenWebNet Gateway_MessageReceived", "Monitor: " & e.Data)
     End Sub
 #End Region
 
