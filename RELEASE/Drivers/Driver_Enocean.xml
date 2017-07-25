@@ -1,0 +1,137 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+Driver_Enocean
+</name>
+</assembly>
+<members>
+<member name="M:Driver_Enocean.Driver_EnOcean.GetCRC8Header(System.Byte[])">
+	<summary>
+ Return the CRC8 for the header of the telegram (frame[1]...frame[4])
+ </summary>
+	<param name="frame"></param>
+	<returns></returns>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.GetCRC8Data(System.Byte[])">
+	<summary>
+ Return the CRC8 for the data of the telegram (frame[6]...frame[frameLength-1])
+ </summary>
+	<param name="frame"></param>
+	<returns></returns>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.SetAllCRC8(System.Byte[]@)">
+	<summary>
+ Recalculate the C8Header and the CRC8Data in the frame (the frame must be passed by reference)
+ </summary>
+	<param name="frame"></param>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.GetCommandPlus">
+	<summary>
+ Retourne la liste des Commandes avancées
+ </summary>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.ExecuteCommand(System.Object,System.String,System.Object[])">
+	<summary>Execute une commande avancée</summary>
+	<param name="MyDevice">Objet représentant le Device </param>
+	<param name="Command">Nom de la commande avancée à éxécuter</param>
+	<param name="Param">tableau de paramétres</param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.VerifChamp(System.String,System.Object)">
+	<summary>
+ Permet de vérifier si un champ est valide
+ </summary>
+	<param name="Champ"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.Start">
+	<summary>Démarrer le driver</summary>
+	<remarks></remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.Stop">
+	<summary>Arrêter le driver</summary>
+	<remarks></remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.Restart">
+	<summary>Re-Démarrer le du driver</summary>
+	<remarks></remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.Read(System.Object)">
+	<summary>Intérroger un device</summary>
+	<param name="Objet">Objet représetant le device à interroger</param>
+	<remarks>pas utilisé</remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.Write(System.Object,System.String,System.Object,System.Object)">
+	<summary>Commander un device</summary>
+	<param name="Objet">Objet représetant le device à interroger</param>
+	<param name="Commande">La commande à passer</param>
+	<param name="Parametre1"></param>
+	<param name="Parametre2"></param>
+	<remarks></remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.DeleteDevice(System.String)">
+	<summary>Fonction lancée lors de la suppression d'un device</summary>
+	<param name="DeviceId">Objet représetant le device à interroger</param>
+	<remarks></remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.NewDevice(System.String)">
+	<summary>Fonction lancée lors de l'ajout d'un device</summary>
+	<param name="DeviceId">Objet représetant le device à interroger</param>
+	<remarks></remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.Add_DeviceCommande(System.String,System.String,System.Int32)">
+	<summary>ajout des commandes avancées pour les devices</summary>
+	<param name="nom">Nom de la commande avancée</param>
+	<param name="description">Description qui sera affichée dans l'admin</param>
+	<param name="nbparam">Nombre de parametres attendus</param>
+	<remarks></remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.Add_LibelleDriver(System.String,System.String,System.String,System.String)">
+	<summary>ajout Libellé pour le Driver</summary>
+	<param name="nom">Nom du champ : HELP</param>
+	<param name="labelchamp">Nom à afficher : Aide</param>
+	<param name="tooltip">Tooltip à afficher au dessus du champs dans l'admin</param>
+	<remarks></remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.Add_LibelleDevice(System.String,System.String,System.String,System.String)">
+	<summary>Ajout Libellé pour les Devices</summary>
+	<param name="nom">Nom du champ : HELP</param>
+	<param name="labelchamp">Nom à afficher : Aide, si = "@" alors le champ ne sera pas affiché</param>
+	<param name="tooltip">Tooltip à afficher au dessus du champs dans l'admin</param>
+	<remarks></remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.Add_ParamAvance(System.String,System.String,System.Object)">
+	<summary>ajout de parametre avancés</summary>
+	<param name="nom">Nom du parametre (sans espace)</param>
+	<param name="description">Description du parametre</param>
+	<param name="valeur">Sa valeur</param>
+	<remarks></remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.#ctor">
+	<summary>Creation d'un objet de type</summary>
+	<remarks></remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.TimerTick(System.Object,System.Timers.ElapsedEventArgs)">
+	<summary>Si refresh &gt;0 gestion du timer</summary>
+	<remarks>PAS UTILISE CAR IL FAUT LANCER UN TIMER QUI LANCE/ARRETE CETTE FONCTION dans Start/Stop</remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.ouvrir(System.String)">
+	<summary>Ouvrir le port EnOcean</summary>
+	<param name="numero">Nom/Numero du port COM: COM2</param>
+	<remarks></remarks>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.TraiteFrame(System.String)">
+	<summary>
+ Shift left the frame trying to find a new Sync Byte
+ </summary>
+</member><member name="M:Driver_Enocean.Driver_EnOcean.SendToSerial(System.String)">
+	<summary>
+ Send ESP3 frame to serial port associated to the EnOcean USB gateway
+ 
+ The sender address must be in the range 00.00.00.00 and 00.00.00.7F because the EnOcean gateway can emulate 128 sender addresses from the Base_Id
+ For example, if the Base_Id is FF.56.2A.80 and the sender address is 00.0.00.46, the resultant address is FF.56.2A.C6
+ </summary>
+</member><member name="T:Driver_Enocean.Driver_EnOcean">
+	<summary>Class Driver_EnOcan, permet de communiquer avec le controleur EnOcean</summary>
+	<remarks></remarks>
+</member><member name="P:Driver_Enocean.My.Resources.Resources.ResourceManager">
+	<summary>
+  Retourne l'instance ResourceManager mise en cache utilisée par cette classe.
+</summary>
+</member><member name="P:Driver_Enocean.My.Resources.Resources.Culture">
+	<summary>
+  Remplace la propriété CurrentUICulture du thread actuel pour toutes
+  les recherches de ressources à l'aide de cette classe de ressource fortement typée.
+</summary>
+</member><member name="T:Driver_Enocean.My.Resources.Resources">
+	<summary>
+  Une classe de ressource fortement typée destinée, entre autres, à la consultation des chaînes localisées.
+</summary>
+</member>
+</members>
+</doc>
