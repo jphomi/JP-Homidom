@@ -6,7 +6,20 @@ Driver_Wattlet
 </name>
 </assembly>
 <members>
-<member name="E:Driver_Wattlet.Driver_Wattlet.DriverEvent">
+<member name="P:Driver_Wattlet.My.Resources.Resources.ResourceManager">
+	<summary>
+  Retourne l'instance ResourceManager mise en cache utilisée par cette classe.
+</summary>
+</member><member name="P:Driver_Wattlet.My.Resources.Resources.Culture">
+	<summary>
+  Remplace la propriété CurrentUICulture du thread actuel pour toutes
+  les recherches de ressources à l'aide de cette classe de ressource fortement typée.
+</summary>
+</member><member name="T:Driver_Wattlet.My.Resources.Resources">
+	<summary>
+  Une classe de ressource fortement typée destinée, entre autres, à la consultation des chaînes localisées.
+</summary>
+</member><member name="E:Driver_Wattlet.Driver_Wattlet.DriverEvent">
 	<summary>
  Evènement déclenché par le driver au serveur
  </summary>
@@ -234,19 +247,6 @@ Driver_Wattlet
 </member><member name="M:Driver_Wattlet.Driver_Wattlet.TimerTick(System.Object,System.Timers.ElapsedEventArgs)">
 	<summary>Si refresh &gt;0 gestion du timer</summary>
 	<remarks>PAS UTILISE CAR IL FAUT LANCER UN TIMER QUI LANCE/ARRETE CETTE FONCTION dans Start/Stop</remarks>
-</member><member name="P:Driver_Wattlet.My.Resources.Resources.ResourceManager">
-	<summary>
-  Retourne l'instance ResourceManager mise en cache utilisée par cette classe.
-</summary>
-</member><member name="P:Driver_Wattlet.My.Resources.Resources.Culture">
-	<summary>
-  Remplace la propriété CurrentUICulture du thread actuel pour toutes
-  les recherches de ressources à l'aide de cette classe de ressource fortement typée.
-</summary>
-</member><member name="T:Driver_Wattlet.My.Resources.Resources">
-	<summary>
-  Une classe de ressource fortement typée destinée, entre autres, à la consultation des chaînes localisées.
-</summary>
 </member>
 </members>
 </doc>
