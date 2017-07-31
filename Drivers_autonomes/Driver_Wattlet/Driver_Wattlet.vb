@@ -6,6 +6,8 @@ Imports STRGS = Microsoft.VisualBasic.Strings
 Imports System.Text.RegularExpressions
 Imports System.IO
 Imports System.Text
+Imports System.Xml
+Imports System.Xml.XPath
 
 <Serializable()> Public Class Driver_Wattlet
     Implements HoMIDom.HoMIDom.IDriver
@@ -53,7 +55,12 @@ Imports System.Text
 
     Dim _UrlWattCube As String = ""
     Dim _Adr1Txt As New ArrayList()
+    Dim _Username As String = ""
+    Dim _Password As String = ""
+    Dim versionWattCube As String = ""
 
+
+    ' config wattcube web etmodules http://192.168.0.1/config.xml
 
     ' liste modules http://192.168.0.1/status.json
     '{"modules":[{"address":1441,"name":"1441","io1_name":"1441_io1","io2_name":"1441_io2","type":"POWER","state":{"io1":0,"io2":0},"soft":0,"hard":0}]}
@@ -82,8 +89,6 @@ Imports System.Text
         Public io1 As Integer
         Public io2 As Integer
     End Class
-
-
 #End Region
 
 #Region "Propriétés génériques"
@@ -436,15 +441,14 @@ Imports System.Text
                     Select Case UCase(Command)
                         Case "ALL_LIGHT_ON"
                             urlcommand = _UrlWattCube & "000000/wrio/01"
-                            Get_response(urlcommand)
+                            Get_response(urlcommand, _Username, _Password)
                             WriteLog("DBG: " & "ExecuteCommand, Passage par la commande ALL_LIGHT_ON, " & urlcommand)
                         Case "ALL_LIGHT_OFF"
                             urlcommand = _UrlWattCube & "000000/wrio/00"
-                            Get_response(urlcommand)
+                            Get_response(urlcommand, _Username, _Password)
                             WriteLog("DBG: " & "ExecuteCommand, Passage par la commande ALL_LIGHT_OFF, " & urlcommand)
                     End Select
-                    'mise a jour de la configuration
-                    Return Get_Config()
+                    Return True
                 End If
             Else
                 Return False
@@ -493,7 +497,9 @@ Imports System.Text
 
             Try
                 _DEBUG = _Parametres.Item(0).Valeur
-             Catch ex As Exception
+                _Username = _Parametres.Item(1).Valeur
+                _Password = _Parametres.Item(2).Valeur
+            Catch ex As Exception
                 _DEBUG = False
                 _Parametres.Item(0).Valeur = False
                 WriteLog("ERR: Erreur dans les paramétres avancés. utilisation des valeur par défaut : " & ex.Message)
@@ -502,18 +508,18 @@ Imports System.Text
             _UrlWattCube = "http://" & _IP_TCP & ":" & _Port_TCP & "/"
             WriteLog("Start, connection au serveur " & _UrlWattCube)
 
-            If Get_Config() Then
+            If Get_Config(_UrlWattCube & "config.xml", _Username, _Password) Then
                 _IsConnect = True
                 WriteLog("Driver " & Me.Nom & " démarré avec succés à l'adresse " & _UrlWattCube)
-                WriteLog("Driver " & Me.Nom & " WattCube, version hard " & Hex(devlist.modules.Item(0).soft) & " version soft " & Hex(devlist.modules.Item(0).soft))
+                WriteLog(" Wattcube web version " & versionWattCube)
 
-                WriteLog("Driver " & Me.Nom & devlist.modules.Count & " modules trouvés")
+                Get_ConfigDevice()
+                WriteLog(devlist.modules.Count & " modules trouvés")
                 For i = 0 To devlist.modules.Count - 1
-                    WriteLog("Driver " & "idDevice : " & devlist.modules.Item(i).address & " / " & devlist.modules.Item(i).address)
-
+                    WriteLog("idDevice : " & devlist.modules.Item(i).address & " / " & devlist.modules.Item(i).name & " - version hard/soft " & Hex(devlist.modules.Item(0).hard) & " / " & Hex(devlist.modules.Item(0).soft))
                 Next
                 'lance le time du driver, mini toutes les minutes
-                If _Refresh = 0 Then _Refresh = 2
+                If _Refresh = 0 Then _Refresh = 5
                 MyTimer.Interval = _Refresh * 1000
                 MyTimer.Enabled = True
                 AddHandler MyTimer.Elapsed, AddressOf TimerTick
@@ -570,9 +576,6 @@ Imports System.Text
                 WriteLog("ERR: READ, Pas de réseau! Lecture du périphérique impossible")
                 Exit Sub
             End If
-
-            If devlist IsNot Nothing Then Get_Value(Objet)
-
         Catch ex As Exception
             WriteLog("ERR: Read, adresse1 : " & Objet.adresse1 & " - adresse2 : " & Objet.adresse2)
             WriteLog("ERR: Read, Exception : " & ex.Message)
@@ -594,6 +597,8 @@ Imports System.Text
             End If
             Try ' lecture de la variable debug, permet de rafraichir la variable debug sans redemarrer le service
                 _DEBUG = _Parametres.Item(0).Valeur
+                _Username = _Parametres.Item(1).Valeur
+                _Password = _Parametres.Item(2).Valeur
             Catch ex As Exception
                 _DEBUG = False
                 _Parametres.Item(0).Valeur = False
@@ -607,19 +612,20 @@ Imports System.Text
             End If
 
             Dim iddevice As String = Trim(Mid(Objet.adresse1, 1, InStr(Objet.adresse1, "#") - 1))
+            Dim identree As String = Int(Trim(Mid(Objet.adresse2, 1, InStr(Objet.adresse2, "#") - 1)) - 1).ToString
+
             _UrlWattCube = "http://" & _IP_TCP & ":" & _Port_TCP & "/"
             Dim urlcommand As String = ""
-
             Try
                 Select Case Objet.Type
-                    Case "LAMPE", "APPAREIL", "SWITCH"
+                    Case "LAMPE", "APPAREIL", "SWITCH", "VOLET"
                         Select Case Command
-                            Case "ON"
-                                urlcommand = _UrlWattCube & iddevice & "/wrio/01"
-                                Get_response(urlcommand)
-                            Case "OFF"
-                                urlcommand = _UrlWattCube & iddevice & "/wrio/00"
-                                Get_response(urlcommand)
+                            Case "ON", "OUVERTURE"
+                                urlcommand = _UrlWattCube & iddevice & "/wrio/" & identree & "1"
+                                Get_response(urlcommand, _Username, _Password)
+                            Case "OFF", "FERMETURE"
+                                urlcommand = _UrlWattCube & iddevice & "/wrio/" & identree & "0"
+                                Get_response(urlcommand, _Username, _Password)
                         End Select
                         WriteLog("DBG: commande lancée : " & Command & ", à l'url " & urlcommand)
                     Case Else
@@ -740,9 +746,15 @@ Imports System.Text
             _DeviceSupport.Add(ListeDevices.GENERIQUEBOOLEEN)
             _DeviceSupport.Add(ListeDevices.GENERIQUESTRING)
             _DeviceSupport.Add(ListeDevices.GENERIQUEVALUE)
+            _DeviceSupport.Add(ListeDevices.VOLET)
+            _DeviceSupport.Add(ListeDevices.ENERGIEINSTANTANEE)
+
 
             'Parametres avancés
             Add_ParamAvance("Debug", "Activer le Debug complet (True/False)", False)
+            Add_ParamAvance("Username", "Nom utilisateur", "admin")
+            Add_ParamAvance("Password", "Mot de passe", "homi123456")
+
             'ajout des commandes avancées pour les devices
 
             'ajout des commandes avancées pour les devices
@@ -771,7 +783,8 @@ Imports System.Text
             MyTimer.Enabled = False
             Exit Sub
         End If
-        Get_Config()
+        Get_ConfigDevice()
+        Get_Value()
     End Sub
 
 
@@ -779,10 +792,11 @@ Imports System.Text
 
 #Region "Fonctions internes"
     'Insérer ci-dessous les fonctions propres au driver
-    Function Get_response(url As String) As String
+    Function Get_response(url As String, user As String, password As String) As String
         ' recupere les configarions des equipements et scenarios de Wattlet
         Try
             Dim client As New Net.WebClient
+            client.Credentials = New NetworkCredential(user, password)
 
             Dim responsebody As String = client.DownloadString(url)
             While client.IsBusy
@@ -798,34 +812,80 @@ Imports System.Text
 
     End Function
 
-    Function Get_Config() As Boolean
-        ' recupere les configarions des equipements et scenarios de Wattlet
+    Function Get_Config(adrs As String, user As String, password As String) As Boolean
+        ' recupere les configuration de WattCube_Web
+
+        WriteLog("DBG: Get_config, Acquisition fichier xml -> " & adrs)
+        Try
+            Dim client As New Net.WebClient
+            client.Credentials = New NetworkCredential(user, password)
+
+            Dim responsebody As String = client.DownloadString(adrs)
+            While client.IsBusy
+            End While
+
+            Dim response As String = ""
+            If responsebody <> "" Then
+                response = Mid(responsebody, InStr(responsebody, "<version>") + 9, InStr(responsebody, "</version>") - (InStr(responsebody, "<version>") + 9))
+            End If
+            versionWattCube = response
+            Return True
+
+        Catch ex As Exception
+            WriteLog("ERR: " & "GET_Config, " & ex.Message)
+            WriteLog("ERR: " & "GET_Config, Url: " & _UrlWattCube)
+            Return False
+        End Try
+    End Function
+    Function Get_ConfigDevice() As Boolean
+        ' recupere les configarions des equipements de Wattlet
 
         Try
             Dim adrs As String = _UrlWattCube & "status.json"
-            WriteLog("DBG: " & "GET_CONFIG Url: " & adrs)
+            _Adr1Txt.Clear()
+            WriteLog("DBG: " & "GET_CONFIGDevice Url: " & adrs)
 
-            Dim responsebody As String = Get_response(_UrlWattCube & "status.json")
+            Dim responsebody As String = Get_response(adrs, _Username, _Password)
 
-            WriteLog("DBG: Get_Config inputs : " & responsebody.ToString)
+            WriteLog("DBG: Get_ConfigDevice inputs : " & responsebody.ToString)
             devlist = Newtonsoft.Json.JsonConvert.DeserializeObject(responsebody, GetType(ListModules))
             Dim adress As String = ""
             Dim _libelleadr1 As String = ""
+            Dim NbSortie As String = ""
             For i = 0 To devlist.modules.Count - 1
                 adress = Mid("000000", Len(devlist.modules.Item(i).address) + 1, 6) & devlist.modules.Item(i).address
                 _libelleadr1 += adress & " # " & devlist.modules.Item(i).type & "|"
+                _Adr1Txt.Add(adress & " # " & devlist.modules.Item(i).type)
                 WriteLog("DBG: Device : " & devlist.modules.Item(i).name & " | type -> " & devlist.modules.Item(i).type & ", ID = " & adress)
-
                 Dim IdMod As String = ""
-                Dim NbSortie As String = ""
                 IdMod += adress & " # " & devlist.modules.Item(i).type & "|"
                 Select Case UCase(devlist.modules.Item(i).type)
                     Case "POWER"
-                        NbSortie += adress & " #; " & "1" & " # " & "Entrée 1"
+                        NbSortie += adress & " #; " & "1" & " # " & "Sortie 1"
                     Case "PUSH"
-                        NbSortie += adress & " #; " & "1" & " # " & "Entrée 1"
+                        NbSortie += adress & " #; " & "1" & " # " & "Sortie 1"
+                    Case "PUSH2"
+                        NbSortie += adress & " #; " & "1" & " # " & "Sortie 1"
+                        NbSortie += adress & " #; " & "2" & " # " & "Sortie 2"
+                    Case "PUSHL"
+                        NbSortie += adress & " #; " & "1" & " # " & "Sortie 1"
                     Case "LIGHT"
-                        NbSortie += adress & " #; " & "1" & " # " & "Entrée 1"
+                        NbSortie += adress & " #; " & "1" & " # " & "Sortie 1"
+                    Case "LIGHT2"
+                        NbSortie += adress & " #; " & "1" & " # " & "Sortie 1"
+                        NbSortie += adress & " #; " & "2" & " # " & "Sortie 2"
+                    Case "OPEN"
+                        NbSortie += adress & " #; " & "1" & " # " & "Sortie 1"
+                    Case "DSC"
+                        NbSortie += adress & " #; " & "1" & " # " & "Sortie 1"
+                    Case "VMC"
+                        NbSortie += adress & " #; " & "1" & " # " & "Sortie 1"
+                        NbSortie += adress & " #; " & "2" & " # " & "Sortie 2"
+                    Case "PILOT"
+                        NbSortie += adress & " #; " & "1" & " # " & "Sortie 1"
+                    Case "WIN"
+                        NbSortie += adress & " #; " & "1" & " # " & "Montée 1"
+                        NbSortie += adress & " #; " & "2" & " # " & "Descente 1"
                 End Select
             Next
 
@@ -837,17 +897,22 @@ Imports System.Text
                         _libelleadr1 = Mid(_libelleadr1, 1, Len(_libelleadr1) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
                         ld0.Parametre = _libelleadr1
                         _LabelsDevice(i) = ld0
+                    Case "ADRESSE2"
+                        NbSortie = Mid(NbSortie, 1, Len(NbSortie) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
+                        'si 1 seule entree, enleve la reference au module
+                        If devlist.modules.Count = 1 Then NbSortie = Mid(NbSortie, InStr(NbSortie, "#;") + 3, Len(NbSortie))
+                        ld0.Parametre = NbSortie
+                        _LabelsDevice(i) = ld0
                 End Select
             Next
             Return True
         Catch ex As Exception
-
-            WriteLog("ERR: " & "GET_Config, " & ex.Message)
-            WriteLog("ERR: " & "GET_Config, Url: " & _UrlWattCube)
+            WriteLog("ERR: " & "GET_ConfigDevice, " & ex.Message)
+            WriteLog("ERR: " & "GET_ConfigDevice, Url: " & _UrlWattCube)
             Return False
         End Try
     End Function
-    Function Get_Value(ByVal objet As Object) As Boolean
+    Function Get_Value() As Boolean
         ' recupere les valeurs des equipements Wattlet
 
         Try
@@ -856,60 +921,55 @@ Imports System.Text
                 Return False
             End If
 
-            Dim moduleIDalire As Modules = Nothing
-
-            For Each _Mod In devlist.modules
-                If Mid(objet.adresse1, 1, 6) = Mid("000000", Len(_Mod.address) + 1, 6) & _Mod.address Then
-                    moduleIDalire = _Mod
-                    Exit For
+            Dim deviceadr1 As New ArrayList()
+            Dim devices As New ArrayList()
+            For i = 0 To _Adr1Txt.Count - 1
+                deviceadr1 = _Server.ReturnDeviceByAdresse1TypeDriver(_IdSrv, _Adr1Txt.Item(i), "", Me._ID, True)
+                If deviceadr1.Count > 0 Then
+                    WriteLog("DBG: ADR1 : " & devlist.modules.Item(i).address & " -> Nb Device " & deviceadr1.Count)
+                    devices.AddRange(deviceadr1)
                 End If
+                Dim idCom As String = ""
+                For Each LocalDevice As Object In devices
+                    If LocalDevice.adresse2 <> "" Then ' cas ou saisi dans la zone texte
+                        If InStr(LocalDevice.adresse2, "#") > 0 Then
+                            idCom = (Trim(Mid(LocalDevice.adresse2, 1, InStr(LocalDevice.adresse2, "#") - 1)))
+                        Else
+                            idCom = LocalDevice.adresse2
+                        End If
+                    End If
+                    WriteLog("DBG: " & "idCom, " & idCom)
+
+                    Select Case LocalDevice.GetType.Name
+                        Case "LAMPE", "APPAREIL", "CONTACT", "SWITCH"
+                            If idCom = 1 Then
+                                If LocalDevice.Value <> devlist.modules.Item(i).state.io1 Then LocalDevice.Value = devlist.modules.Item(i).state.io1
+                            Else
+                                If LocalDevice.Value <> devlist.modules.Item(i).state.io2 Then LocalDevice.Value = devlist.modules.Item(i).state.io2
+                            End If
+                        Case "BATTERIE", "TEMPERATURE", "HUMIDITE", "ENERGIEINSTANTANEE", "GENERIQUEVALUE", "COMPTEUR"
+                            Dim valuetmp As Integer
+                            If idCom = 1 Then
+                                valuetmp = Regex.Replace(CStr(devlist.modules.Item(i).state.io1), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                                If LocalDevice.Value <> valuetmp Then LocalDevice.Value = Regex.Replace(CStr(devlist.modules.Item(i).state.io1), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                            Else
+                                valuetmp = Regex.Replace(CStr(devlist.modules.Item(i).state.io2), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                                If LocalDevice.Value <> valuetmp Then LocalDevice.Value = Regex.Replace(CStr(devlist.modules.Item(i).state.io2), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                            End If
+                        Case "GENERIQUESTRING"
+                        Case "GENERIQUEBOOLEEN"
+                    End Select
+                Next
             Next
-
-            ' nom de device non trouve
-            If (moduleIDalire Is Nothing) Then
-                WriteLog("ERR: GetValue=> Pas de nom de device/module pour adresse1= " & objet.adresse1)
-                Return False
-            End If
-
-            Dim idCom As String = ""
-            If objet.adresse2 <> "" Then ' cas ou saisi dans la zone texte
-                If InStr(objet.adresse2, "#") > 0 Then
-                    idCom = (Trim(Mid(objet.adresse2, 1, InStr(objet.adresse2, "#") - 1)))
-                Else
-                    idCom = objet.adresse2
-                End If
-            End If
-
-            Select Case Objet.Type
-                Case "LAMPE", "APPAREIL", "CONTACT", "SWITCH"
-                    If idCom = 1 Then
-                        objet.Value = moduleIDalire.state.io1
-                    Else
-                        objet.Value = moduleIDalire.state.io2
-                    End If
-                    objet.Value = moduleIDalire.state.io1
-                Case "BATTERIE", "TEMPERATURE", "HUMIDITE", "ENERGIEINSTANTANEE", "GENERIQUEVALUE", "COMPTEUR"
-                    If idCom = 1 Then
-                        objet.Value = Regex.Replace(CStr(moduleIDalire.state.io1), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
-                    Else
-                        objet.Value = Regex.Replace(CStr(moduleIDalire.state.io2), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
-                    End If
-                Case "GENERIQUESTRING"
-                Case "GENERIQUEBOOLEEN"
-            End Select
-            Return True
+                Return True
         Catch ex As Exception
-
             WriteLog("ERR: " & "GET_Value, " & ex.Message)
             WriteLog("ERR: " & "GET_Value, Url: " & _UrlWattCube)
             Return False
         End Try
-    End Function
-    Sub GetConfig()
-        Get_Config()
-    End Sub
 
-    Private Sub WriteLog(ByVal message As String)
+    End Function
+     Private Sub WriteLog(ByVal message As String)
         Try
             'utilise la fonction de base pour loguer un event
             If STRGS.InStr(message, "DBG:") > 0 Then
@@ -924,6 +984,7 @@ Imports System.Text
         Catch ex As Exception
             _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom & " WriteLog", ex.Message)
         End Try
+
     End Sub
 #End Region
 End Class
