@@ -8,10 +8,10 @@ Imports System.Runtime.InteropServices
 
 ' Passez en revue les valeurs des attributs de l'assembly
 
-<Assembly: AssemblyTitle("Driver_Wattlet")> 
+<Assembly: AssemblyTitle("Driver_SenCrop")> 
 <Assembly: AssemblyDescription("")> 
 <Assembly: AssemblyCompany("HoMIDoM")> 
-<Assembly: AssemblyProduct("Driver_Wattlet")> 
+<Assembly: AssemblyProduct("Driver_Sencrop")> 
 <Assembly: AssemblyCopyright("Copyright © HoMIDoM 2012")> 
 <Assembly: AssemblyTrademark("")> 
 
