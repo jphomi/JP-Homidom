@@ -64,21 +64,21 @@
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="GSMCommServer">
-      <HintPath>..\..\RELEASE\Drivers\GSMCommServer.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="GSMCommServer, Version=1.21.0.0, Culture=neutral, PublicKeyToken=515d87df384dcc81, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\GSMComm.1.21.1\lib\GSMCommServer.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="GSMCommShared">
-      <HintPath>..\..\RELEASE\Drivers\GSMCommShared.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="GSMCommShared, Version=1.21.0.0, Culture=neutral, PublicKeyToken=515d87df384dcc81, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\GSMComm.1.21.1\lib\GSMCommShared.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="GSMCommunication">
-      <HintPath>..\..\RELEASE\Drivers\GSMCommunication.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="GSMCommunication, Version=1.21.0.0, Culture=neutral, PublicKeyToken=515d87df384dcc81, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\GSMComm.1.21.1\lib\GSMCommunication.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="PDUConverter">
-      <HintPath>..\..\RELEASE\Drivers\PDUConverter.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="PDUConverter, Version=1.21.0.0, Culture=neutral, PublicKeyToken=515d87df384dcc81, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\GSMComm.1.21.1\lib\PDUConverter.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -133,6 +133,7 @@
       <CustomToolNamespace>My</CustomToolNamespace>
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">
@@ -166,7 +167,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UseGlobalSettings="True" BuildVersion_IncrementBeforeBuild="True" />
+      <UserProperties BuildVersion_IncrementBeforeBuild="True" BuildVersion_UseGlobalSettings="True" BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

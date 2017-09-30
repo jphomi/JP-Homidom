@@ -124,7 +124,13 @@ Driver_Gsm
 </member><member name="T:Driver_Gsm.Driver_Gsm">
 	<summary>Class Driver GSM </summary>
 	<remarks>Les drivers de votre modem doivent etre installés
- Nécessite les dll GSMCommServer.dll,  GSMCommunication.dll, GSMCommShared.dll,PDUConverter.dll </remarks>
+ Nécessite les dll GSMCommunication.dll, PDUConverter.dll
+ 
+a titre indicatif ( passerelle sms )
+Bouygues Télécom : +33660003000
+Orange, sosh, virgin : +33689004000
+SFR : +33609001390
+Free : +33695000695</remarks>
 </member>
 </members>
 </doc>
