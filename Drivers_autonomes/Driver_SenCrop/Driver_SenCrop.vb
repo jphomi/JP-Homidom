@@ -92,7 +92,7 @@ Imports Newtonsoft.Json.Linq
         Public gps_fix As Integer
         Public active As Integer
         Public turn_off As Object
-        Public signalnr As Double
+        Public signalnr As Object
         Public batt As Object
         Public latitude As Double
         Public altitude As Integer
