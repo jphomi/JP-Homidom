@@ -102,10 +102,17 @@
   <ItemGroup>
     <Import Include="Antlr.Runtime.Collections" />
     <Import Include="Microsoft.VisualBasic" />
+    <Import Include="Newtonsoft" />
+    <Import Include="Newtonsoft.Json" />
+    <Import Include="Newtonsoft.Json.Converters" />
+    <Import Include="Newtonsoft.Json.Linq" />
+    <Import Include="Newtonsoft.Json.Schema" />
+    <Import Include="Newtonsoft.Json.Serialization" />
     <Import Include="System" />
     <Import Include="System.Collections" />
     <Import Include="System.Collections.Generic" />
     <Import Include="System.Data" />
+    <Import Include="System.Data.SQLite" />
     <Import Include="System.Diagnostics" />
     <Import Include="System.Linq" />
     <Import Include="System.Xml.Linq" />
@@ -213,7 +220,7 @@
   </PropertyGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" BuildVersion_AssemblyInfoFilename="" BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_UseGlobalSettings="True" BuildVersion_IncrementBeforeBuild="True" />
+      <UserProperties BuildVersion_IncrementBeforeBuild="True" BuildVersion_UseGlobalSettings="True" BuildVersion_BuildVersioningStyle="None.None.Increment.None" BuildVersion_AssemblyInfoFilename="" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

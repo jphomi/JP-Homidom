@@ -675,7 +675,17 @@ Namespace HoMIDom
         Public Function GetSaint() As String
             Try
                 Dim lines() As String = My.Resources.Saint.Split(System.Environment.NewLine)
-                Return lines(Now.DayOfYear - 1).Replace(Chr(10), "")
+                Dim currentDate As DateTime = DateTime.Now
+                If DateTime.IsLeapYear(currentDate.Year) Then
+                    Return lines(Now.DayOfYear - 1).Replace(Chr(10), "")
+                Else
+                    If currentDate.Month > 2 Then
+                        Return lines(Now.DayOfYear).Replace(Chr(10), "")
+                    Else
+                        Return lines(Now.DayOfYear - 1).Replace(Chr(10), "")
+                    End If
+                End If
+
             Catch ex As Exception
                 Log(TypeLog.ERREUR, TypeSource.SERVEUR, "GetSaint", "Exception : " & ex.Message)
                 Return Nothing
@@ -10249,47 +10259,28 @@ Namespace HoMIDom
                 If String.IsNullOrEmpty(Requete) = True Then
                     If System.IO.File.Exists(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt") Then
                         Dim SR As New StreamReader(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt", Encoding.GetEncoding("ISO-8859-1"))
-                        retour = SR.ReadToEnd
+                        retour = SR.ReadToEnd()
                         retour = HtmlDecode(retour)
-
                         SR.Close()
-                        SR.Dispose()
-                        SR = Nothing
                     Else
                         retour = ""
                     End If
                 Else
                     If IsNumeric(Requete) Then
-                        Dim SR As New StreamReader(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt", Encoding.GetEncoding("ISO-8859-1"))
-                        Dim i As Integer = 0
-                        Dim nbtotal As Integer = 0
-                        'cpte nbre total ligne dans le fichier
-                        Do
-                            If SR.EndOfStream Then Exit Do
-                            Dim line As String = SR.ReadLine()
-                            nbtotal += 1
-                        Loop
-                        SR.Close()
-                        SR.Dispose()
-                        SR = Nothing
-                        SR = New StreamReader(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt", Encoding.GetEncoding("ISO-8859-1"))
-                        Do
-                            If SR.EndOfStream Then Exit Do
-                            Dim line As String = Trim(SR.ReadLine())
-                            If line <> "" Then
-                                If i > nbtotal - Requete Then ' limite nbre de ligne demandé
-                                    If retour = "" Then
-                                        retour = retour + line
-                                    Else
-                                        retour = retour + vbCrLf + line
-                                    End If
-                                End If
+                        Dim cnt As Integer = CInt(Requete)
+                        If cnt < 8 Then cnt = 0
+
+                        Dim lignes() As String = IO.File.ReadAllLines(_MonRepertoire & "\logs\log_" & DateAndTime.Now.ToString("yyyyMMdd") & ".txt")
+                        Dim cnt1 As Integer = lignes.Length - cnt
+
+                        If cnt1 <= 0 Then cnt1 = 0
+
+                        For i As Integer = 0 To lignes.Length - 1
+                            If i >= cnt1 Then
+                                retour &= lignes(i)
                             End If
-                            i += 1
-                        Loop
-                        SR.Close()
-                        SR.Dispose()
-                        SR = Nothing
+                        Next
+
                         retour = HtmlDecode(retour)
                     Else
                         'creation d'une nouvelle instance du membre xmldocument
