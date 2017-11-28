@@ -282,16 +282,18 @@ Imports System.Text.RegularExpressions
             Select Case UCase(Champ)
                 Case "ADRESSE1"
                     If Value IsNot Nothing Then
-                        If String.IsNullOrEmpty(Value) Or IsNumeric(Value) Or InStr(Value, ":") = 0 Then
-                            retour = "Veuillez saisir l'adresse de lecture sous la forme A:1 pour Analog entree1, D3 pour Digital entree3 "
+                        If Not Value = "-1" Then
+                            If String.IsNullOrEmpty(Value) Or IsNumeric(Value) Or InStr(Value, ":") = 0 Then
+                                retour = "Veuillez saisir l'adresse de lecture sous la forme A:1 pour Analog entree1, D:3 pour Digital entree3 "
+                            End If
                         End If
                     End If
                 Case "ADRESSE2"
-                    If Value IsNot Nothing Then
-                        If String.IsNullOrEmpty(Value) Or Not IsNumeric(Value) Then
-                            retour = "Veuillez saisir l'adresse d'écriture sous la forme 1 pour Digital sortie1 "
+                        If Value IsNot Nothing Then
+                            If String.IsNullOrEmpty(Value) Or Not IsNumeric(Value) Then
+                                retour = "Veuillez saisir l'adresse d'écriture sous la forme 1 pour Digital sortie1 "
+                            End If
                         End If
-                    End If
             End Select
             Return retour
         Catch ex As Exception
@@ -380,6 +382,7 @@ Imports System.Text.RegularExpressions
                 WriteLog("ERR: Read, Erreur de lecture de debug : " & ex.Message)
             End Try
 
+            If Objet.Adresse1 = "-1" Then Exit Sub ' cas ou commande uniquement
             Dim typadr As String
             Dim adr1 As Integer
 
@@ -439,12 +442,12 @@ Imports System.Text.RegularExpressions
             Try
                 Select Case Objet.Type
                     Case "APPAREIL", "SWITCH"
-                        If Command = "ON" Then
+                        If (Command = "ON") And (adr2 <> "-1") Then
                             phidgetIFK.outputs(adr2) = True
                             Objet.value = True
                             If _DEBUG Then WriteLog("DBG: Write " & Objet.Type & " Adr : " & adr2 & " -> ON")
                         End If
-                        If Command = "OFF" Then
+                        If (Command = "OFF") And (adr2 <> "-1") Then
                             phidgetIFK.outputs(adr2) = False
                             Objet.value = False
                             If _DEBUG Then WriteLog("DBG: Write " & Objet.Type & " Adr : " & adr2 & " -> OFF")
@@ -464,14 +467,20 @@ Imports System.Text.RegularExpressions
     ''' <param name="DeviceId">Objet représetant le device à interroger</param>
     ''' <remarks></remarks>
     Public Sub DeleteDevice(ByVal DeviceId As String) Implements HoMIDom.HoMIDom.IDriver.DeleteDevice
-
+        Try
+        Catch ex As Exception
+            WriteLog("ERR: DeleteDevice Exception : " & ex.Message)
+        End Try
     End Sub
 
     ''' <summary>Fonction lancée lors de l'ajout d'un device</summary>
     ''' <param name="DeviceId">Objet représetant le device à interroger</param>
     ''' <remarks></remarks>
     Public Sub NewDevice(ByVal DeviceId As String) Implements HoMIDom.HoMIDom.IDriver.NewDevice
-
+        Try
+        Catch ex As Exception
+            WriteLog("ERR: NewDevice Exception : " & ex.Message)
+        End Try
     End Sub
 
     ''' <summary>ajout des commandes avancées pour les devices</summary>
@@ -620,7 +629,7 @@ Imports System.Text.RegularExpressions
     ''analog output change event handler... here we check or uncheck the corresponding output checkbox based on the index of
     ''the output that generated the event
     Private Sub phidgetIFK_ANAOutputChange(ByVal sender As Object, ByVal e As Phidgets.Events.SensorChangeEventArgs) Handles phidgetIFK.SensorChange
-        WriteLog("DBG: AnalogicInputChange Sortie Num: " & e.Index & " Value: " & e.Value)
+        WriteLog("DBG: AnalogicOutputChange Sortie Num: " & e.Index & " Value: " & e.Value)
     End Sub
 
     ''' <summary>Traite les paquets reçus</summary>
