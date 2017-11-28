@@ -10,6 +10,7 @@ Imports System.Text
 Imports System.Xml
 Imports System.Xml.XPath
 Imports Newtonsoft.Json.Linq
+Imports MySql.Data
 
 
 <Serializable()> Public Class Driver_SenCrop
@@ -65,7 +66,7 @@ Imports Newtonsoft.Json.Linq
     Dim _Obj As Object = Nothing
 
     Dim authenconnec As ReponseAuthen
-    Dim listestat As New List(Of Stations)
+    '   Dim listestat As New List(Of Stations)
     '    Dim meteo As List(Of String) = New List(Of String)
     Dim listprevisions As Previsions
 
@@ -697,7 +698,6 @@ Imports Newtonsoft.Json.Linq
                     Objet.JourJ2 = TraduireJour(Mid(Now.AddDays(2).DayOfWeek.ToString, 1, 3))
                     Objet.JourJ3 = TraduireJour(Mid(Now.AddDays(3).DayOfWeek.ToString, 1, 3))
 
-
                     ' objet.VentActuel = Regex.Replace(CStr(moduleIDalire.dashboard_data.WindStrength), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
 
                 Case "BATTERIE"
@@ -761,7 +761,7 @@ Imports Newtonsoft.Json.Linq
                                     stid = Mid(st, 1, (InStr(st, ":") - 1))
                                     stvalue = Mid(st, InStr(st, ":") + 1, Len(st))
                                     If InStr(stid, Objet.adresse2) > 0 Then
-                                        workTable.Rows.Add("Sencrop", station.serial, station.status.latitude & " , " & station.status.longitude, station.status.altitude.ToString, Objet.adresse2, stvalue)
+                                        workTable.Rows.Add("Sencrop", station.serial, station.status.latitude & " / " & station.status.longitude, station.status.altitude.ToString, Objet.adresse2, stvalue)
                                     End If
                                 Next
                             Next
