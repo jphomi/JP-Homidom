@@ -1351,7 +1351,7 @@ Public Class Driver_ZWave
                                                 Case InStr(Objet.Adresse2, "Wake-up Interval:") > 0
                                                     m_manager.SetValue(ValueTemp, CInt(ValDimmer))
                                                 Case InStr(Objet.Adresse2, "Heating 1:") > 0
-                                                    '                                                    m_manager.SetValue(ValueTemp, CInt(ValDimmer))
+                                                    m_manager.SetValue(ValueTemp, CInt(ValDimmer))
                                                     m_manager.SetValue(ValueTemp, ValDimmer)
                                                 Case InStr(Objet.Adresse2, "Basic:") > 0
                                                     m_manager.SetValue(ValueTemp, CByte(ValDimmer))
@@ -2124,7 +2124,7 @@ Public Class Driver_ZWave
                     WriteLog("DBG: " & "GetValueID, Value from node:" & valueID.GetNodeId() & "-" & valueID.GetId() & ":" & "Label:" & m_manager.GetValueLabel(valueID).ToString & " Instance:" & valueID.GetInstance)
                     If (valueID.GetNodeId() = node.ID) And (m_manager.GetValueLabel(valueID).ToLower = valueLabel.ToLower) Then
                         If ValueInstanc Then
-                            Dim ValueInstance As Byte
+                            Dim ValueInstance As Byte = 0
                             If (InStr(ValueInstanc, ".") > 0) Then
                                 ValueInstance = Mid(ValueInstanc, 1, InStr(ValueInstanc, ".") - 1)
                             Else
