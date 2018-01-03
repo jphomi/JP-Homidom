@@ -2115,18 +2115,25 @@ Public Class Driver_ZWave
         ''' <param name="node"></param>
         ''' <param name="valueLabel"></param>
         ''' <returns>ValueId</returns>
-        Private Function GetValeur(ByVal node As Node, ByVal valueLabel As String, Optional ByVal ValueInstance As Byte = 0) As ZWValueID
+        '        Private Function GetValeur(ByVal node As Node, ByVal valueLabel As String, Optional ByVal ValueInstance As Byte = 0) As ZWValueID
+        Private Function GetValeur(ByVal node As Node, ByVal valueLabel As String, Optional ByVal ValueInstanc As String = "") As ZWValueID
             Try
-                WriteLog("DBG: " & "GetValueID, Receive from node:" & node.ID & ":" & " Label:" & valueLabel & " Instance:" & ValueInstance)
+                WriteLog("DBG: " & "GetValueID, Receive from node:" & node.ID & ":" & " Label:" & valueLabel & " Instance:" & ValueInstanc)
 
                 For Each valueID As ZWValueID In node.Values
                     WriteLog("DBG: " & "GetValueID, Value from node:" & valueID.GetNodeId() & "-" & valueID.GetId() & ":" & "Label:" & m_manager.GetValueLabel(valueID).ToString & " Instance:" & valueID.GetInstance)
                     If (valueID.GetNodeId() = node.ID) And (m_manager.GetValueLabel(valueID).ToLower = valueLabel.ToLower) Then
-                        If ValueInstance Then
+                        If ValueInstanc Then
+                            Dim ValueInstance As Byte
+                            If (InStr(ValueInstanc, ".") > 0) Then
+                                ValueInstance = Mid(ValueInstanc, 1, InStr(ValueInstanc, "."))
+                            Else
+                                ValueInstance = Mid(ValueInstanc, 1, Len(ValueInstanc))
+                            End If
                             If valueID.GetInstance() = ValueInstance Then
-                                WriteLog("DBG: " & "GetValueID, Valeur trouvée  Instance:" & ValueInstance)
-                                If (InStr(ValueInstance, ".") > 0) Then
-                                    Dim ValueIndex As Byte = Mid(ValueInstance, InStr(ValueInstance, ".") + 1, Len(ValueInstance))
+                                WriteLog("DBG: " & "GetValueID, Valeur trouvée  Instance:" & ValueInstanc)
+                                If (InStr(ValueInstanc, ".") > 0) Then
+                                    Dim ValueIndex As Byte = Mid(ValueInstanc, InStr(ValueInstanc, ".") + 1, Len(ValueInstanc))
                                     If valueID.GetIndex() = ValueIndex Then
                                         WriteLog("DBG: " & "GetValueID, Valeur trouvée  Index:" & ValueIndex)
                                         Return valueID
