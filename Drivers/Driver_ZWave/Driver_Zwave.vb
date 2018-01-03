@@ -2126,7 +2126,7 @@ Public Class Driver_ZWave
                         If ValueInstanc Then
                             Dim ValueInstance As Byte
                             If (InStr(ValueInstanc, ".") > 0) Then
-                                ValueInstance = Mid(ValueInstanc, 1, InStr(ValueInstanc, "."))
+                                ValueInstance = Mid(ValueInstanc, 1, InStr(ValueInstanc, ".") - 1)
                             Else
                                 ValueInstance = Mid(ValueInstanc, 1, Len(ValueInstanc))
                             End If
