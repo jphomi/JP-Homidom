@@ -2123,7 +2123,7 @@ Public Class Driver_ZWave
                 For Each valueID As ZWValueID In node.Values
                     WriteLog("DBG: " & "GetValueID, Value from node:" & valueID.GetNodeId() & "-" & valueID.GetId() & ":" & "Label:" & m_manager.GetValueLabel(valueID).ToString & " Instance:" & valueID.GetInstance)
                     If (valueID.GetNodeId() = node.ID) And (m_manager.GetValueLabel(valueID).ToLower = valueLabel.ToLower) Then
-                        If ValueInstanc Then
+                        If ValueInstanc <> "" Then
                             Dim ValueInstance As Byte = 0
                             If (InStr(ValueInstanc, ".") > 0) Then
                                 ValueInstance = Mid(ValueInstanc, 1, InStr(ValueInstanc, ".") - 1)
