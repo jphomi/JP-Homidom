@@ -1351,7 +1351,7 @@ Public Class Driver_ZWave
                                                 Case InStr(Objet.Adresse2, "Wake-up Interval:") > 0
                                                     m_manager.SetValue(ValueTemp, CInt(ValDimmer))
                                                 Case InStr(Objet.Adresse2, "Heating 1:") > 0
-                                                    m_manager.SetValue(ValueTemp, CInt(ValDimmer))
+                                                    '        m_manager.SetValue(ValueTemp, CInt(ValDimmer))
                                                     m_manager.SetValue(ValueTemp, ValDimmer)
                                                 Case InStr(Objet.Adresse2, "Basic:") > 0
                                                     m_manager.SetValue(ValueTemp, CByte(ValDimmer))
