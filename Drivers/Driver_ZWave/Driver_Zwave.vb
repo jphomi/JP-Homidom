@@ -184,6 +184,9 @@ Public Class Driver_ZWave
             COMMAND_CLASS_NOTIFICATION_V3 = 71                    ' 0x47
             COMMAND_CLASS_NOTIFICATION_V4 = 71                    ' 0x47
             COMMAND_CLASS_NOTIFICATION_V5 = 71                    ' 0x47
+            COMMAND_CLASS_NOTIFICATION_V6 = 71                    ' 0x47
+            COMMAND_CLASS_NOTIFICATION_V7 = 71                    ' 0x47
+            COMMAND_CLASS_NOTIFICATION_V8 = 71                    ' 0x47
             COMMAND_CLASS_RATE_TBL_CONFIG = 72                    ' 0x48
             COMMAND_CLASS_RATE_TBL_MONITOR = 73                   ' 0x49
             COMMAND_CLASS_TARIFF_CONFIG = 74                      ' 0x4A
@@ -1208,7 +1211,6 @@ Public Class Driver_ZWave
                             Select Case True
                                 Case UCase(Commande) = "ON"
                                     If IsMultiLevel Then
-                                        ' If Objet.Type = "VOLET" And InStr(Objet.Adresse2, "Level:") Then
                                         If InStr(Objet.Adresse2, "Level:") Then
                                             Dim OnValue As Byte = Objet.ValueMax - 1   ' n'accepte que 99 max
                                             m_manager.SetValue(ValueTemp, OnValue)
@@ -1227,17 +1229,16 @@ Public Class Driver_ZWave
 
                                 Case UCase(Commande) = "OFF"
                                     If IsMultiLevel Then
-                                        ' If Objet.Type = "VOLET" And InStr(Objet.Adresse2, "Level:") Then
                                         If InStr(Objet.Adresse2, "Level:") Then
                                             Dim OffValue As Byte = Objet.ValueMin
                                             m_manager.SetValue(ValueTemp, OffValue)
+                                        Else
                                             If NodeTemp.CommandClass.Contains(CommandClass.COMMAND_CLASS_SWITCH_BINARY) Or
                                                 NodeTemp.CommandClass.Contains(CommandClass.COMMAND_CLASS_SWITCH_BINARY_V2) Or
                                                 NodeTemp.CommandClass.Contains(CommandClass.COMMAND_CLASS_DOOR_LOCK) Or
                                                 NodeTemp.CommandClass.Contains(CommandClass.COMMAND_CLASS_DOOR_LOCK_V2) Or
                                                 NodeTemp.CommandClass.Contains(CommandClass.COMMAND_CLASS_DOOR_LOCK_V3) Then
                                                 m_manager.SetValue(ValueTemp, False)
-                                            Else
                                             End If
                                         End If
                                     Else
@@ -1351,7 +1352,6 @@ Public Class Driver_ZWave
                                                 Case InStr(Objet.Adresse2, "Wake-up Interval:") > 0
                                                     m_manager.SetValue(ValueTemp, CInt(ValDimmer))
                                                 Case InStr(Objet.Adresse2, "Heating 1:") > 0
-                                                    '        m_manager.SetValue(ValueTemp, CInt(ValDimmer))
                                                     m_manager.SetValue(ValueTemp, ValDimmer)
                                                 Case InStr(Objet.Adresse2, "Basic:") > 0
                                                     m_manager.SetValue(ValueTemp, CByte(ValDimmer))
@@ -2115,7 +2115,6 @@ Public Class Driver_ZWave
         ''' <param name="node"></param>
         ''' <param name="valueLabel"></param>
         ''' <returns>ValueId</returns>
-        '        Private Function GetValeur(ByVal node As Node, ByVal valueLabel As String, Optional ByVal ValueInstance As Byte = 0) As ZWValueID
         Private Function GetValeur(ByVal node As Node, ByVal valueLabel As String, Optional ByVal ValueInstanc As String = "") As ZWValueID
             Try
                 WriteLog("DBG: " & "GetValueID, Receive from node:" & node.ID & ":" & " Label:" & valueLabel & " Instance:" & ValueInstanc)
