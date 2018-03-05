@@ -842,9 +842,9 @@ Imports System.Runtime.InteropServices
         'mise à jour de la valeur du composant
         If TypeOf Objet.Value Is Boolean Then
             If NBupdates > 0 Then Objet.Value = True Else Objet.Value = False
-        ElseIf TypeOf Objet.Value Is Long Or TypeOf Objet.Value Is Integer Then
+        ElseIf TypeOf Objet.Value Is Long Or TypeOf Objet.Value Is Integer Or TypeOf Objet.Value Is Double Then
             Objet.Value = CInt(NBupdates)
-        Else
+         Else
             Objet.Value = CStr(NBupdates) & " Update(s) disponible(s)"
         End If
 
