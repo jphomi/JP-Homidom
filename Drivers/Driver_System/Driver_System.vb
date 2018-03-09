@@ -800,10 +800,11 @@ Imports System.Runtime.InteropServices
         'mise à jour de la valeur du composant
         If TypeOf Objet.Value Is Boolean Then
             If NBupdates > 0 Then Objet.Value = True Else Objet.Value = False
-        ElseIf TypeOf Objet.Value Is Long Or TypeOf Objet.Value Is Integer Then
+        ElseIf TypeOf Objet.Value Is Long Or TypeOf Objet.Value Is Long Or TypeOf Objet.Value Is Integer Then
             Objet.Value = CInt(NBupdates)
         Else
-            Objet.Value = CStr(NBupdates) & " Update(s) disponible(s)"
+            '            Objet.Value = CStr(NBupdates) & " Update(s) disponible(s)"
+            Objet.Value = CStr(NBupdates)
         End If
 
     End Sub
@@ -812,8 +813,10 @@ Imports System.Runtime.InteropServices
 
         ' Info de l'agent
         Dim oAgentInfo = CreateObject("Microsoft.Update.AgentInfo")
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "%system32%/wuapi.dll version: " & oAgentInfo.GetInfo("ProductVersionString"))
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "WUA version : " & oAgentInfo.GetInfo("ApiMajorVersion") & "." & oAgentInfo.GetInfo("ApiMinorVersion"))
+        WriteLog("%system32%/wuapi.dll version: " & oAgentInfo.GetInfo("ProductVersionString"))
+        '  _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "%system32%/wuapi.dll version: " & oAgentInfo.GetInfo("ProductVersionString"))
+        WriteLog("WUA version : " & oAgentInfo.GetInfo("ApiMajorVersion") & "." & oAgentInfo.GetInfo("ApiMinorVersion"))
+        ' _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "WUA version : " & oAgentInfo.GetInfo("ApiMajorVersion") & "." & oAgentInfo.GetInfo("ApiMinorVersion"))
 
 
         '  http://msdn.microsoft.com/en-gb/library/windows/desktop/aa387102(v=vs.85).aspx
@@ -825,17 +828,21 @@ Imports System.Runtime.InteropServices
         UpdateSession.ClientApplicationID = "Homidom automate Sytem update"
 
         Dim updateSearcher = UpdateSession.CreateUpdateSearcher()
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Searching for updates...")
+        WriteLog("Searching for updates...")
+        '       _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Searching for updates...")
 
         Dim searchResult = updateSearcher.Search("IsInstalled=0 and Type='Software'")
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "List of applicable items on the machine:")
+        WriteLog("List of applicable items on the machine:")
+        '    _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "List of applicable items on the machine:")
         For I = 0 To searchResult.Updates.Count - 1
             Dim update = searchResult.Updates.Item(I)
-            _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", update.Title)
+            WriteLog(update.Title)
+            '      _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", update.Title)
         Next
         Dim NBupdates As Integer = searchResult.Updates.Count
         If NBupdates = 0 Then
-            _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "There are no applicable updates.")
+            WriteLog("There are no applicable updates.")
+            '       _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "There are no applicable updates.")
             Exit Sub
         End If
 
@@ -849,7 +856,8 @@ Imports System.Runtime.InteropServices
         End If
 
 
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Creating collection of updates to download:")
+        WriteLog("Creating collection of updates to download:")
+        '  _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Creating collection of updates to download:")
 
         'Dim updatesToDownload = CreateObject("Microsoft.Update.UpdateColl")
         Dim updatesToDownload = New WUApiLib.UpdateCollection
@@ -858,10 +866,12 @@ Imports System.Runtime.InteropServices
             Dim update = searchResult.Updates.Item(I)
             Dim addThisUpdate = False
             If update.InstallationBehavior.CanRequestUserInput = True Then
-                _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", I + 1 & ">  skipping: " & update.Title & " because it requires user input")
+                WriteLog(I + 1 & ">  skipping: " & update.Title & " because it requires user input")
+                '   _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", I + 1 & ">  skipping: " & update.Title & " because it requires user input")
             Else
                 If update.EulaAccepted = False Then
-                    _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "> note: " & update.Title & " has a license agreement automatically accepted:")
+                    WriteLog("> note: " & update.Title & " has a license agreement automatically accepted:")
+                    '    _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "> note: " & update.Title & " has a license agreement automatically accepted:")
                     '_Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", update.EulaText)
                     '_Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Do you accept this license agreement? (Y/N) ....Y autoupdate Accpete pour vous")
                     update.AcceptEula()
@@ -871,13 +881,15 @@ Imports System.Runtime.InteropServices
                 End If
             End If
             If addThisUpdate = True Then
-                _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", I + 1 & "> adding: " & update.Title)
+                WriteLog(I + 1 & "> adding: " & update.Title)
+                ' _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", I + 1 & "> adding: " & update.Title)
                 updatesToDownload.Add(update)
             End If
         Next
 
         If updatesToDownload.Count = 0 Then
-            _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "All applicable updates were skipped.")
+            WriteLog("All applicable updates were skipped.")
+            '   _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "All applicable updates were skipped.")
             Exit Sub
         End If
 
@@ -885,7 +897,8 @@ Imports System.Runtime.InteropServices
 
         For a As Integer = 0 To updatesToDownload.Count - 1
 
-            _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Downloading updates..." & searchResult.Updates.Item(a).Title)
+            WriteLog("Downloading updates..." & searchResult.Updates.Item(a).Title)
+            '     _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Downloading updates..." & searchResult.Updates.Item(a).Title)
 
             'If UpdatesTitle.ToUpper = patch.Title.ToUpper Then
             downloader = UpdateSession.CreateUpdateDownloader()
@@ -904,7 +917,8 @@ Imports System.Runtime.InteropServices
         'Dim updatesToInstall = New WUApiLib.UpdateCollection ' a remplacer plus tard...a voir
         Dim rebootMayBeRequired = False
 
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Successfully downloaded updates:")
+        WriteLog("Successfully downloaded updates:")
+        '  _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Successfully downloaded updates:")
 
         For i = 0 To searchResult.Updates.Count - 1
             Dim update = searchResult.Updates.Item(i)
@@ -918,29 +932,37 @@ Imports System.Runtime.InteropServices
         Next
 
         If updatesToInstall.Count = 0 Then
-            _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "No updates were successfully downloaded.")
+            WriteLog("No updates were successfully downloaded.")
+            ' _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "No updates were successfully downloaded.")
             Exit Sub
         End If
 
         If rebootMayBeRequired = True Then
-            _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "These updates may require a reboot.")
+            WriteLog("These updates may require a reboot.")
+            '  _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "These updates may require a reboot.")
         End If
 
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Would you like to install updates now? (Y/N)....update seront validés")
+        WriteLog("Would you like to install updates now? (Y/N)....update seront validés")
+        ' _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Would you like to install updates now? (Y/N)....update seront validés")
         'strInput = WScript.StdIn.Readline
         ' If (strInput = "Y" Or strInput = "y") Then
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Installing updates...")
+        WriteLog("Installing update...")
+        '_Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Installing updates...")
         Dim installer = UpdateSession.CreateUpdateInstaller()
         installer.Updates = updatesToInstall
         Dim installationResult = installer.Install()
 
         'Output results of install
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Installation Result: " & installationResult.ResultCode)
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Reboot Required: " & installationResult.RebootRequired & vbCrLf)
-        _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Listing of updates installed " & "and individual installation results:")
+        WriteLog("Installation Result: " & installationResult.ResultCode)
+        '_Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Installation Result: " & installationResult.ResultCode)
+        WriteLog("Reboot Required: " & installationResult.RebootRequired & vbCrLf)
+        '_Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Reboot Required: " & installationResult.RebootRequired & vbCrLf)
+        WriteLog("Listing of updates installed " & "and individual installation results:")
+        '_Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", "Listing of updates installed " & "and individual installation results:")
 
         For i = 0 To updatesToInstall.Count - 1
-            _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", i + 1 & "> " & updatesToInstall.Item(i).Title & ": " & installationResult.GetUpdateResult(i).ResultCode)
+            WriteLog(i + 1 & "> " & updatesToInstall.Item(i).Title & ": " & installationResult.GetUpdateResult(i).ResultCode)
+            '   _Server.Log(TypeLog.INFO, TypeSource.DRIVER, "System", i + 1 & "> " & updatesToInstall.Item(i).Title & ": " & installationResult.GetUpdateResult(i).ResultCode)
         Next
 
 
@@ -1047,7 +1069,22 @@ Imports System.Runtime.InteropServices
         d = Nothing
 
     End Function
-
+    Private Sub WriteLog(ByVal message As String)
+        Try
+            'utilise la fonction de base pour loguer un event
+            If STRGS.InStr(message, "DBG:") > 0 Then
+                If _DEBUG Then
+                    _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, Me.Nom, STRGS.Right(message, message.Length - 5))
+                End If
+            ElseIf STRGS.InStr(message, "ERR:") > 0 Then
+                _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom, STRGS.Right(message, message.Length - 5))
+            Else
+                _Server.Log(TypeLog.INFO, TypeSource.DRIVER, Me.Nom, message)
+            End If
+        Catch ex As Exception
+            _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom & " WriteLog", ex.Message)
+        End Try
+    End Sub
 #End Region
 
 
