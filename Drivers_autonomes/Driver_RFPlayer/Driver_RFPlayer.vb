@@ -7,11 +7,11 @@ Imports System.Text.RegularExpressions
 Imports STRGS = Microsoft.VisualBasic.Strings
 Imports System.IO
 Imports System.IO.Ports
-Imports System.Net
-Imports System.Net.Sockets
-Imports System.Collections.Concurrent
-Imports System.Threading
-Imports System.Threading.Tasks
+'Imports System.Net
+'Imports System.Net.Sockets
+'Imports System.Collections.Concurrent
+'Imports System.Threading.Tasks
+Imports Newtonsoft.Json.Linq
 
 ' Auteur : JPHomi
 ' Date : 01/01/2018
@@ -68,11 +68,54 @@ Imports System.Threading.Tasks
     ' Variables de gestion du port COM
     Private WithEvents port As New SerialPort
     Private port_name As String = ""
-    Dim _baudspeed As Integer = 57600
+    Dim _baudspeed As Integer = 115200
     Dim _nbrebit As Integer = 8
     Dim _parity As IO.Ports.Parity = IO.Ports.Parity.None
     Dim _nbrebitstop As IO.Ports.StopBits = IO.Ports.StopBits.One
+    Dim FrameStr As String = ""
+    Dim FrameCompleted As Boolean = False
+    '    Dim TransmitterActif As New List(Of String)
+    Dim TransmitterAvailable As New List(Of String)
+    Dim ReceiverAvailable As New List(Of String)
+    Dim ReceiverEnable As New List(Of String)
+    Dim RepeaterAvailable As New List(Of String)
+    Dim RepeaterEnable As New List(Of String)
+    Dim jsonObjConf As Object
+    Dim jsonObjDatas As Object
 
+    Public ListInfoSystemStatus As List(Of infosystem) = New List(Of infosystem)
+    Public ListOfDevices As List(Of device) = New List(Of device)
+
+
+    Public Class infosystem
+        Public n As String
+        Public v As String
+        Public unit As String
+        Public c As String
+    End Class
+
+    Public Class device
+        Public id As String
+        Public name As String
+        Public protocol As String
+        Public subTypeMeaning As String
+        Public qualifier As String
+    End Class
+
+    Enum ListProtocol As Integer
+        X10 = 1
+        VISONIC433 = 2
+        VISONIC868 = 2
+        BLYSS = 3
+        CHACON = 4
+        DOMIA = 6
+        X2D433 = 8
+        X2D868 = 8
+        XDSHUTTER = 8
+        RTS = 9
+        KD101 = 10
+        PARROT = 11
+    End Enum
 #End Region
 
 #Region "Propriétés génériques"
@@ -126,6 +169,7 @@ Imports System.Threading.Tasks
             _LabelsDevice = value
         End Set
     End Property
+
     Public Event DriverEvent(ByVal DriveName As String, ByVal TypeEvent As String, ByVal Parametre As Object) Implements HoMIDom.HoMIDom.IDriver.DriverEvent
     Public Property Enable() As Boolean Implements HoMIDom.HoMIDom.IDriver.Enable
         Get
@@ -277,7 +321,7 @@ Imports System.Threading.Tasks
                     Return False
                 Else
                     ' Traitement de la commande 
-                        Select UCase(Command)
+                    Select Case UCase(Command)
                         Case "ADD_ASSOCIATION"
                             ' CO_CR_LEARNMODE
                             Dim buf1 As Byte() = {&H55, &H0, &H1, &H0, &H5, &H23, &H1, &H0}
@@ -347,8 +391,22 @@ Imports System.Threading.Tasks
                 WriteLog("Demarrage du pilote, ceci peut prendre plusieurs secondes")
                 WriteLog(ouvrir(_Com))
 
-                _IsConnect = True
+                If Not _IsConnect Then Exit Sub
                 WriteLog("Driver " & Me.Nom & " démarré ")
+
+
+                AddHandler port.DataReceived, AddressOf ReceiveFromSerial
+                'passe les échanges en json
+                SendToSerial("ZIA++FORMAT JSON", 0)
+
+                SendToSerial("ZIA++STATUS SYSTEM JSON", 3)
+                WriteLog("Version " & ListInfoSystemStatus.Item(0).v & " / mac adress " & ListInfoSystemStatus.Item(1).v)
+
+                '    SendToSerial("ZIA++STATUS RADIO JSON", 3)
+
+                '  SendToSerial("ZIA33", 3)
+
+
 
             Else
                 WriteLog("ERR: Port Com non défini. Impossible d'ouvrir le port !")
@@ -360,20 +418,18 @@ Imports System.Threading.Tasks
         End Try
     End Sub
 
-        ''' <summary>Arrêter le driver</summary>
-        ''' <remarks></remarks>
+    ''' <summary>Arrêter le driver</summary>
+    ''' <remarks></remarks>
     Public Sub [Stop]() Implements HoMIDom.HoMIDom.IDriver.Stop
 
         Try
             If _IsConnect Then
                 port.Dispose()
                 port.Close()
-                WriteLog("Driver " & Me.Nom & ", port fermé")
-
                 _IsConnect = False
+                WriteLog("Driver " & Me.Nom & ", port fermé")
                 WriteLog("Driver " & Me.Nom & " arrêté")
             Else
-                _IsConnect = False
                 WriteLog("Driver " & Me.Nom & "Port " & _Com & " est déjà fermé")
             End If
 
@@ -421,23 +477,157 @@ Imports System.Threading.Tasks
     ''' <remarks></remarks>
     Public Sub Write(ByVal Objet As Object, ByVal Commande As String, Optional ByVal Parametre1 As Object = Nothing, Optional ByVal Parametre2 As Object = Nothing) Implements HoMIDom.HoMIDom.IDriver.Write
 
-        If _Enable = False Then Exit Sub
+
+        Dim texteCommande As String
+
+        Dim TempVersion As Byte = 0
+        _DEBUG = _Parametres.Item(0).Valeur
+
+
+        If _Enable = False Then
+            WriteLog("ERR: " & "Write, Erreur: Impossible de traiter la commande car le driver n'est pas activé (Enable)")
+            Exit Sub
+        End If
 
         If _IsConnect = False Then
-            WriteLog("ERR: READ, Le driver n'est pas démarré, impossible d'écrire sur le port")
+            WriteLog("ERR: " & "Write, Erreur: Impossible de traiter la commande car le driver n'est pas connecté")
             Exit Sub
         End If
         Try
-            Dim buf As Byte() = {&H0, &H0, &H0, &H0, &H0, &H0, &H0, &H0}
+
+            Dim ParaAdr1 = Split(Objet.Adresse1, "#")
+            Dim ParaAdr2 = Split(Objet.Adresse2, " ")
+            ParaAdr1(0) = Trim(ParaAdr1(0))
+            ParaAdr1(1) = Trim(ParaAdr1(1))
+            ParaAdr2(0) = Trim(ParaAdr2(0))
+            ParaAdr2(1) = Trim(ParaAdr2(1))
+            Dim qlif As String = ""
+            For i As Integer = 0 To ListOfDevices.Count - 1
+                If (ListOfDevices.Item(i).id = ParaAdr2(1)) And (ListOfDevices.Item(i).protocol = ParaAdr1(0)) Then
+                    qlif = ListOfDevices.Item(i).qualifier
+                End If
+            Next
+
+
             Select Case True
-                Case (Objet.Type = "LAMPE" Or Objet.Type = "APPAREIL" Or Objet.Type = "SWITCH")
+                Case (Objet.Type = "LAMPE" Or Objet.Type = "APPAREIL" Or Objet.Type = "SWITCH" Or Objet.Type = "VOLET")
+                    texteCommande = UCase(Commande)
                     Select Case True
                         Case UCase(Commande) = "ON"
-                            buf = {&H55, &H0, &H1, &H0, &H5, &H70, &H3, &H9}
+                            Select Case ParaAdr1(0)
+                                Case "1" 'Frame Protocol 1		X10, infotype 0, 1
+                                    WriteInfoType0("ZIA++ON " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                Case "2" 'Frame Protocol 2		VISONIC, infotype 2
+                                    WriteInfoType2("ZIA++ON " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                Case "3" 'Frame Protocol 3		BLYSS, infotype 1
+                                Case "4" 'Frame Protocol 4		CHACON, infotype 1
+                                Case "5" 'Frame Protocol 5		Oregon, infotype 4, 5, 6, 7, 9
+                                Case "6" 'Frame Protocol 6		DOMIA, infotype 0
+                                    WriteInfoType0("ZIA++ON " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                Case "7" 'Frame Protocol 7		OWL, infotype 8
+                                Case "8" 'Frame Protocol 8		X2D, infotype 10, 11
+                                Case "9" 'Frame Protocol 9		RTS, infotype 3
+                                    If qlif = "0" Then
+                                        WriteInfoType3("ZIA++ON " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                    Else
+                                        WriteInfoType3("ZIA++ON " & ParaAdr1(1) & " ID " & ParaAdr2(1) & " QUALIFIER " & qlif)
+                                    End If
+                                Case "10" 'Frame Protocol 10	KD101, infotype 1
+                                Case "11" 'Frame Protocol 11   PARROT, infotype 0
+                                    WriteInfoType0("ZIA++ON " & ParaAdr1(1) & " " & ParaAdr2(1))
+                            End Select
+
                         Case UCase(Commande) = "OFF"
-                            buf = {&H1, &H94, &HB9, &H46}
+                            Select Case ParaAdr1(0)
+                                Case "1" 'Frame Protocol 1		X10, infotype 0, 1
+                                    WriteInfoType0("ZIA++OFF " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                Case "2" 'Frame Protocol 2		VISONIC, infotype 2
+                                    WriteInfoType2("ZIA++OFF " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                Case "3" 'Frame Protocol 3		BLYSS, infotype 1
+                                Case "4" 'Frame Protocol 4		CHACON, infotype 1
+                                Case "5" 'Frame Protocol 5		Oregon, infotype 4, 5, 6, 7, 9
+                                Case "6" 'Frame Protocol 6		DOMIA, infotype 0
+                                    WriteInfoType0("ZIA++OFF " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                Case "7" 'Frame Protocol 7		OWL, infotype 8
+                                Case "8" 'Frame Protocol 8		X2D, infotype 10, 11
+                                Case "9" 'Frame Protocol 9		RTS, infotype 3
+                                    If qlif = "0" Then
+                                        WriteInfoType3("ZIA++OFF " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                    Else
+                                        WriteInfoType3("ZIA++OFF " & ParaAdr1(1) & " ID " & ParaAdr2(1) & " QUALIFIER " & qlif)
+                                    End If
+                                Case "10" 'Frame Protocol 10	KD101, infotype 1
+                                Case "11" 'Frame Protocol 11   PARROT, infotype 0
+                                    WriteInfoType0("ZIA++OFF " & ParaAdr1(1) & " " & ParaAdr2(1))
+                            End Select
+
+                        Case UCase(Commande) = "DIM" Or UCase(Commande) = "OUVERTURE"
+                            Select Case ParaAdr1(0)
+                                Case "1" 'Frame Protocol 1		X10, infotype 0, 1
+                                Case "2" 'Frame Protocol 2		VISONIC, infotype 2
+                                Case "3" 'Frame Protocol 3		BLYSS, infotype 1
+                                Case "4" 'Frame Protocol 4		CHACON, infotype 1
+                                Case "5" 'Frame Protocol 5		Oregon, infotype 4, 5, 6, 7, 9
+                                Case "6" 'Frame Protocol 6		DOMIA, infotype 0
+                                Case "7" 'Frame Protocol 7		OWL, infotype 8
+                                Case "8" 'Frame Protocol 8		X2D, infotype 10, 11
+                                Case "9" 'Frame Protocol 9		RTS, infotype 3
+                                    If qlif = "0" Then WriteInfoType3("ZIA++DIM %" & Parametre1 & " " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                Case "10" 'Frame Protocol 10	KD101, infotype 1
+                                Case "11" 'Frame Protocol 11   PARROT, infotype 0
+                            End Select
+                        Case UCase(Commande) = "SETPOINT"   'Ecrire une valeur vers le device physique
+                            If Not IsNothing(Parametre1) Then
+                                Dim ValDimmer As Single
+                                If IsNumeric(Parametre1) Then ValDimmer = Parametre1
+                                Select Case True  ' gestion des modes de chauffage
+                                    Case (UCase(Parametre1) = "CONFORT" Or UCase(Parametre1) = "CONF")
+                                        ValDimmer = 95
+                                    Case (UCase(Parametre1) = "CONFORT-1" Or UCase(Parametre1) = "CONF-1")
+                                        ValDimmer = 45
+                                    Case (UCase(Parametre1) = "CONFORT-2" Or UCase(Parametre1) = "CONF-2")
+                                        ValDimmer = 35
+                                    Case (UCase(Parametre1) = "ECO" Or UCase(Parametre1) = "EC")
+                                        ValDimmer = 25
+                                    Case (UCase(Parametre1) = "HORSGEL" Or UCase(Parametre1) = "HG")
+                                        ValDimmer = 15
+                                    Case UCase(Parametre1) = "ARRET"
+                                        ValDimmer = 5
+                                End Select
+                            End If
+                        Case "ALL_LIGHT_ON"
+                            Select Case ParaAdr1(0)
+                                Case "1" 'Frame Protocol 1		X10, infotype 0, 1
+                                Case "2" 'Frame Protocol 2		VISONIC, infotype 2
+                                Case "3" 'Frame Protocol 3		BLYSS, infotype 1
+                                Case "4" 'Frame Protocol 4		CHACON, infotype 1
+                                Case "5" 'Frame Protocol 5		Oregon, infotype 4, 5, 6, 7, 9
+                                Case "6" 'Frame Protocol 6		DOMIA, infotype 0
+                                Case "7" 'Frame Protocol 7		OWL, infotype 8
+                                Case "8" 'Frame Protocol 8		X2D, infotype 10, 11
+                                Case "9" 'Frame Protocol 9		RTS, infotype 3
+                                    If qlif = "0" Then WriteInfoType3("ZIA++DIM %" & Parametre1 & " " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                Case "10" 'Frame Protocol 10	KD101, infotype 1
+                                Case "11" 'Frame Protocol 11   PARROT, infotype 0
+                            End Select
+
+                        Case "ALL_LIGHT_OFF"
+                            Select Case ParaAdr1(0)
+                                Case "1" 'Frame Protocol 1		X10, infotype 0, 1
+                                Case "2" 'Frame Protocol 2		VISONIC, infotype 2
+                                Case "3" 'Frame Protocol 3		BLYSS, infotype 1
+                                Case "4" 'Frame Protocol 4		CHACON, infotype 1
+                                Case "5" 'Frame Protocol 5		Oregon, infotype 4, 5, 6, 7, 9
+                                Case "6" 'Frame Protocol 6		DOMIA, infotype 0
+                                Case "7" 'Frame Protocol 7		OWL, infotype 8
+                                Case "8" 'Frame Protocol 8		X2D, infotype 10, 11
+                                Case "9" 'Frame Protocol 9		RTS, infotype 3
+                                    If qlif = "0" Then WriteInfoType3("ZIA++DIM %" & Parametre1 & " " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                Case "10" 'Frame Protocol 10	KD101, infotype 1
+                                Case "11" 'Frame Protocol 11   PARROT, infotype 0
+                            End Select
                     End Select
-                    port.Write(buf, 0, 8)
+                    WriteLog("DBG: " & "ExecuteCommand, Passage par la commande " & UCase(Commande))
             End Select
         Catch ex As Exception
             WriteLog("ERR: Write, Exception : " & ex.Message)
@@ -546,6 +736,7 @@ Imports System.Threading.Tasks
             _DeviceSupport.Add(ListeDevices.BATTERIE.ToString)
             _DeviceSupport.Add(ListeDevices.CONTACT.ToString)
             _DeviceSupport.Add(ListeDevices.DETECTEUR.ToString)
+            _DeviceSupport.Add(ListeDevices.DIRECTIONVENT.ToString)
             _DeviceSupport.Add(ListeDevices.ENERGIEINSTANTANEE.ToString)
             _DeviceSupport.Add(ListeDevices.ENERGIETOTALE.ToString)
             _DeviceSupport.Add(ListeDevices.GENERIQUEBOOLEEN.ToString)
@@ -558,6 +749,8 @@ Imports System.Threading.Tasks
             _DeviceSupport.Add(ListeDevices.TELECOMMANDE.ToString)
             _DeviceSupport.Add(ListeDevices.TEMPERATURE.ToString)
             _DeviceSupport.Add(ListeDevices.TEMPERATURECONSIGNE.ToString)
+            _DeviceSupport.Add(ListeDevices.VITESSEVENT.ToString)
+            _DeviceSupport.Add(ListeDevices.VOLET.ToString)
 
             'Paramétres avancés
             Add_ParamAvance("Debug", "Activer le Debug complet (True/False)", False)
@@ -567,20 +760,12 @@ Imports System.Threading.Tasks
             'ajout des commandes avancées pour les devices
             Add_DeviceCommande("ALL_LIGHT_ON", "", 0)
             Add_DeviceCommande("ALL_LIGHT_OFF", "", 0)
-            Add_DeviceCommande("SetName", "Nom du composant", 0)
-            Add_DeviceCommande("GetName", "Nom du composant", 0)
-            Add_DeviceCommande("SetConfigParam", "paramètre de configuration - Par1 : Index - Par2 : Valeur", 2)
-            Add_DeviceCommande("GetConfigParam", "paramètre de configuration - Par1 : Index", 1)
-            Add_DeviceCommande("RequestNodeState", "Nom du composant", 0)
-            Add_DeviceCommande("TestNetworkNode", "Nom du composant", 0)
-            Add_DeviceCommande("RequestNetworkUpdate", "Nom du composant", 0)
-            Add_DeviceCommande("GetNumGroups", "Nom du composant", 0)
 
             'Libellé Driver
             Add_LibelleDriver("HELP", "Aide...", "Ce module permet de recuperer les informations delivrées par un contrôleur Z-Wave ")
 
             'Libellé Device
-            Add_LibelleDevice("ADRESSE1", "Adresse", "Adresse du composant de Z-Wave")
+            Add_LibelleDevice("ADRESSE1", "Protocole", "Protocole utilisé")
             Add_LibelleDevice("ADRESSE2", "Label de la donnée:Index", "'Temperature', 'Relative Humidity', 'Battery Level' suivi de l'index (si necessaire)")
             Add_LibelleDevice("SOLO", "@", "")
             Add_LibelleDevice("MODELE", "@", "")
@@ -619,30 +804,361 @@ Imports System.Threading.Tasks
                         WriteLog("Ouvrir - Ouverture du port " & port.PortName & " à la vitesse " & port.BaudRate & port.DataBits & port.Parity.ToString & port.StopBits.ToString)
                         port.Open()
                         ' Le port existe ==> le controleur est present
-                        If port.IsOpen() Then
-                            'port.Close()
-                            Return ("Port " & port_name & " ouvert")
+                        If port IsNot Nothing AndAlso port.IsOpen() Then
+                            _IsConnect = True
+                            Return ("Le port " & port_name & " ouvert")
                         Else
                             ' Le port n'existe pas ==> le controleur n'est pas present
-                            Return ("Port " & port_name & " fermé")
+                            _IsConnect = False
+                            Return ("Le port " & port_name & " fermé")
                         End If
                     Catch ex As Exception
-                        Return ("Port " & port_name & " n'existe pas")
+                        _IsConnect = False
+                        Return ("Le port " & port_name & " n'existe pas")
                         Exit Function
                     End Try
                 Else
-                    Return ("Port " & port_name & " dejà ouvert")
+                    Return ("Le port " & port_name & " dejà ouvert")
                 End If
             Catch ex As Exception
+                _IsConnect = False
                 Return ("ERR: " & ex.Message)
             End Try
-
         Catch ex As Exception
+            _IsConnect = False
             Return ("ERR: " & ex.Message)
         End Try
     End Function
 
-    Private Sub WriteLog(ByVal message As String)
+    ''' <summary>
+    ''' Place le controller en mode "inclusion"
+    ''' </summary>
+    ''' <remarks></remarks>
+    Sub StartInclusionMode(Optional ByVal NumProtocole As String = Nothing, Optional ByVal iddevice As String = Nothing)
+        Select Case NumProtocole
+            Case "1" 'Frame Protocol 1		X10, infotype 0, 1
+            Case "2" 'Frame Protocol 2		VISONIC, infotype 2
+            Case "3" 'Frame Protocol 3		BLYSS, infotype 1
+            Case "4" 'Frame Protocol 4		CHACON, infotype 1
+            Case "5" 'Frame Protocol 5		Oregon, infotype 4, 5, 6, 7, 9
+            Case "6" 'Frame Protocol 6		DOMIA, infotype 0
+            Case "7" 'Frame Protocol 7		OWL, infotype 8
+            Case "8" 'Frame Protocol 8		X2D, infotype 10, 11
+            Case "9" 'Frame Protocol 9		RTS, infotype 3
+                WriteInfoType3("ZIA++ASSOC " & NumProtocole & " ID " & iddevice)
+            Case "10" 'Frame Protocol 10	KD101, infotype 1
+            Case "11" 'Frame Protocol 11   PARROT, infotype 0
+        End Select
+
+    End Sub
+
+    Private Sub SendToSerial(frame As String, timeout As Integer)
+        Try
+            Dim utf8Encoding As New System.Text.UTF8Encoding
+            Dim encodedString() As Byte
+            encodedString = utf8Encoding.GetBytes(frame & vbCrLf)
+            FrameCompleted = False
+            port.Write(utf8Encoding.GetString(encodedString))
+            WriteLog("DBG: SendToSerial, " & frame)
+            Dim i As Integer = 0
+            While (timeout >= i)
+                System.Threading.Thread.Sleep(1000 * i)
+                i = i + 1
+                If FrameCompleted Then Exit While
+            End While
+
+        Catch ex As Exception
+            WriteLog("ERR: SendToSerial Exception: " + ex.Message)
+        End Try
+        System.Threading.Thread.Sleep(100)
+    End Sub
+
+    Private Sub ReceiveFromSerial(sender As Object, e As SerialDataReceivedEventArgs)
+        Try
+            Dim sp As SerialPort = CType(sender, SerialPort)
+            Dim _libelleadr2 As String = ""
+
+            While (sp.BytesToRead > 0)
+                FrameStr = FrameStr & port.ReadExisting
+            End While
+
+            ' si trame entiere on traite
+            If InStr(FrameStr, "}]}}") > 0 Then
+                Select Case True
+                    Case InStr(FrameStr, "ZIA--{") > 0
+                        ReadConf(FrameStr.Replace("ZIA--", ""))
+                        '      Case InStr(FrameStr, "ZIA33{") > 0
+                        FrameStr = "ZIA33{ ""frame"" :{""header"": {""frameType"": ""0"", ""cluster"": ""0"", ""dataFlag"": ""0"", ""rfLevel"": ""-64"", ""floorNoise"": ""-103"", ""rfQuality"": ""9"", ""protocol"": ""9"", ""protocolMeaning"": ""RTS"", ""infoType"": ""3"", ""frequency"": ""433920""},""infos"": {""subType"": ""0"", ""subTypeMeaning"": ""Shutter"", ""id"": ""14813191"", ""qualifier"": ""4"", ""qualifierMeaning"": { ""flags"": [""My""]}}}}"
+                        ReadDatas(FrameStr.Replace("ZIA33", ""))
+                        FrameStr = "ZIA33{ ""frame"" :{""header"": {""frameType"": ""0"", ""cluster"": ""0"", ""dataFlag"": ""0"", ""rfLevel"": ""-64"", ""floorNoise"": ""-103"", ""rfQuality"": ""9"", ""protocol"": ""9"", ""protocolMeaning"": ""RTS"", ""infoType"": ""3"", ""frequency"": ""433920""},""infos"": {""subType"": ""1"", ""subTypeMeaning"": ""Portal"", ""id"": ""14813215"", ""qualifier"": ""4"", ""qualifierMeaning"": { ""flags"": [""Portail""]}}}}"
+                        ReadDatas(FrameStr.Replace("ZIA33", ""))
+                        For i As Integer = 0 To ListOfDevices.Count - 1
+                            _libelleadr2 += ListOfDevices.Item(i).protocol & " #; " & ListOfDevices.Item(i).subTypeMeaning & " " & ListOfDevices.Item(i).id & "|"
+                        Next
+                        ' evite les doublons 
+                        Dim ld0 As New HoMIDom.HoMIDom.Driver.cLabels
+                        For i As Integer = 0 To _LabelsDevice.Count - 1
+                            ld0 = _LabelsDevice(i)
+                            Select Case ld0.NomChamp
+                                Case "ADRESSE2"
+                                    _libelleadr2 = Mid(_libelleadr2, 1, Len(_libelleadr2) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
+                                    ld0.Parametre = _libelleadr2
+                                    _LabelsDevice(i) = ld0
+                            End Select
+                        Next
+                    Case Else
+                        WriteLog("DBG: ReceiveFromSerial, framestr: " + FrameStr)
+                End Select
+                'efface variables reponse une fois traitée
+                FrameStr = ""
+                FrameCompleted = True
+            End If
+        Catch ex As Exception
+            WriteLog("ERR: ReceiveFromSerial Exception: " + ex.Message)
+        End Try
+    End Sub
+    Private Sub ReadConf(str As String)
+        Try
+            WriteLog("DBG: ReadConf à traiter : " + str)
+            jsonObjConf = Newtonsoft.Json.JsonConvert.DeserializeObject(str)
+            Dim st As JProperty
+            Dim _libelleadr1 As String = ""
+
+            Select Case True
+                Case InStr(str, "systemStatus") > 0
+                    For i As Integer = 0 To 9
+                        Dim info As infosystem = New infosystem
+                        For Each st In jsonObjConf("systemStatus")("info")(i)
+                            Select Case True
+                                Case (st.Name.ToString = "n")
+                                    info.n = st.Value.ToString
+                                Case (st.Name.ToString = "v")
+                                    info.v = st.Value.ToString
+                                Case (st.Name.ToString = "unit")
+                                    info.unit = st.Value.ToString
+                                Case (st.Name.ToString = "c")
+                                    info.c = st.Value.ToString
+                            End Select
+                        Next
+                        If (info.n = "Version") Or (info.n = "Mac") Then
+                            ListInfoSystemStatus.Add(info)
+                            WriteLog("DBG: ReadConf Enregistrement: " & ListInfoSystemStatus.Item(ListInfoSystemStatus.Count - 1).n & " -> " & ListInfoSystemStatus.Item(ListInfoSystemStatus.Count - 1).v)
+                        End If
+                    Next
+                    For Each st In jsonObjConf("systemStatus")("info")(10)("transmitter")("available")
+                        TransmitterAvailable.Clear()
+                        For Each t As String In st.Value
+                            TransmitterAvailable.Add(t)
+                            Dim ptc As String = ""
+                            Select Case True
+                                Case InStr(t, "X10") 'Frame Protocol 1		X10, infotype 0, 1
+                                    ptc = "1 # X10|"
+                                Case InStr(t, "VISONIC") 'Frame Protocol 2		VISONIC, infotype 2
+                                    ptc = "2 # VISONIC|"
+                                Case InStr(t, "BLYSS") 'Frame Protocol 3		BLYSS, infotype 1
+                                    ptc = "3 # BLYSS|"
+                                Case InStr(t, "CHACON")  'Frame Protocol 4		CHACON, infotype 1
+                                    ptc = "4 # CHACON|"
+                                Case InStr(t, "OREGON")  'Frame Protocol 5		Oregon, infotype 4, 5, 6, 7, 9
+                                    ptc = "5 # OREGON|"
+                                Case InStr(t, "DOMIA")  'Frame Protocol 6		DOMIA, infotype 0
+                                    ptc = "6 # DOMIA|"
+                                Case InStr(t, "OWL")  'Frame Protocol 7		OWL, infotype 8
+                                    ptc = "7 # OWL|"
+                                Case InStr(t, "X2D")  'Frame Protocol 8		X2D, infotype 10, 11
+                                    ptc = "8 # X2D|"
+                                Case InStr(t, "RTS")  'Frame Protocol 9		RTS, infotype 3
+                                    ptc = "9 # RTS|"
+                                Case InStr(t, "KD101")  'Frame Protocol 10	KD101, infotype 1
+                                    ptc = "10 # KD101|"
+                                Case InStr(t, "PARROT")  'Frame Protocol 11   PARROT, infotype 0
+                                    ptc = "11 # PARROT|"
+                            End Select
+                            If (ptc <> "") And (InStr(_libelleadr1, ptc) = 0) Then _libelleadr1 += ptc
+                        Next
+                        WriteLog("ReadConf Transmetteur Available " & TransmitterAvailable.Count.ToString())
+                    Next
+                    For Each st In jsonObjConf("systemStatus")("info")(11)("receiver")("available")
+                        ReceiverAvailable.Clear()
+                        For Each t As String In st.Value
+                            ReceiverAvailable.Add(t)
+                        Next
+                        WriteLog("DBG: ReadConf Recepteur Available " & ReceiverAvailable.Count.ToString())
+                    Next
+                    For Each st In jsonObjConf("systemStatus")("info")(12)("receiver")("enabled")
+                        ReceiverEnable.Clear()
+                        For Each t As String In st.Value
+                            ReceiverEnable.Add(t)
+                        Next
+                        WriteLog("DBG: ReadConf Recepteur Enable " & ReceiverEnable.Count.ToString())
+                    Next
+                    For Each st In jsonObjConf("systemStatus")("info")(13)("repeater")("available")
+                        RepeaterAvailable.Clear()
+                        For Each t As String In st.Value
+                            RepeaterAvailable.Add(t)
+                        Next
+                        WriteLog("DBG: ReadConf Repeteur Available " & RepeaterAvailable.Count.ToString())
+                    Next
+                    For Each st In jsonObjConf("systemStatus")("info")(14)("repeater")("enabled")
+                        RepeaterEnable.Clear()
+                        For Each t As String In st.Value
+                            RepeaterEnable.Add(t)
+                        Next
+                        WriteLog("DBG: ReadConf Repeteur Enable " & RepeaterEnable.Count.ToString())
+                    Next
+                    ' evite les doublons 
+                    Dim ld0 As New HoMIDom.HoMIDom.Driver.cLabels
+                    For i As Integer = 0 To _LabelsDevice.Count - 1
+                        ld0 = _LabelsDevice(i)
+                        Select Case ld0.NomChamp
+                            Case "ADRESSE1"
+                                _libelleadr1 = Mid(_libelleadr1, 1, Len(_libelleadr1) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
+                                ld0.Parametre = _libelleadr1
+                                _LabelsDevice(i) = ld0
+                                'Case "ADRESSE2"
+                                '    _libelleadr2 = Mid(_libelleadr2, 1, Len(_libelleadr2) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
+                                '    ld0.Parametre = _libelleadr2
+                                '    _LabelsDevice(i) = ld0
+                        End Select
+                    Next
+                Case InStr(str, "radioStatus") > 0
+            End Select
+
+
+
+        Catch ex As Exception
+            WriteLog("ERR: ReadConf Exception: " + ex.Message)
+        End Try
+    End Sub
+
+    Private Sub ReadDatas(str As String)
+        Try
+            WriteLog("DBG: ReadDatas à traiter : " + str)
+            jsonObjConf = Newtonsoft.Json.JsonConvert.DeserializeObject(str)
+
+            Dim st As String = jsonObjConf("frame")("header")("infoType")
+            WriteLog("DBG: infoType: " & st)
+
+            Select Case st
+                Case "0" 'Frame infoType 0		ON/OFF
+                Case "1" 'Frame infoType 1		ON/OFF   error in API receive id instead of id_lsb and id_msb
+                Case "2" 'Frame infoType 2		Visonic
+                Case "3" 'Frame infoType 3		RTS
+                    DecodeInfoType3(jsonObjConf, st)
+                Case "4" 'Frame infoType 4		Oregon thermo/hygro sensors
+                Case "5" 'Frame infoType 5		Oregon thermo/hygro/pressure sensors
+                Case "6" 'Frame infoType 6		Oregon Wind sensors
+                Case "7" 'Frame infoType 7		Oregon UV sensors
+                Case "8" 'Frame infoType 8		OWL Energy/power sensors
+                Case "9" 'Frame infoType 9		Oregon Rain sensors
+                Case "10" 'Frame infoType 10	Thermostats  X2D protocol
+                Case "11" 'Frame infoType 11   Alarm X2D protocol / Shutter
+            End Select
+
+
+
+        Catch ex As Exception
+            WriteLog("ERR: ReadDatas Exception: " + ex.Message)
+        End Try
+    End Sub
+
+    Private Sub DecodeInfoType0(DecData, infoType)
+        Try
+            Dim protocol As String = DecData("frame")("header")("protocol")
+            Dim subType As String = DecData("frame")("infos")("subType")
+            Dim subTypeMeaning As String = DecData("frame")("infos")("subTypeMeaning")
+            Dim id As String = DecData("frame")("infos")("id")
+            Dim qualifier As String = DecData("frame")("infos")("qualifier")
+            Dim qualifierMeaning As String = DecData("frame")("infos")("qualifierMeaning")("flags")(0)
+
+            Dim dev As device = New device
+            dev.id = id
+            dev.name = qualifierMeaning
+            dev.protocol = Trim(protocol)
+            dev.subTypeMeaning = subTypeMeaning
+            dev.qualifier = qualifier
+            If (ListOfDevices.IndexOf(dev) = -1) Then
+                ListOfDevices.Add(dev)
+                WriteLog("DBG: " & Trim(dev.protocol) & " #; " & subTypeMeaning & " " & dev.id & "|")
+            End If
+        Catch ex As Exception
+            WriteLog("ERR: DecodeInfoType0 Exception: " + ex.Message)
+        End Try
+    End Sub
+    Private Sub WriteInfoType0(command)
+        Try
+            SendToSerial(command, 3)
+            WriteLog("DBG: WriteInfoType0, commande " & command & " exécutée")
+        Catch ex As Exception
+            WriteLog("ERR: WriteInfoType0 Exception: " + ex.Message)
+            '   Return ""
+        End Try
+    End Sub
+    Private Sub DecodeInfoType2(DecData, infoType)
+        Try
+            Dim protocol As String = DecData("frame")("header")("protocol")
+            Dim subType As String = DecData("frame")("infos")("subType")
+            Dim subTypeMeaning As String = DecData("frame")("infos")("subTypeMeaning")
+            Dim id As String = DecData("frame")("infos")("id")
+            Dim qualifier As String = DecData("frame")("infos")("qualifier")
+            Dim qualifierMeaning As String = DecData("frame")("infos")("qualifierMeaning")("flags")(0)
+
+            Dim dev As device = New device
+            dev.id = id
+            dev.name = qualifierMeaning
+            dev.protocol = Trim(protocol)
+            dev.subTypeMeaning = subTypeMeaning
+            dev.qualifier = qualifier
+            If (ListOfDevices.IndexOf(dev) = -1) Then
+                ListOfDevices.Add(dev)
+                WriteLog("DBG: " & Trim(dev.protocol) & " #; " & subTypeMeaning & " " & dev.id & "|")
+            End If
+        Catch ex As Exception
+            WriteLog("ERR: DecodeInfoType2 Exception: " + ex.Message)
+        End Try
+    End Sub
+    Private Sub WriteInfoType2(command)
+        Try
+            SendToSerial(command, 3)
+            WriteLog("DBG: WriteInfoType2, commande " & command & " exécutée")
+        Catch ex As Exception
+            WriteLog("ERR: WriteInfoType2 Exception: " + ex.Message)
+            '   Return ""
+        End Try
+    End Sub
+    Private Sub DecodeInfoType3(DecData, infoType)
+        Try
+            Dim protocol As String = DecData("frame")("header")("protocol")
+            Dim subType As String = DecData("frame")("infos")("subType")
+            Dim subTypeMeaning As String = DecData("frame")("infos")("subTypeMeaning")
+            Dim id As String = DecData("frame")("infos")("id")
+            Dim qualifier As String = DecData("frame")("infos")("qualifier")
+            Dim qualifierMeaning As String = DecData("frame")("infos")("qualifierMeaning")("flags")(0)
+
+            Dim dev As device = New device
+            dev.id = id
+            dev.name = qualifierMeaning
+            dev.protocol = Trim(protocol)
+            dev.subTypeMeaning = subTypeMeaning
+            dev.qualifier = qualifier
+            If (ListOfDevices.IndexOf(dev) = -1) Then
+                ListOfDevices.Add(dev)
+                WriteLog("DBG: " & Trim(dev.protocol) & " #; " & subTypeMeaning & " " & dev.id & "|")
+            End If
+        Catch ex As Exception
+            WriteLog("ERR: DecodeInfoType3 Exception: " + ex.Message)
+        End Try
+    End Sub
+    Private Sub WriteInfoType3(command)
+        Try
+            SendToSerial(command, 3)
+            WriteLog("DBG: WriteInfoType3, commande " & command & " exécutée")
+        Catch ex As Exception
+            WriteLog("ERR: WriteInfoType3 Exception: " + ex.Message)
+            '   Return ""
+        End Try
+    End Sub
+    Private Sub WriteLog(message)
         Try
             'utilise la fonction de base pour loguer un event
             If STRGS.InStr(message, "DBG:") > 0 Then
@@ -663,4 +1179,47 @@ Imports System.Threading.Tasks
 #End Region
 
 End Class
+
+'###########
+'	#infotype0  ==> ok
+'	#ReqRcv = 'ZIA33{ "frame" :{"header": {"frameType": "0", "cluster": "0", "dataFlag": "0", "rfLevel": "-44", "floorNoise": "-99", "rfQuality": "10", "protocol": "6", "protocolMeaning": "DOMIA", "infoType": "0", "frequency": "433920"},"infos": {"subType": "0", "id": "235", "subTypeMeaning": "OFF", "idMeaning": "O12"}}}'
+'###########
+'	#infotype1 ==> ok
+'	#ReqRcv='ZIA33{ "frame" :{"header": {"frameType": "0", "cluster": "0", "dataFlag": "0", "rfLevel": "-72", "floorNoise": "-106", "rfQuality": "8", "protocol": "4", "protocolMeaning": "CHACON", "infoType": "1", "frequency": "433920"},"infos": {"subType": "1", "id": "424539265", "subTypeMeaning": "ON"}}}'
+'###########
+'	#infotype2
+'	#==> ok
+'	#ReqRcv='ZIA33{ "frame" :{"header": {"frameType": "0", "cluster": "0", "dataFlag": "0", "rfLevel": "-51", "floorNoise": "-103", "rfQuality": "10", "protocol": "2", "protocolMeaning": "VISONIC", "infoType": "2", "frequency": "433920"},"infos": {"subType": "0", "subTypeMeaning": "Detector/Sensor", "id": "335547184", "qualifier": "3", "qualifierMeaning": { "flags": ["Tamper","Alarm"]}}}}'
+'	#ReqRcv='ZIA33{ "frame" :{"header": {"frameType": "0", "cluster": "0", "dataFlag": "0", "rfLevel": "-55", "floorNoise": "-102", "rfQuality": "10", "protocol": "2", "protocolMeaning": "VISONIC", "infoType": "2", "frequency": "433920"},"infos": {"subType": "0", "subTypeMeaning": "Detector/Sensor", "id": "2034024048", "qualifier": "1", "qualifierMeaning": { "flags": ["Tamper"]}}}}'
+'	#OK ==>  protocol = 3
+'	#ReqRcv='ZIA33{ "frame" :{"header": {"frameType": "0", "cluster": "0", "dataFlag": "0", "rfLevel": "-66", "floorNoise": "-106", "rfQuality": "10", "protocol": "3", "protocolMeaning": "BLYSS", "infoType": "2", "frequency": "433920"},"infos": {"subType": "0", "subTypeMeaning": "Detector/Sensor", "id": "256292321", "qualifier": "0"}}}'
+'	#ReqRcv='ZIA33{ "frame" :{"header": {"frameType": "0", "cluster": "0", "dataFlag": "1", "rfLevel": "-84", "floorNoise": "-106", "rfQuality": "5", "protocol": "2", "protocolMeaning": "VISONIC", "infoType": "2", "frequency": "868950"},"infos": {"subType": "0", "subTypeMeaning": "Detector/Sensor", "id": "2039708784", "qualifier": "0", "qualifierMeaning": { "flags": []}}}}'
+'	###########
+'	#infotype3 RTS Subtype0 ==> ok  // 
+'	#ReqRcv='ZIA33{ "frame" :{"header": {"frameType": "0", "cluster": "0", "dataFlag": "0", "rfLevel": "-64", "floorNoise": "-103", "rfQuality": "9", "protocol": "9", "protocolMeaning": "RTS", "infoType": "3", "frequency": "433920"},"infos": {"subType": "0", "subTypeMeaning": "Shutter", "id": "14813191", "qualifier": "4", "qualifierMeaning": { "flags": ["My"]}}}}'
+'###########
+'	#infotype4
+'	#ReqRcv='ZIA33{ "frame" :{"header": {"frameType": "0", "cluster": "0", "dataFlag": "0", "rfLevel": "-86", "floorNoise": "-100", "rfQuality": "3", "protocol": "5", "protocolMeaning": "OREGON", "infoType": "4", "frequency": "433920"},"infos": {"subType": "0", "id_PHY": "0xEA4C", "id_PHYMeaning": "THC238/268,THWR288,THRN122,THN122/132,AW129/131", "adr_channel": "21762", "adr": "85", "channel": "2", "qualifier": "33", "lowBatt": "1", "measures" : [{"type" : "temperature", "value" : "-17.8", "unit" : "Celsius"}, {"type" : "hygrometry", "value" : "0", "unit" : "%"}]}}}'
+'	#ReqRcv='ZIA33{ "frame" :{"header": {"frameType": "0", "cluster": "0", "dataFlag": "0", "rfLevel": "-46", "floorNoise": "-105", "rfQuality": "10", "protocol": "5", "protocolMeaning": "OREGON", "infoType": "4", "frequency": "433920"},"infos": {"subType": "0", "id_PHY": "0x1A2D", "id_PHYMeaning": "THGR122/228/238/268,THGN122/123/132", "adr_channel": "63492", "adr": "248", "channel": "4", "qualifier": "32", "lowBatt": "0", "measures" : [{"type" : "temperature", "value" : "+20.3", "unit" : "Celsius"}, {"type" : "hygrometry", "value" : "41", "unit" : "%"}]}}}'
+'	#ReqRcv='ZIA33{ "frame" :{"header": {"frameType": "0", "cluster": "0", "dataFlag": "0", "rfLevel": "-77", "floorNoise": "-100", "rfQuality": "5", "protocol": "5", "protocolMeaning": "OREGON", "infoType": "4", "frequency": "433920"},"infos": {"subType": "0", "id_PHY": "0xFA28", "id_PHYMeaning": "THGR810", "adr_channel": "64513", "adr": "252", "channel": "1", "qualifier": "48", "lowBatt": "0", "measures" : [{"type" : "temperature", "value" : "+21.0", "unit" : "Celsius"}, {"type" : "hygrometry", "value" : "35", "unit" : "%"}]}}}'
+'###########
+'	#infotype5
+'###########
+'	#infotype6
+'###########
+'	#infotype7
+'###########
+'	#infotype8 OWL ==> ok
+'	#ReqRcv='ZIA33{ "frame" :{"header": {"frameType": "0", "cluster": "0", "dataFlag": "0", "rfLevel": "-85", "floorNoise": "-97", "rfQuality": "3", "protocol": "7", "protocolMeaning": "OWL", "infoType": "8", "frequency": "433920"},"infos": {"subType": "0", "id_PHY": "0x0002", "id_PHYMeaning": "CM180", "adr_channel": "35216",  "adr": "2201",  "channel": "0",  "qualifier": "1",  "lowBatt": "1", "measures" : [{"type" : "energy", "value" : "871295", "unit" : "Wh"}, {"type" : "power", "value" : "499", "unit" : "W"}]}}}'
+'###########
+'	#infotype9
+'###########
+'	#infotype10
+'###########
+'	#infotype11 ==> ok
+'	#ReqRcv='ZIA33{ "frame" :{"header": {"frameType": "0", "cluster": "0", "dataFlag": "1", "rfLevel": "-75", "floorNoise": "-99", "rfQuality": "6", "protocol": "8", "protocolMeaning": "X2D", "infoType": "11", "frequency": "868350"},"infos": {"subType": "0", "subTypeMeaning": "Detector/Sensor", "id": "2888689920", "qualifier": "10", "qualifierMeaning": { "flags": ["Alarm","Supervisor/Alive"]}}}}'
+'	#ReqRcv='ZIA33{ "frame" :{"header": {"frameType": "0", "cluster": "0", "dataFlag": "1", "rfLevel": "-57", "floorNoise": "-106", "rfQuality": "10", "protocol": "8", "protocolMeaning": "X2D", "infoType": "11", "frequency": "868350"},"infos": {"subType": "0", "subTypeMeaning": "Detector/Sensor", "id": "1112729857", "qualifier": "2", "qualifierMeaning": { "flags": ["Alarm"]}}}}'
+'	#ReqRcv='ZIA33{ "frame" :{"header": {"frameType": "0", "cluster": "0", "dataFlag": "1", "rfLevel": "-57", "floorNoise": "-106", "rfQuality": "10", "protocol": "8", "protocolMeaning": "X2D", "infoType": "11", "frequency": "868350"},"infos": {"subType": "0", "subTypeMeaning": "Detector/Sensor", "id": "1112729857", "qualifier": "0", "qualifierMeaning": { "flags": []}}}}'
+'	###########
+
 

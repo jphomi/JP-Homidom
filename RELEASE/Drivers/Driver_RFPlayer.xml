@@ -88,6 +88,11 @@ Driver_RFPlayer
 	<summary>Ouvrir le port RFPlayer</summary>
 	<param name="numero">Nom/Numero du port COM: COM2</param>
 	<remarks></remarks>
+</member><member name="M:Driver_RFPlayer.Driver_RFPlayer.StartInclusionMode(System.String,System.String)">
+	<summary>
+ Place le controller en mode "inclusion"
+ </summary>
+	<remarks></remarks>
 </member><member name="T:Driver_RFPlayer.Driver_RFPlayer">
 	<summary>Class Driver_RFPlayer, permet de communiquer avec le controleur RFPlayer</summary>
 	<remarks></remarks>
