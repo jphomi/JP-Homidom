@@ -765,14 +765,14 @@ Imports System.Security.Cryptography
             If Auth.expires_in > 0 And Auth.refresh_token <> Nothing Then
                 Dim stream = Newtonsoft.Json.JsonConvert.SerializeObject(Auth)
                 System.IO.File.WriteAllText(My.Application.Info.DirectoryPath & "\config\reponse_accesstoken_" & clientOauth & ".json", stream)
-                WriteLog("DBG: " & Me.Nom & " GetRefreshToken, Requête " & httpsOauth & " OK")
-                WriteLog("DBG: " & Me.Nom & " GetRefreshToken, Connect : " & responsebody.ToString)
+                WriteLog("DBG: " & " GetRefreshToken, Requête " & httpsOauth & " OK")
+                WriteLog("DBG: " & " GetRefreshToken, Connect : " & responsebody.ToString)
             Else
-                WriteLog("ERR: " & Me.Nom & " GetRefreshToken, Non connecté")
+                WriteLog("ERR: " & " GetRefreshToken, Non connecté")
             End If
             Return True
         Catch ex As Exception
-            WriteLog("ERR: " & Me.Nom & " GetRefreshToken, " & ex.Message)
+            WriteLog("ERR: " & " GetRefreshToken, " & ex.Message)
             Return True
         End Try
     End Function
