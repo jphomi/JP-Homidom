@@ -404,7 +404,7 @@ Imports Newtonsoft.Json.Linq
 
                 '    SendToSerial("ZIA++STATUS RADIO JSON", 3)
 
-                '  SendToSerial("ZIA33", 3)
+                ' SendToSerial("ZIA++FRAME JSON", 3)
 
 
 
@@ -496,14 +496,11 @@ Imports Newtonsoft.Json.Linq
         Try
 
             Dim ParaAdr1 = Split(Objet.Adresse1, "#")
-            Dim ParaAdr2 = Split(Objet.Adresse2, " ")
             ParaAdr1(0) = Trim(ParaAdr1(0))
             ParaAdr1(1) = Trim(ParaAdr1(1))
-            ParaAdr2(0) = Trim(ParaAdr2(0))
-            ParaAdr2(1) = Trim(ParaAdr2(1))
-            Dim qlif As String = ""
+            Dim qlif As String = "0"
             For i As Integer = 0 To ListOfDevices.Count - 1
-                If (ListOfDevices.Item(i).id = ParaAdr2(1)) And (ListOfDevices.Item(i).protocol = ParaAdr1(0)) Then
+                If (ListOfDevices.Item(i).id = Objet.Adresse2) And (ListOfDevices.Item(i).protocol = ParaAdr1(0)) Then
                     qlif = ListOfDevices.Item(i).qualifier
                 End If
             Next
@@ -516,49 +513,49 @@ Imports Newtonsoft.Json.Linq
                         Case UCase(Commande) = "ON"
                             Select Case ParaAdr1(0)
                                 Case "1" 'Frame Protocol 1		X10, infotype 0, 1
-                                    WriteInfoType0("ZIA++ON " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                    WriteInfoType0("ZIA++ON " & ParaAdr1(1) & " " & Objet.Adresse2)
                                 Case "2" 'Frame Protocol 2		VISONIC, infotype 2
-                                    WriteInfoType2("ZIA++ON " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                    WriteInfoType2("ZIA++ON " & ParaAdr1(1) & " " & Objet.Adresse2)
                                 Case "3" 'Frame Protocol 3		BLYSS, infotype 1
                                 Case "4" 'Frame Protocol 4		CHACON, infotype 1
                                 Case "5" 'Frame Protocol 5		Oregon, infotype 4, 5, 6, 7, 9
                                 Case "6" 'Frame Protocol 6		DOMIA, infotype 0
-                                    WriteInfoType0("ZIA++ON " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                    WriteInfoType0("ZIA++ON " & ParaAdr1(1) & " " & Objet.Adresse2)
                                 Case "7" 'Frame Protocol 7		OWL, infotype 8
                                 Case "8" 'Frame Protocol 8		X2D, infotype 10, 11
                                 Case "9" 'Frame Protocol 9		RTS, infotype 3
                                     If qlif = "0" Then
-                                        WriteInfoType3("ZIA++ON " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                        WriteInfoType3("ZIA++ON " & ParaAdr1(1) & " " & Objet.Adresse2)
                                     Else
-                                        WriteInfoType3("ZIA++ON " & ParaAdr1(1) & " ID " & ParaAdr2(1) & " QUALIFIER " & qlif)
+                                        WriteInfoType3("ZIA++ON " & ParaAdr1(1) & " " & Objet.Adresse2 & " QUALIFIER " & qlif)
                                     End If
                                 Case "10" 'Frame Protocol 10	KD101, infotype 1
                                 Case "11" 'Frame Protocol 11   PARROT, infotype 0
-                                    WriteInfoType0("ZIA++ON " & ParaAdr1(1) & " " & ParaAdr2(1))
+                                    WriteInfoType0("ZIA++ON " & ParaAdr1(1) & " " & Objet.Adresse2)
                             End Select
 
                         Case UCase(Commande) = "OFF"
                             Select Case ParaAdr1(0)
                                 Case "1" 'Frame Protocol 1		X10, infotype 0, 1
-                                    WriteInfoType0("ZIA++OFF " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                    WriteInfoType0("ZIA++OFF " & ParaAdr1(1) & " " & Objet.Adresse2)
                                 Case "2" 'Frame Protocol 2		VISONIC, infotype 2
-                                    WriteInfoType2("ZIA++OFF " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                    WriteInfoType2("ZIA++OFF " & ParaAdr1(1) & " " & Objet.Adresse2)
                                 Case "3" 'Frame Protocol 3		BLYSS, infotype 1
                                 Case "4" 'Frame Protocol 4		CHACON, infotype 1
                                 Case "5" 'Frame Protocol 5		Oregon, infotype 4, 5, 6, 7, 9
                                 Case "6" 'Frame Protocol 6		DOMIA, infotype 0
-                                    WriteInfoType0("ZIA++OFF " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                    WriteInfoType0("ZIA++OFF " & ParaAdr1(1) & " " & Objet.Adresse2)
                                 Case "7" 'Frame Protocol 7		OWL, infotype 8
                                 Case "8" 'Frame Protocol 8		X2D, infotype 10, 11
                                 Case "9" 'Frame Protocol 9		RTS, infotype 3
                                     If qlif = "0" Then
-                                        WriteInfoType3("ZIA++OFF " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                        WriteInfoType3("ZIA++OFF " & ParaAdr1(1) & " " & Objet.Adresse2)
                                     Else
-                                        WriteInfoType3("ZIA++OFF " & ParaAdr1(1) & " ID " & ParaAdr2(1) & " QUALIFIER " & qlif)
+                                        WriteInfoType3("ZIA++OFF " & ParaAdr1(1) & " " & Objet.Adresse2 & " QUALIFIER " & qlif)
                                     End If
                                 Case "10" 'Frame Protocol 10	KD101, infotype 1
                                 Case "11" 'Frame Protocol 11   PARROT, infotype 0
-                                    WriteInfoType0("ZIA++OFF " & ParaAdr1(1) & " " & ParaAdr2(1))
+                                    WriteInfoType0("ZIA++OFF " & ParaAdr1(1) & " " & Objet.Adresse2)
                             End Select
 
                         Case UCase(Commande) = "DIM" Or UCase(Commande) = "OUVERTURE"
@@ -572,7 +569,9 @@ Imports Newtonsoft.Json.Linq
                                 Case "7" 'Frame Protocol 7		OWL, infotype 8
                                 Case "8" 'Frame Protocol 8		X2D, infotype 10, 11
                                 Case "9" 'Frame Protocol 9		RTS, infotype 3
-                                    If qlif = "0" Then WriteInfoType3("ZIA++DIM %" & Parametre1 & " " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                    ' If qlif = "0" Then
+                                    'End If
+                                    WriteInfoType3("ZIA++DIM %" & Parametre1 & " " & ParaAdr1(1) & " " & Objet.Adresse2)
                                 Case "10" 'Frame Protocol 10	KD101, infotype 1
                                 Case "11" 'Frame Protocol 11   PARROT, infotype 0
                             End Select
@@ -606,7 +605,7 @@ Imports Newtonsoft.Json.Linq
                                 Case "7" 'Frame Protocol 7		OWL, infotype 8
                                 Case "8" 'Frame Protocol 8		X2D, infotype 10, 11
                                 Case "9" 'Frame Protocol 9		RTS, infotype 3
-                                    If qlif = "0" Then WriteInfoType3("ZIA++DIM %" & Parametre1 & " " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                    If qlif = "0" Then WriteInfoType3("ZIA++DIM %" & Parametre1 & " " & ParaAdr1(1) & " " & Objet.Adresse2)
                                 Case "10" 'Frame Protocol 10	KD101, infotype 1
                                 Case "11" 'Frame Protocol 11   PARROT, infotype 0
                             End Select
@@ -622,7 +621,7 @@ Imports Newtonsoft.Json.Linq
                                 Case "7" 'Frame Protocol 7		OWL, infotype 8
                                 Case "8" 'Frame Protocol 8		X2D, infotype 10, 11
                                 Case "9" 'Frame Protocol 9		RTS, infotype 3
-                                    If qlif = "0" Then WriteInfoType3("ZIA++DIM %" & Parametre1 & " " & ParaAdr1(1) & " ID " & ParaAdr2(1))
+                                    If qlif = "0" Then WriteInfoType3("ZIA++DIM %" & Parametre1 & " " & ParaAdr1(1) & " " & Objet.Adresse2)
                                 Case "10" 'Frame Protocol 10	KD101, infotype 1
                                 Case "11" 'Frame Protocol 11   PARROT, infotype 0
                             End Select
@@ -845,7 +844,7 @@ Imports Newtonsoft.Json.Linq
             Case "7" 'Frame Protocol 7		OWL, infotype 8
             Case "8" 'Frame Protocol 8		X2D, infotype 10, 11
             Case "9" 'Frame Protocol 9		RTS, infotype 3
-                WriteInfoType3("ZIA++ASSOC " & NumProtocole & " ID " & iddevice)
+                WriteInfoType3("ZIA++ASSOC " & NumProtocole & " " & iddevice)
             Case "10" 'Frame Protocol 10	KD101, infotype 1
             Case "11" 'Frame Protocol 11   PARROT, infotype 0
         End Select
@@ -887,13 +886,13 @@ Imports Newtonsoft.Json.Linq
                 Select Case True
                     Case InStr(FrameStr, "ZIA--{") > 0
                         ReadConf(FrameStr.Replace("ZIA--", ""))
-                        '      Case InStr(FrameStr, "ZIA33{") > 0
-                        FrameStr = "ZIA33{ ""frame"" :{""header"": {""frameType"": ""0"", ""cluster"": ""0"", ""dataFlag"": ""0"", ""rfLevel"": ""-64"", ""floorNoise"": ""-103"", ""rfQuality"": ""9"", ""protocol"": ""9"", ""protocolMeaning"": ""RTS"", ""infoType"": ""3"", ""frequency"": ""433920""},""infos"": {""subType"": ""0"", ""subTypeMeaning"": ""Shutter"", ""id"": ""14813191"", ""qualifier"": ""4"", ""qualifierMeaning"": { ""flags"": [""My""]}}}}"
+                        '   Case InStr(FrameStr, "ZIA33{") > 0
+                        FrameStr = "ZIA33{ ""frame"" :{""header"": {""frameType"": ""0"", ""cluster"": ""0"", ""dataFlag"": ""0"", ""rfLevel"": ""-64"", ""floorNoise"": ""-103"", ""rfQuality"": ""9"", ""protocol"": ""9"", ""protocolMeaning"": ""RTS"", ""infoType"": ""3"", ""frequency"": ""433920""},""infos"": {""subType"": ""0"", ""subTypeMeaning"": ""Shutter"", ""id"": ""A1"", ""qualifier"": ""4"", ""qualifierMeaning"": { ""flags"": [""My""]}}}}"
                         ReadDatas(FrameStr.Replace("ZIA33", ""))
-                        FrameStr = "ZIA33{ ""frame"" :{""header"": {""frameType"": ""0"", ""cluster"": ""0"", ""dataFlag"": ""0"", ""rfLevel"": ""-64"", ""floorNoise"": ""-103"", ""rfQuality"": ""9"", ""protocol"": ""9"", ""protocolMeaning"": ""RTS"", ""infoType"": ""3"", ""frequency"": ""433920""},""infos"": {""subType"": ""1"", ""subTypeMeaning"": ""Portal"", ""id"": ""14813215"", ""qualifier"": ""4"", ""qualifierMeaning"": { ""flags"": [""Portail""]}}}}"
-                        ReadDatas(FrameStr.Replace("ZIA33", ""))
+                        '                FrameStr = "ZIA33{ ""frame"" :{""header"": {""frameType"": ""0"", ""cluster"": ""0"", ""dataFlag"": ""0"", ""rfLevel"": ""-64"", ""floorNoise"": ""-103"", ""rfQuality"": ""9"", ""protocol"": ""9"", ""protocolMeaning"": ""RTS"", ""infoType"": ""3"", ""frequency"": ""433920""},""infos"": {""subType"": ""1"", ""subTypeMeaning"": ""Portal"", ""id"": ""14813215"", ""qualifier"": ""4"", ""qualifierMeaning"": { ""flags"": [""Portail""]}}}}"
+                        '               ReadDatas(FrameStr.Replace("ZIA33", ""))
                         For i As Integer = 0 To ListOfDevices.Count - 1
-                            _libelleadr2 += ListOfDevices.Item(i).protocol & " #; " & ListOfDevices.Item(i).subTypeMeaning & " " & ListOfDevices.Item(i).id & "|"
+                            _libelleadr2 += ListOfDevices.Item(i).protocol & " #; " & ListOfDevices.Item(i).id & "|"
                         Next
                         ' evite les doublons 
                         Dim ld0 As New HoMIDom.HoMIDom.Driver.cLabels
