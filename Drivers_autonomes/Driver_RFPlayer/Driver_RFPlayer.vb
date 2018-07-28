@@ -378,7 +378,6 @@ Imports Newtonsoft.Json.Linq
         'récupération des paramétres avancés
         Try
             _DEBUG = _Parametres.Item(0).Valeur
-
         Catch ex As Exception
             _DEBUG = False
             _Parametres.Item(0).Valeur = False
@@ -401,13 +400,6 @@ Imports Newtonsoft.Json.Linq
 
                 SendToSerial("ZIA++STATUS SYSTEM JSON", 3)
                 WriteLog("Version " & ListInfoSystemStatus.Item(0).v & " / mac adress " & ListInfoSystemStatus.Item(1).v)
-
-                '    SendToSerial("ZIA++STATUS RADIO JSON", 3)
-
-                ' SendToSerial("ZIA++FRAME JSON", 3)
-
-
-
             Else
                 WriteLog("ERR: Port Com non défini. Impossible d'ouvrir le port !")
                 _IsConnect = False
@@ -510,7 +502,7 @@ Imports Newtonsoft.Json.Linq
                 Case (Objet.Type = "LAMPE" Or Objet.Type = "APPAREIL" Or Objet.Type = "SWITCH" Or Objet.Type = "VOLET")
                     texteCommande = UCase(Commande)
                     Select Case True
-                        Case UCase(Commande) = "ON"
+                        Case UCase(Commande) = "ON" Or UCase(Commande) = "OPEN"
                             Select Case ParaAdr1(0)
                                 Case "1" 'Frame Protocol 1		X10, infotype 0, 1
                                     WriteInfoType0("ZIA++ON " & ParaAdr1(1) & " " & Objet.Adresse2)
@@ -533,8 +525,9 @@ Imports Newtonsoft.Json.Linq
                                 Case "11" 'Frame Protocol 11   PARROT, infotype 0
                                     WriteInfoType0("ZIA++ON " & ParaAdr1(1) & " " & Objet.Adresse2)
                             End Select
+                            Objet.value = True
 
-                        Case UCase(Commande) = "OFF"
+                        Case UCase(Commande) = "OFF" Or UCase(Commande) = "CLOSE"
                             Select Case ParaAdr1(0)
                                 Case "1" 'Frame Protocol 1		X10, infotype 0, 1
                                     WriteInfoType0("ZIA++OFF " & ParaAdr1(1) & " " & Objet.Adresse2)
@@ -557,6 +550,7 @@ Imports Newtonsoft.Json.Linq
                                 Case "11" 'Frame Protocol 11   PARROT, infotype 0
                                     WriteInfoType0("ZIA++OFF " & ParaAdr1(1) & " " & Objet.Adresse2)
                             End Select
+                            Objet.value = False
 
                         Case UCase(Commande) = "DIM" Or UCase(Commande) = "OUVERTURE"
                             Select Case ParaAdr1(0)
@@ -571,10 +565,28 @@ Imports Newtonsoft.Json.Linq
                                 Case "9" 'Frame Protocol 9		RTS, infotype 3
                                     ' If qlif = "0" Then
                                     'End If
-                                    WriteInfoType3("ZIA++DIM %" & Parametre1 & " " & ParaAdr1(1) & " " & Objet.Adresse2)
+                                    Select Case True
+                                        Case Parametre1 < 1  ' traitement ON/OFF et non pas touche My
+                                            If qlif = "0" Then
+                                                WriteInfoType3("ZIA++OFF " & ParaAdr1(1) & " " & Objet.Adresse2)
+                                            Else
+                                                WriteInfoType3("ZIA++OFF " & ParaAdr1(1) & " " & Objet.Adresse2 & " QUALIFIER " & qlif)
+                                            End If
+                                        Case Parametre1 > 99
+                                            If qlif = "0" Then
+                                                WriteInfoType3("ZIA++ON " & ParaAdr1(1) & " " & Objet.Adresse2)
+                                            Else
+                                                WriteInfoType3("ZIA++ON " & ParaAdr1(1) & " " & Objet.Adresse2 & " QUALIFIER " & qlif)
+                                            End If
+                                        Case Else
+                                            WriteInfoType3("ZIA++DIM %" & Parametre1 & " " & ParaAdr1(1) & " " & Objet.Adresse2)
+                                    End Select
                                 Case "10" 'Frame Protocol 10	KD101, infotype 1
                                 Case "11" 'Frame Protocol 11   PARROT, infotype 0
-                            End Select
+                             End Select
+                            Objet.value = Parametre1
+
+
                         Case UCase(Commande) = "SETPOINT"   'Ecrire une valeur vers le device physique
                             If Not IsNothing(Parametre1) Then
                                 Dim ValDimmer As Single
@@ -593,7 +605,9 @@ Imports Newtonsoft.Json.Linq
                                     Case UCase(Parametre1) = "ARRET"
                                         ValDimmer = 5
                                 End Select
+                                Objet.value = ValDimmer
                             End If
+
                         Case "ALL_LIGHT_ON"
                             Select Case ParaAdr1(0)
                                 Case "1" 'Frame Protocol 1		X10, infotype 0, 1
@@ -605,10 +619,15 @@ Imports Newtonsoft.Json.Linq
                                 Case "7" 'Frame Protocol 7		OWL, infotype 8
                                 Case "8" 'Frame Protocol 8		X2D, infotype 10, 11
                                 Case "9" 'Frame Protocol 9		RTS, infotype 3
-                                    If qlif = "0" Then WriteInfoType3("ZIA++DIM %" & Parametre1 & " " & ParaAdr1(1) & " " & Objet.Adresse2)
+                                    If qlif = "0" Then
+                                        WriteInfoType3("ZIA++ON " & ParaAdr1(1) & " " & Objet.Adresse2)
+                                    Else
+                                        WriteInfoType3("ZIA++ON " & ParaAdr1(1) & " " & Objet.Adresse2 & " QUALIFIER " & qlif)
+                                    End If
                                 Case "10" 'Frame Protocol 10	KD101, infotype 1
                                 Case "11" 'Frame Protocol 11   PARROT, infotype 0
                             End Select
+                            Objet.value = True
 
                         Case "ALL_LIGHT_OFF"
                             Select Case ParaAdr1(0)
@@ -621,10 +640,15 @@ Imports Newtonsoft.Json.Linq
                                 Case "7" 'Frame Protocol 7		OWL, infotype 8
                                 Case "8" 'Frame Protocol 8		X2D, infotype 10, 11
                                 Case "9" 'Frame Protocol 9		RTS, infotype 3
-                                    If qlif = "0" Then WriteInfoType3("ZIA++DIM %" & Parametre1 & " " & ParaAdr1(1) & " " & Objet.Adresse2)
+                                    If qlif = "0" Then
+                                        WriteInfoType3("ZIA++OFF " & ParaAdr1(1) & " " & Objet.Adresse2)
+                                    Else
+                                        WriteInfoType3("ZIA++OFF " & ParaAdr1(1) & " " & Objet.Adresse2 & " QUALIFIER " & qlif)
+                                    End If
                                 Case "10" 'Frame Protocol 10	KD101, infotype 1
                                 Case "11" 'Frame Protocol 11   PARROT, infotype 0
                             End Select
+                            Objet.value = False
                     End Select
                     WriteLog("DBG: " & "ExecuteCommand, Passage par la commande " & UCase(Commande))
             End Select
@@ -759,6 +783,7 @@ Imports Newtonsoft.Json.Linq
             'ajout des commandes avancées pour les devices
             Add_DeviceCommande("ALL_LIGHT_ON", "", 0)
             Add_DeviceCommande("ALL_LIGHT_OFF", "", 0)
+            Add_DeviceCommande("SETPOINT", "", 0)
 
             'Libellé Driver
             Add_LibelleDriver("HELP", "Aide...", "Ce module permet de recuperer les informations delivrées par un contrôleur Z-Wave ")
@@ -887,6 +912,7 @@ Imports Newtonsoft.Json.Linq
                     Case InStr(FrameStr, "ZIA--{") > 0
                         ReadConf(FrameStr.Replace("ZIA--", ""))
                         '   Case InStr(FrameStr, "ZIA33{") > 0
+                        WriteLog("DBG: ReceiveFromSerial, framestr: " + FrameStr)
                         FrameStr = "ZIA33{ ""frame"" :{""header"": {""frameType"": ""0"", ""cluster"": ""0"", ""dataFlag"": ""0"", ""rfLevel"": ""-64"", ""floorNoise"": ""-103"", ""rfQuality"": ""9"", ""protocol"": ""9"", ""protocolMeaning"": ""RTS"", ""infoType"": ""3"", ""frequency"": ""433920""},""infos"": {""subType"": ""0"", ""subTypeMeaning"": ""Shutter"", ""id"": ""A1"", ""qualifier"": ""4"", ""qualifierMeaning"": { ""flags"": [""My""]}}}}"
                         ReadDatas(FrameStr.Replace("ZIA33", ""))
                         '                FrameStr = "ZIA33{ ""frame"" :{""header"": {""frameType"": ""0"", ""cluster"": ""0"", ""dataFlag"": ""0"", ""rfLevel"": ""-64"", ""floorNoise"": ""-103"", ""rfQuality"": ""9"", ""protocol"": ""9"", ""protocolMeaning"": ""RTS"", ""infoType"": ""3"", ""frequency"": ""433920""},""infos"": {""subType"": ""1"", ""subTypeMeaning"": ""Portal"", ""id"": ""14813215"", ""qualifier"": ""4"", ""qualifierMeaning"": { ""flags"": [""Portail""]}}}}"
@@ -1173,8 +1199,6 @@ Imports Newtonsoft.Json.Linq
             _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom & " WriteLog", ex.Message)
         End Try
     End Sub
-
-
 #End Region
 
 End Class
