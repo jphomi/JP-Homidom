@@ -1743,15 +1743,17 @@ Public Class Driver_ZWave
             Try
                 Dim node As Node
                 Dim i As Integer
+                If _IsConnect Then
 
-                For i = 0 To m_nodeList.Count - 1
-                    node = GetNode(m_homeId, m_nodeList.ElementAt(i).ID)
-                    If (m_manager.IsNodeFailed(m_homeId, node.ID)) Then
-                        WriteLog("Noeud Mort : " & m_nodeList.ElementAt(i).ID & " / " & m_nodeList.ElementAt(i).Product & " -> " & m_nodeList.ElementAt(i).Label)
-                    Else
-                        WriteLog("Noeud Actif : " & m_nodeList.ElementAt(i).ID & " / " & m_nodeList.ElementAt(i).Product & " -> " & m_nodeList.ElementAt(i).Label)
-                    End If
-                Next
+                    For i = 0 To m_nodeList.Count - 1
+                        node = GetNode(m_homeId, m_nodeList.ElementAt(i).ID)
+                        If (m_manager.IsNodeFailed(m_homeId, node.ID)) Then
+                            WriteLog("Noeud Mort : " & m_nodeList.ElementAt(i).ID & " / " & m_nodeList.ElementAt(i).Product & " -> " & m_nodeList.ElementAt(i).Label)
+                        Else
+                            WriteLog("Noeud Actif : " & m_nodeList.ElementAt(i).ID & " / " & m_nodeList.ElementAt(i).Product & " -> " & m_nodeList.ElementAt(i).Label)
+                        End If
+                    Next
+                End If
             Catch ex As Exception
                 WriteLog("ERR: AffichedNode, Probleme lors de la suppression des noeuds")
             End Try
@@ -1809,10 +1811,12 @@ Public Class Driver_ZWave
         ''' </summary>
         ''' <remarks></remarks>
         Sub StartInclusionMode()
-            If m_manager.AddNode(m_homeId, False) Then
-                WriteLog("Début de la séquence d'Inclusion.")
-            Else
-                WriteLog("ERR: Impossible d'envoyer une séquence d'Inclusion.")
+            If _IsConnect Then
+                If m_manager.AddNode(m_homeId, False) Then
+                    WriteLog("Début de la séquence d'Inclusion.")
+                Else
+                    WriteLog("ERR: Impossible d'envoyer une séquence d'Inclusion.")
+                End If
             End If
         End Sub
 
@@ -1821,12 +1825,14 @@ Public Class Driver_ZWave
         ''' </summary>
         ''' <remarks></remarks>
         Sub StartSecureInclusionMode()
-            'WriteLog("Début de la séquence d'association sécurisée.")
-            RemoveFailedNode(0)  'preferable avant une inclusion sécurisée
-            If m_manager.AddNode(m_homeId, True) Then
-                WriteLog("Début de la séquence d'Inclusion sécurisée.")
-            Else
-                WriteLog("ERR: Impossible d'envoyer une séquence d'Inclusion.")
+            If _IsConnect Then
+                'WriteLog("Début de la séquence d'association sécurisée.")
+                RemoveFailedNode(0)  'preferable avant une inclusion sécurisée
+                If m_manager.AddNode(m_homeId, True) Then
+                    WriteLog("Début de la séquence d'Inclusion sécurisée.")
+                Else
+                    WriteLog("ERR: Impossible d'envoyer une séquence d'Inclusion.")
+                End If
             End If
         End Sub
 
@@ -1835,11 +1841,13 @@ Public Class Driver_ZWave
         ''' </summary>
         ''' <remarks></remarks>
         Sub StartExclusionMode()
-            ' WriteLog("Début de la séquence désassociation.")
-            If m_manager.RemoveNode(m_homeId) Then
-                WriteLog("Début de la séquence d'Exclusion.")
-            Else
-                WriteLog("ERR: Impossible d'envoyer une séquence de d'Exclusion.")
+            If _IsConnect Then
+                ' WriteLog("Début de la séquence désassociation.")
+                If m_manager.RemoveNode(m_homeId) Then
+                    WriteLog("Début de la séquence d'Exclusion.")
+                Else
+                    WriteLog("ERR: Impossible d'envoyer une séquence de d'Exclusion.")
+                End If
             End If
         End Sub
 
@@ -1848,10 +1856,12 @@ Public Class Driver_ZWave
         ''' </summary>
         ''' <remarks></remarks>
         Sub StopAssociation()
-            If m_manager.CancelControllerCommand(m_homeId) Then
-                WriteLog("Annule la commande en cours.")
-            Else
-                WriteLog("ERR: Impossible d'envoyer la commande d'annulation d'association.")
+            If _IsConnect Then
+                If m_manager.CancelControllerCommand(m_homeId) Then
+                    WriteLog("Annule la commande en cours.")
+                Else
+                    WriteLog("ERR: Impossible d'envoyer la commande d'annulation d'association.")
+                End If
             End If
         End Sub
 
@@ -1865,44 +1875,46 @@ Public Class Driver_ZWave
                 Dim node As Node
                 Dim i As Integer
                 Dim Trouve As Boolean = False
+                If _IsConnect Then
 
-                If NumNode = Nothing Then NumNode = 0
-                'Supprime tous les noeuds Morts
-                If NumNode = 0 Then
-                    For i = 0 To m_nodeList.Count - 1
-                        node = GetNode(m_homeId, m_nodeList.ElementAt(i).ID)
-                        If (m_manager.IsNodeFailed(m_homeId, node.ID)) Then
-                            WriteLog("Noeud Mort : " & m_nodeList.ElementAt(i).ID & " / " & m_nodeList.ElementAt(i).Product & " -> " & m_nodeList.ElementAt(i).Label)
-                            If m_manager.RemoveFailedNode(m_homeId, node.ID) Then
-                                WriteLog("Noeud Supprimé : " & m_nodeList.ElementAt(i).ID & " / " & m_nodeList.ElementAt(i).Product)
+                    If NumNode = Nothing Then NumNode = 0
+                    'Supprime tous les noeuds Morts
+                    If NumNode = 0 Then
+                        For i = 0 To m_nodeList.Count - 1
+                            node = GetNode(m_homeId, m_nodeList.ElementAt(i).ID)
+                            If (m_manager.IsNodeFailed(m_homeId, node.ID)) Then
+                                WriteLog("Noeud Mort : " & m_nodeList.ElementAt(i).ID & " / " & m_nodeList.ElementAt(i).Product & " -> " & m_nodeList.ElementAt(i).Label)
+                                If m_manager.RemoveFailedNode(m_homeId, node.ID) Then
+                                    WriteLog("Noeud Supprimé : " & m_nodeList.ElementAt(i).ID & " / " & m_nodeList.ElementAt(i).Product)
+                                Else
+                                    WriteLog("ERR: Probleme lors de la suppression du noeud : " & m_nodeList.ElementAt(i).ID & " / " & m_nodeList.ElementAt(i).Product & " -> " & m_nodeList.ElementAt(i).Label)
+                                End If
                             Else
-                                WriteLog("ERR: Probleme lors de la suppression du noeud : " & m_nodeList.ElementAt(i).ID & " / " & m_nodeList.ElementAt(i).Product & " -> " & m_nodeList.ElementAt(i).Label)
+                                WriteLog("Noeud actif : " & m_nodeList.ElementAt(i).ID & " / " & m_nodeList.ElementAt(i).Product & " -> " & m_nodeList.ElementAt(i).Label)
                             End If
-                        Else
-                            WriteLog("Noeud actif : " & m_nodeList.ElementAt(i).ID & " / " & m_nodeList.ElementAt(i).Product & " -> " & m_nodeList.ElementAt(i).Label)
-                        End If
-                    Next
-                End If
-
-                'Supprime le noeud passé en paramètre
-                If NumNode > 1 Then
-                    For i = 0 To m_nodeList.Count - 1
-                        node = GetNode(m_homeId, m_nodeList.ElementAt(i).ID)
-                        If NumNode = node.ID Then
-                            Trouve = True
-                            If m_manager.RemoveFailedNode(m_homeId, node.ID) Then
-                                WriteLog("Noeud Supprimé : " & m_nodeList.ElementAt(i).ID & " / " & m_nodeList.ElementAt(i).Product & " -> " & m_nodeList.ElementAt(i).Product)
-                            Else
-                                WriteLog("ERR: Probleme lors de la suppression du noeud : " & m_nodeList.ElementAt(i).ID & " / " & m_nodeList.ElementAt(i).Product & " -> " & m_nodeList.ElementAt(i).Label)
-                            End If
-                            Exit For
-                        End If
-                    Next
-                    If Trouve = False Then
-                        WriteLog("ERR: RemoveFailedNode, Numéro du noeud incorrect : " & NumNode.ToString)
+                        Next
                     End If
+
+                    'Supprime le noeud passé en paramètre
+                    If NumNode > 1 Then
+                        For i = 0 To m_nodeList.Count - 1
+                            node = GetNode(m_homeId, m_nodeList.ElementAt(i).ID)
+                            If NumNode = node.ID Then
+                                Trouve = True
+                                If m_manager.RemoveFailedNode(m_homeId, node.ID) Then
+                                    WriteLog("Noeud Supprimé : " & m_nodeList.ElementAt(i).ID & " / " & m_nodeList.ElementAt(i).Product & " -> " & m_nodeList.ElementAt(i).Product)
+                                Else
+                                    WriteLog("ERR: Probleme lors de la suppression du noeud : " & m_nodeList.ElementAt(i).ID & " / " & m_nodeList.ElementAt(i).Product & " -> " & m_nodeList.ElementAt(i).Label)
+                                End If
+                                Exit For
+                            End If
+                        Next
+                        If Trouve = False Then
+                            WriteLog("ERR: RemoveFailedNode, Numéro du noeud incorrect : " & NumNode.ToString)
+                        End If
+                    End If
+                    ' WriteLog("RemoveFailedNode, Nombre de noeud présent aprés analyse :" & m_nodeList.Count)
                 End If
-                ' WriteLog("RemoveFailedNode, Nombre de noeud présent aprés analyse :" & m_nodeList.Count)
             Catch ex As Exception
                 WriteLog("ERR: RemoveFailedNode, Probleme lors de la suppression des noeuds")
             End Try
@@ -2483,7 +2495,8 @@ Public Class Driver_ZWave
                     While Nodes.MoveNext()
                         valnode = Nodes.Current.OuterXml
                         ' recherche de l'id demandé
-                        If InStr(valnode, "Node id=""" & nodeid & """") > 0 Then
+                        'If InStr(valnode, "Node id=""" & nodeid & """") > 0 Then
+                        If InStr(valnode, "Node id=""" & nodeid & """" & " name") > 0 Then
                             reader = XmlReader.Create(New StringReader(valnode))
                             reader.ReadToDescendant("CommandClasses")
                             While reader.Read()

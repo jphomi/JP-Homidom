@@ -1,0 +1,95 @@
+
+Logging started 2018-07-18 19:17:33.912 
+
+2018-07-18 19:17:33.928 Always, OpenZwave Version 1.4.0 Starting Up
+2018-07-18 19:17:33.928 Info, Setting Up Provided Network Key for Secure Communications
+2018-07-18 19:17:33.928 Warning, Failed - Network Key Not Set
+2018-07-18 19:17:33.928 Info, mgr,     Added driver for controller \\.\COM5
+2018-07-18 19:17:33.928 Info,   Opening controller \\.\COM5
+2018-07-18 19:17:33.928 Info,     Trying to open serial port \\.\COM5 (Attempt 1)
+2018-07-18 19:17:33.944 Info,     Serial port \\.\COM5 opened (attempt 1)
+2018-07-18 19:17:33.944 Detail, contrlr, Queuing (Command) FUNC_ID_ZW_GET_VERSION: 0x01, 0x03, 0x00, 0x15, 0xe9
+2018-07-18 19:17:33.944 Detail, contrlr, Queuing (Command) FUNC_ID_ZW_MEMORY_GET_ID: 0x01, 0x03, 0x00, 0x20, 0xdc
+2018-07-18 19:17:33.944 Detail, contrlr, Queuing (Command) FUNC_ID_ZW_GET_CONTROLLER_CAPABILITIES: 0x01, 0x03, 0x00, 0x05, 0xf9
+2018-07-18 19:17:33.944 Detail, contrlr, Queuing (Command) FUNC_ID_SERIAL_API_GET_CAPABILITIES: 0x01, 0x03, 0x00, 0x07, 0xfb
+2018-07-18 19:17:33.959 Detail, contrlr, Queuing (Command) FUNC_ID_ZW_GET_SUC_NODE_ID: 0x01, 0x03, 0x00, 0x56, 0xaa
+2018-07-18 19:17:33.959 Detail, 
+2018-07-18 19:17:33.975 Info, contrlr, Sending (Command) message (Callback ID=0x00, Expected Reply=0x15) - FUNC_ID_ZW_GET_VERSION: 0x01, 0x03, 0x00, 0x15, 0xe9
+2018-07-18 19:17:34.991 Error, contrlr, ERROR: Dropping command, expected response not received after 1 attempt(s)
+
+
+Dumping queued log messages
+
+2018-07-18 19:17:33.959 2836 
+2018-07-18 19:17:33.975 2836 Sending (Command) message (Callback ID=0x00, Expected Reply=0x15) - FUNC_ID_ZW_GET_VERSION: 0x01, 0x03, 0x00, 0x15, 0xe9
+2018-07-18 19:17:34.991 2836 ERROR: Dropping command, expected response not received after 1 attempt(s)
+
+End of queued log message dump
+
+
+2018-07-18 19:17:34.991 Detail, contrlr, Removing current message
+2018-07-18 19:17:34.991 Detail, contrlr, Notification: Notification - TimeOut
+2018-07-18 19:17:35.022 Detail, 
+2018-07-18 19:17:35.022 Info, contrlr, Sending (Command) message (Callback ID=0x00, Expected Reply=0x20) - FUNC_ID_ZW_MEMORY_GET_ID: 0x01, 0x03, 0x00, 0x20, 0xdc
+2018-07-18 19:17:36.037 Error, contrlr, ERROR: Dropping command, expected response not received after 1 attempt(s)
+
+
+Dumping queued log messages
+
+2018-07-18 19:17:35.022 2836 
+2018-07-18 19:17:35.022 2836 Sending (Command) message (Callback ID=0x00, Expected Reply=0x20) - FUNC_ID_ZW_MEMORY_GET_ID: 0x01, 0x03, 0x00, 0x20, 0xdc
+2018-07-18 19:17:36.037 2836 ERROR: Dropping command, expected response not received after 1 attempt(s)
+
+End of queued log message dump
+
+
+2018-07-18 19:17:36.037 Detail, contrlr, Removing current message
+2018-07-18 19:17:36.037 Detail, contrlr, Notification: Notification - TimeOut
+2018-07-18 19:17:36.053 Detail, 
+2018-07-18 19:17:36.053 Info, contrlr, Sending (Command) message (Callback ID=0x00, Expected Reply=0x05) - FUNC_ID_ZW_GET_CONTROLLER_CAPABILITIES: 0x01, 0x03, 0x00, 0x05, 0xf9
+2018-07-18 19:17:37.069 Error, contrlr, ERROR: Dropping command, expected response not received after 1 attempt(s)
+
+
+Dumping queued log messages
+
+2018-07-18 19:17:36.053 2836 
+2018-07-18 19:17:36.053 2836 Sending (Command) message (Callback ID=0x00, Expected Reply=0x05) - FUNC_ID_ZW_GET_CONTROLLER_CAPABILITIES: 0x01, 0x03, 0x00, 0x05, 0xf9
+2018-07-18 19:17:37.069 2836 ERROR: Dropping command, expected response not received after 1 attempt(s)
+
+End of queued log message dump
+
+
+2018-07-18 19:17:37.069 Detail, contrlr, Removing current message
+2018-07-18 19:17:37.069 Detail, contrlr, Notification: Notification - TimeOut
+2018-07-18 19:17:37.116 Detail, 
+2018-07-18 19:17:37.116 Info, contrlr, Sending (Command) message (Callback ID=0x00, Expected Reply=0x07) - FUNC_ID_SERIAL_API_GET_CAPABILITIES: 0x01, 0x03, 0x00, 0x07, 0xfb
+2018-07-18 19:17:38.131 Error, contrlr, ERROR: Dropping command, expected response not received after 1 attempt(s)
+
+
+Dumping queued log messages
+
+2018-07-18 19:17:37.116 2836 
+2018-07-18 19:17:37.116 2836 Sending (Command) message (Callback ID=0x00, Expected Reply=0x07) - FUNC_ID_SERIAL_API_GET_CAPABILITIES: 0x01, 0x03, 0x00, 0x07, 0xfb
+2018-07-18 19:17:38.131 2836 ERROR: Dropping command, expected response not received after 1 attempt(s)
+
+End of queued log message dump
+
+
+2018-07-18 19:17:38.131 Detail, contrlr, Removing current message
+2018-07-18 19:17:38.131 Detail, contrlr, Notification: Notification - TimeOut
+2018-07-18 19:17:38.147 Detail, 
+2018-07-18 19:17:38.147 Info, contrlr, Sending (Command) message (Callback ID=0x00, Expected Reply=0x56) - FUNC_ID_ZW_GET_SUC_NODE_ID: 0x01, 0x03, 0x00, 0x56, 0xaa
+2018-07-18 19:17:39.178 Error, contrlr, ERROR: Dropping command, expected response not received after 1 attempt(s)
+
+
+Dumping queued log messages
+
+2018-07-18 19:17:38.147 2836 
+2018-07-18 19:17:38.147 2836 Sending (Command) message (Callback ID=0x00, Expected Reply=0x56) - FUNC_ID_ZW_GET_SUC_NODE_ID: 0x01, 0x03, 0x00, 0x56, 0xaa
+2018-07-18 19:17:39.178 2836 ERROR: Dropping command, expected response not received after 1 attempt(s)
+
+End of queued log message dump
+
+
+2018-07-18 19:17:39.178 Detail, contrlr, Removing current message
+2018-07-18 19:17:39.178 Detail, contrlr, Notification: Notification - TimeOut
