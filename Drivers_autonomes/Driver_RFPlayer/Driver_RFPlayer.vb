@@ -502,7 +502,7 @@ Imports Newtonsoft.Json.Linq
                 Case (Objet.Type = "LAMPE" Or Objet.Type = "APPAREIL" Or Objet.Type = "SWITCH" Or Objet.Type = "VOLET")
                     texteCommande = UCase(Commande)
                     Select Case True
-                        Case UCase(Commande) = "ON" Or UCase(Commande) = "OPEN"
+                        Case UCase(Commande) = "ON"
                             Select Case ParaAdr1(0)
                                 Case "1" 'Frame Protocol 1		X10, infotype 0, 1
                                     WriteInfoType0("ZIA++ON " & ParaAdr1(1) & " " & Objet.Adresse2)
@@ -525,9 +525,13 @@ Imports Newtonsoft.Json.Linq
                                 Case "11" 'Frame Protocol 11   PARROT, infotype 0
                                     WriteInfoType0("ZIA++ON " & ParaAdr1(1) & " " & Objet.Adresse2)
                             End Select
-                            Objet.value = True
+                            If Objet.Type = "VOLET" Then
+                                Objet.value = 100
+                            Else
+                                Objet.value = True
+                            End If
 
-                        Case UCase(Commande) = "OFF" Or UCase(Commande) = "CLOSE"
+                        Case UCase(Commande) = "OFF"
                             Select Case ParaAdr1(0)
                                 Case "1" 'Frame Protocol 1		X10, infotype 0, 1
                                     WriteInfoType0("ZIA++OFF " & ParaAdr1(1) & " " & Objet.Adresse2)
@@ -550,7 +554,11 @@ Imports Newtonsoft.Json.Linq
                                 Case "11" 'Frame Protocol 11   PARROT, infotype 0
                                     WriteInfoType0("ZIA++OFF " & ParaAdr1(1) & " " & Objet.Adresse2)
                             End Select
-                            Objet.value = False
+                            If Objet.Type = "VOLET" Then
+                                Objet.value = 0
+                            Else
+                                Objet.value = False
+                            End If
 
                         Case UCase(Commande) = "DIM" Or UCase(Commande) = "OUVERTURE"
                             Select Case ParaAdr1(0)
@@ -566,7 +574,7 @@ Imports Newtonsoft.Json.Linq
                                     ' If qlif = "0" Then
                                     'End If
                                     Select Case True
-                                        Case Parametre1 < 1  ' traitement ON/OFF et non pas touche My
+                                        Case Parametre1 < 1   ' traitement ON/OFF et non pas touche My
                                             If qlif = "0" Then
                                                 WriteInfoType3("ZIA++OFF " & ParaAdr1(1) & " " & Objet.Adresse2)
                                             Else
@@ -583,7 +591,7 @@ Imports Newtonsoft.Json.Linq
                                     End Select
                                 Case "10" 'Frame Protocol 10	KD101, infotype 1
                                 Case "11" 'Frame Protocol 11   PARROT, infotype 0
-                             End Select
+                            End Select
                             Objet.value = Parametre1
 
 
