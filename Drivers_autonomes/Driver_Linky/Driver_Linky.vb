@@ -58,29 +58,101 @@ Imports MySql.Data
     'Insérer ici les variables internes propres au driver et non communes
 
 
-    Dim _LoginBaseUri As String = "espace-client-connexion.enedis.fr"
-    Dim _ApiBaseUri As String = "espace-client-particuliers.enedis.fr"
-    Dim _ApiEndPointLogin As String = "/auth/UI/Login"
-    Dim _ApiEndPointData As String = "/group/espace-particuliers/suivi-de-consommation"
-    Dim _ApiAcceptTerm As String = "/c/portal/update_terms_of_use"
-    Dim _ApiRealm As String = "realm=particuliers"
-    Dim _AdrsAcceuil As String = "https://" & _LoginBaseUri & _ApiEndPointLogin & "?" & _ApiRealm & "&goto=https://espace-client-particuliers.enedis.fr:/group/espace-particuliers/accueil"
+    Dim _UrlLinky As String = "https://tt1ph811kc.execute-api.eu-central-1.amazonaws.com/prod/"
+    Dim _UrlLinkyDevices As String = "https://tt1ph811kc.execute-api.eu-central-1.amazonaws.com/prod/devices"
+    Dim _UrlLinkyPrevisions As String = "https://tt1ph811kc.execute-api.eu-central-1.amazonaws.com/prod/weather01_trans/"
     Dim _UserName As String = ""
     Dim _Password As String = ""
-    Dim _typeProfil As String = "particulier"
     Dim _Obj As Object = Nothing
-    Dim CookieLogin As New CookieContainer()
 
-    Dim authenconnec As New reponseauthen
+    Dim authenconnec As ReponseAuthen
+    Dim listestat As New List(Of Stations)
+    '    Dim meteo As List(Of String) = New List(Of String)
+    Dim listprevisions As Previsions
 
     Public Class reponseauthen
         Public login As Boolean
-        Public JSESSIONID As String
-        Public AMAuthCookie As String
-        Public iPlanetDirectoryPro As Boolean = False
+        Public authentication_token As String
     End Class
 
+    Public Class Stations
+        Public serial As String
+        Public role As String
+        Public status As Status
+        Public fonctionlive As List(Of FonctionLive)
+    End Class
 
+    Public Class Status
+        Public model_name As String
+        Public calibration As String
+        Public user_id As Integer
+        Public name As String
+        Public identification As String
+        Public serial As String
+        Public firmware As String
+        Public gps_fix As Integer
+        Public active As Integer
+        Public turn_off As Object
+        Public signalnr As Object
+        Public batt As Object
+        Public latitude As Double
+        Public altitude As Integer
+        Public longitude As Double
+
+    End Class
+
+    Public Class FonctionLive
+        Public fonction As String
+        Public params As List(Of String)
+        Public result As List(Of Double)
+        Public sensor_fonction As String
+    End Class
+
+    Public Class Allvaluedetail
+        Public serial As String
+        Public value As Object
+    End Class
+
+    Public Class Previsions
+        Public latitude As Double
+        Public longitude As Double
+        Public timezone As String
+        Public currently As PrevisionDetail
+        Public hourly As Previsions48h
+        Public daily As Previsions8j
+    End Class
+
+    Public Class Previsions48h
+        Public summary As String
+        Public data As List(Of PrevisionDetail)
+    End Class
+
+    Public Class Previsions8j
+        Public summary As String
+        Public data As List(Of PrevisionDetail)
+    End Class
+
+    Public Class PrevisionDetail
+        Public time As Integer
+        Public summary As String
+        Public icon As String
+        Public precipIntensity As Double
+        Public precipProbability As Double
+        Public precipType As String
+        Public temperature As Double
+        Public temperatureHigh As Double
+        Public temperatureLow As Double
+        Public dewPoint As Double
+        Public humidity As Double
+        Public pressure As Double
+        Public windSpeed As Double
+        Public windGust As Double
+        Public windBearing As Double
+        Public cloudCover As Double
+        Public uvIndex As Double
+        Public temperatureMin As Double
+        Public temperatureMax As Double
+    End Class
 
 #End Region
 
@@ -486,41 +558,29 @@ Imports MySql.Data
                 _DEBUG = _Parametres.Item(0).Valeur
                 _UserName = _Parametres.Item(1).Valeur
                 _Password = _Parametres.Item(2).Valeur
-                _typeProfil = _Parametres.Item(3).Valeur
             Catch ex As Exception
                 _DEBUG = False
                 _Parametres.Item(0).Valeur = False
                 WriteLog("ERR: Start, Erreur dans les paramétres avancés. utilisation des valeur par défaut : " & ex.Message)
             End Try
 
-            'pour etre sur que l'écriture est bonne
-            If InStr("entrepri", _typeProfil) > 0 Then
-                _typeProfil = "entreprises"
-            Else
-                _typeProfil = "particuliers"
-            End If
-            _ApiBaseUri = _ApiBaseUri.Replace("particuliers", _typeProfil)
-            _ApiEndPointData = _ApiEndPointData.Replace("particuliers", _typeProfil)
-            _ApiRealm = _ApiRealm.Replace("particuliers", _typeProfil)
-            _AdrsAcceuil = _AdrsAcceuil.Replace("particuliers", _typeProfil)
+            WriteLog("Start, connection au serveur " & _UrlLinky)
 
-            WriteLog("Start, connection au serveur " & _LoginBaseUri)
-
-            If Get_Token("https://" & _LoginBaseUri & _ApiEndPointLogin, _UserName, _Password) Then
+            If Get_Token(_UrlLinky & "users/sign_in", _UserName, _Password) Then
                 _IsConnect = True
-                WriteLog("Driver démarré avec succés à l'adresse " & _LoginBaseUri)
+                WriteLog("Driver démarré avec succés à l'adresse " & _UrlLinky)
 
-                Get_Data("https://" & _ApiBaseUri & _ApiEndPointData, "urlCdcHeure")
-
-                'lance le time du driver, mini toutes les 30 minutes
-                If _Refresh = 0 Then _Refresh = 5400
+                Get_Device(_UrlLinkyDevices)
+ 
+                'lance le time du driver, mini toutes les minutes
+                If _Refresh = 0 Then _Refresh = 180
                 MyTimer.Interval = _Refresh * 1000
                 MyTimer.Enabled = True
                 AddHandler MyTimer.Elapsed, AddressOf TimerTick
 
             Else
                 _IsConnect = False
-                WriteLog("ERR: Driver non démarré à l'adresse " & _LoginBaseUri)
+                WriteLog("ERR: Driver non démarré à l'adresse " & _UrlLinky)
             End If
         Catch ex As Exception
             _IsConnect = False
@@ -582,10 +642,133 @@ Imports MySql.Data
             Dim id_stat As Integer = CInt(Mid(Objet.adresse1, 1, InStr(Objet.adresse1, "#") - 1)) - 1
 
             Select Case Objet.Type
+                Case "METEO"
+                    Get_Previsions(_UrlLinkyPrevisions & listestat.Item(id_stat).status.latitude & "," & listestat.Item(id_stat).status.longitude)
 
+                    For i = 0 To listestat.Item(id_stat).fonctionlive.Count - 1
+                        If listestat.Item(id_stat).fonctionlive.Item(i).sensor_fonction = "TEMP_AIR_H1-FL0000_lastrecord" Then
+                            Objet.TemperatureActuel = Regex.Replace(CStr(listestat.Item(id_stat).fonctionlive.Item(i).result(1)), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                        End If
+                    Next
+                    For i = 0 To listestat.Item(id_stat).fonctionlive.Count - 1
+                        If listestat.Item(id_stat).fonctionlive.Item(i).sensor_fonction = "RH_AIR_H1-FL0000_lastrecord" Then
+                            Objet.HumiditeActuel = Regex.Replace(CStr(listestat.Item(id_stat).fonctionlive.Item(i).result(1)), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                        End If
+                    Next
+
+                    ' conversion den degre celsius
+                    Dim tmp_f As Double
+                    tmp_f = Regex.Replace(CStr(listprevisions.daily.data.Item(0).temperatureHigh), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                    Objet.MaxToday = (tmp_f - 32) / 1.8
+                    tmp_f = Regex.Replace(CStr(listprevisions.daily.data.Item(1).temperatureHigh), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                    Objet.MaxJ1 = (tmp_f - 32) / 1.8
+                    tmp_f = Regex.Replace(CStr(listprevisions.daily.data.Item(2).temperatureHigh), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                    Objet.MaxJ2 = (tmp_f - 32) / 1.8
+                    tmp_f = Regex.Replace(CStr(listprevisions.daily.data.Item(3).temperatureHigh), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                    Objet.MaxJ3 = (tmp_f - 32) / 1.8
+                    tmp_f = Regex.Replace(CStr(listprevisions.daily.data.Item(0).temperatureLow), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                    Objet.MinToday = (tmp_f - 32) / 1.8
+                    tmp_f = Regex.Replace(CStr(listprevisions.daily.data.Item(1).temperatureLow), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                    Objet.MinJ1 = (tmp_f - 32) / 1.8
+                    tmp_f = Regex.Replace(CStr(listprevisions.daily.data.Item(2).temperatureLow), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                    Objet.MinJ2 = (tmp_f - 32) / 1.8
+                    tmp_f = Regex.Replace(CStr(listprevisions.daily.data.Item(3).temperatureLow), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                    Objet.MinJ3 = (tmp_f - 32) / 1.8
+
+                    Dim st_icon As String
+                    Objet.ConditionToday = listprevisions.currently.summary
+                    st_icon = listprevisions.currently.icon.Replace("-day", "")
+                    st_icon = st_icon.Replace("-", "_")
+                    Objet.IconToday = st_icon
+                    Objet.ConditionJ1 = listprevisions.daily.data.Item(0).summary
+                    st_icon = listprevisions.daily.data.Item(0).icon.Replace("-day", "")
+                    st_icon = st_icon.Replace("-", "_")
+                    Objet.IconJ1 = st_icon
+                    Objet.ConditionJ2 = listprevisions.daily.data.Item(1).summary
+                    st_icon = listprevisions.daily.data.Item(1).icon.Replace("-day", "")
+                    st_icon = st_icon.Replace("-", "_")
+                    Objet.IconJ2 = st_icon
+                    Objet.ConditionJ3 = listprevisions.daily.data.Item(2).summary
+                    st_icon = listprevisions.daily.data.Item(2).icon.Replace("-day", "")
+                    st_icon = st_icon.Replace("-", "_")
+                    Objet.IconJ3 = st_icon
+
+                    Objet.JourToday = TraduireJour(Mid(Now.DayOfWeek.ToString, 1, 3))
+                    Objet.JourJ1 = TraduireJour(Mid(Now.AddDays(1).DayOfWeek.ToString, 1, 3))
+                    Objet.JourJ2 = TraduireJour(Mid(Now.AddDays(2).DayOfWeek.ToString, 1, 3))
+                    Objet.JourJ3 = TraduireJour(Mid(Now.AddDays(3).DayOfWeek.ToString, 1, 3))
+
+                    ' objet.VentActuel = Regex.Replace(CStr(moduleIDalire.dashboard_data.WindStrength), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+
+                Case "BATTERIE"
+                    Objet.Value = listestat.Item(id_stat).status.batt
+
+                Case "TEMPERATURE"
+                    For i = 0 To listestat.Item(id_stat).fonctionlive.Count - 1
+                        If listestat.Item(id_stat).fonctionlive.Item(i).sensor_fonction = "TEMP_AIR_H1-FL0000_lastrecord" Then
+                            Objet.value = Regex.Replace(CStr(listestat.Item(id_stat).fonctionlive.Item(i).result(1)), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                        End If
+                    Next
+
+                Case "HUMIDITE"
+                    For i = 0 To listestat.Item(id_stat).fonctionlive.Count - 1
+                        If listestat.Item(id_stat).fonctionlive.Item(i).sensor_fonction = "RH_AIR_H1-FL0000_lastrecord" Then
+                            Objet.Value = Regex.Replace(CStr(listestat.Item(id_stat).fonctionlive.Item(i).result(1)), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                        End If
+                    Next
+                Case "PLUIETOTAL"
+                    For i = 0 To listestat.Item(id_stat).fonctionlive.Count - 1
+                        If listestat.Item(id_stat).fonctionlive.Item(i).sensor_fonction = "RAIN_TIC-FL0001_sumlast" Then
+                            Objet.Value = Regex.Replace(CStr(listestat.Item(id_stat).fonctionlive.Item(i).result(2)), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                        End If
+                    Next
+                Case "PLUIECOURANT"
+                    For i = 0 To listestat.Item(id_stat).fonctionlive.Count - 1
+                        If listestat.Item(id_stat).fonctionlive.Item(i).sensor_fonction = "RAIN_TIC-FL0001_sumlast" Then
+                            Objet.Value = Regex.Replace(CStr(listestat.Item(id_stat).fonctionlive.Item(i).result(0)), "[.,]", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator)
+                        End If
+                    Next
 
                 Case "GENERIQUESTRING"
-              Case Else
+                    If InStr(Objet.adresse1, "All") > 0 Then
+                        workTable.Clear()
+                        If (InStr(Objet.adresse2, "lastrecord")) Or (InStr(Objet.adresse2, "sumlast")) > 0 Then
+                            For i = 0 To listestat.Count - 1
+                                For j = 0 To listestat.Item(i).fonctionlive.Count - 1
+                                    If listestat.Item(i).fonctionlive.Item(j).sensor_fonction = Objet.adresse2 Then
+                                        If InStr(Objet.adresse2, "RAIN") = 0 Then
+                                            workTable.Rows.Add("Linky", listestat.Item(i).status.serial, listestat.Item(i).status.latitude & " , " & listestat.Item(i).status.longitude, listestat.Item(i).status.altitude.ToString, Objet.adresse2, listestat.Item(i).fonctionlive.Item(j).result(1))
+                                        Else
+                                            workTable.Rows.Add("Linky", listestat.Item(i).status.serial, listestat.Item(i).status.latitude & " , " & listestat.Item(i).status.longitude, listestat.Item(i).status.altitude.ToString, Objet.adresse2, listestat.Item(i).fonctionlive.Item(j).result(2))
+                                        End If
+                                    End If
+                                Next
+                            Next
+                        Else
+                            workTable.Clear()
+                            For Each station In listestat
+                                Dim statu As Status
+                                statu = station.status
+                                Dim strjson As String = Newtonsoft.Json.JsonConvert.SerializeObject(statu, Newtonsoft.Json.Formatting.None)
+
+                                Dim ArrayStatus() As String = Split(strjson, ",")
+                                Dim stid As String
+                                Dim stvalue As Object
+                                For Each st In ArrayStatus
+                                    st = st.Replace("""", "")
+                                    st = st.Replace("{", "")
+                                    st = st.Replace("}", "")
+                                    stid = Mid(st, 1, (InStr(st, ":") - 1))
+                                    stvalue = Mid(st, InStr(st, ":") + 1, Len(st))
+                                    If InStr(stid, Objet.adresse2) > 0 Then
+                                        workTable.Rows.Add("Linky", station.serial, station.status.latitude & " / " & station.status.longitude, station.status.altitude.ToString, Objet.adresse2, stvalue)
+                                    End If
+                                Next
+                            Next
+                        End If
+                        Objet.value = Newtonsoft.Json.JsonConvert.SerializeObject(workTable)
+                    End If
+                Case Else
                     WriteLog("ERR: GetData=> Pas de valeur enregistrée")
                     Exit Sub
             End Select
@@ -610,6 +793,15 @@ Imports MySql.Data
                 WriteLog("ERR: Read, Erreur: Impossible de traiter la commande car le driver n'est pas activé (Enable)")
                 Exit Sub
             End If
+            Try ' lecture de la variable debug, permet de rafraichir la variable debug sans redemarrer le service
+                _DEBUG = _Parametres.Item(0).Valeur
+                _UserName = _Parametres.Item(1).Valeur
+                _Password = _Parametres.Item(2).Valeur
+            Catch ex As Exception
+                _DEBUG = False
+                _Parametres.Item(0).Valeur = False
+                WriteLog("ERR: Erreur de lecture de debug : " & ex.Message)
+            End Try
 
             'Si internet n'est pas disponible on ne mets pas à jour les informations
             If My.Computer.Network.IsAvailable = False Then
@@ -720,14 +912,25 @@ Imports MySql.Data
             _Version = Reflection.Assembly.GetExecutingAssembly.GetName.Version.ToString
 
             'liste des devices compatibles
-            _DeviceSupport.Add(ListeDevices.ENERGIEINSTANTANEE)
+            _DeviceSupport.Add(ListeDevices.METEO)
+            _DeviceSupport.Add(ListeDevices.BAROMETRE)
+            _DeviceSupport.Add(ListeDevices.DIRECTIONVENT)
+            _DeviceSupport.Add(ListeDevices.HUMIDITE)
+            _DeviceSupport.Add(ListeDevices.UV)
+            _DeviceSupport.Add(ListeDevices.VITESSEVENT)
+            _DeviceSupport.Add(ListeDevices.TEMPERATURE)
+            _DeviceSupport.Add(ListeDevices.BATTERIE)
+            '  _DeviceSupport.Add(ListeDevices.PLUIECOURANT)
+            _DeviceSupport.Add(ListeDevices.HUMIDITE)
+            _DeviceSupport.Add(ListeDevices.PLUIETOTAL)
+            _DeviceSupport.Add(ListeDevices.GENERIQUESTRING)
+            _DeviceSupport.Add(ListeDevices.GENERIQUEVALUE)
 
 
             'Parametres avancés
             Add_ParamAvance("Debug", "Activer le Debug complet (True/False)", False)
             Add_ParamAvance("Username", "Nom utilisateur", "admin")
             Add_ParamAvance("Password", "Mot de passe", "homi123456")
-            Add_ParamAvance("Profil", "Type profil (particulier/entreprise)", "particulier")
 
             'ajout des commandes avancées pour les devices
 
@@ -739,8 +942,8 @@ Imports MySql.Data
             Add_LibelleDriver("HELP", "Aide...", "Pas d'aide actuellement...")
 
             'Libellé Device
-            Add_LibelleDevice("ADRESSE1", "Pas de temps", "Heure|Mois|Mois")
-            Add_LibelleDevice("ADRESSE2", "@", "")
+            Add_LibelleDevice("ADRESSE1", "Numéro de la station", "Numéro de la station")
+            Add_LibelleDevice("ADRESSE2", "Choix de la valeur", "Choix de la valeur")
             Add_LibelleDevice("REFRESH", "Refresh (sec)", "Valeur de rafraîchissement de la mesure en secondes")
             'Add_LibelleDevice("LASTCHANGEDUREE", "LastChange Durée", "")
 
@@ -758,7 +961,7 @@ Imports MySql.Data
             Exit Sub
         End If
 
-        '    Get_Device(_UrlLinkyDevices)
+        Get_Device(_UrlLinkyDevices)
 
     End Sub
 
@@ -771,104 +974,41 @@ Imports MySql.Data
     Function Get_Token(adrs As String, user As String, password As String) As Boolean
         ' recupere les configuration de Linky
 
-        'chaine de parametre exemple
-        'IDToken1=enedis%40ljpr.eu&IDToken2=2482WI141777.&SunQueryParamsString=cmVhbG09cGFydGljdWxpZXJz&encoded=true&gx_charset=UTF-8&goto=aHR0cHM6Ly9lc3BhY2UtY2xpZW50LXBhcnRpY3VsaWVycy5lbmVkaXMuZnI6L2dyb3VwL2VzcGFjZS1wYXJ0aWN1bGllcnMvYWNjdWVpbA%3D%3D&gotoOnFail=
-        Dim reqparam As String = "IDToken1=" & user.Replace("@", "%40") & "&IDToken2=" & password & "&SunQueryParamsString=" & Convert.ToBase64String(Encoding.UTF8.GetBytes(_ApiRealm)) & "&encoded=true&gx_charset=UTF-8&goto=aHR0cHM6Ly9lc3BhY2UtY2xpZW50LXBhcnRpY3VsaWVycy5lbmVkaXMuZnI6L2dyb3VwL2VzcGFjZS1wYXJ0aWN1bGllcnMvYWNjdWVpbA%3D%3D&gotoOnFail="
-
+        Dim reqparam As String = ""
         Dim responsebodystr As String = ""
-        Dim CookieJar As New CookieContainer()
-        authenconnec.AMAuthCookie = False
 
         Try
-            Try
-                'connection au site enedis pour recupérer cookies
-                WriteLog("Get_Token, Tentative de connexion au site " & _AdrsAcceuil)
+            reqparam = "{""email"":""" & user & """,""password"":""" & password & """}"
+            reqparam = reqparam.PadRight(46)
+            WriteLog("DBG: Get_Token, reqparam -> '" & reqparam & "' / " & reqparam.Length)
+            Dim postBytes As Byte() = Encoding.ASCII.GetBytes(reqparam)
+            Dim Request As HttpWebRequest = HttpWebRequest.Create(adrs)
+            Request.ContentType = "application/json"
+            Request.Method = "POST"
+            Request.KeepAlive = True
+            Request.ContentLength = reqparam.Length
+            Request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:55.0) Gecko/20100101 Firefox/55.0"
+            Request.Accept = "*/*"
+            Request.Timeout = 5000
+            Request.Host = "tt1ph811kc.execute-api.eu-central-1.amazonaws.com"
+            Request.Referer = "http://app.Linky.com/login"
 
-                Dim RequestBase As HttpWebRequest = HttpWebRequest.Create(_AdrsAcceuil)
-                RequestBase.ContentType = "application/x-www-form-urlencoded"
-                RequestBase.Method = "GET"
-                RequestBase.UserAgent = "Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/64.0"
-                RequestBase.Accept = "application/json, text/javascript, */*; q=0.01"
-                RequestBase.AllowAutoRedirect = True
+            Dim writer As New StreamWriter(Request.GetRequestStream)
+            writer.Write(reqparam)
+            writer.Close()
 
-                Dim ResponseBase As HttpWebResponse = RequestBase.GetResponse()
-                If ResponseBase.Headers("Set-Cookie") <> Nothing Then
-                    Dim ckProp() As String = Split(ResponseBase.Headers("Set-Cookie"), ";")
-                    For Each ck As String In ckProp
-                        CookieJar.SetCookies(New Uri(_AdrsAcceuil), ck)
-                    Next
-                    WriteLog("DBG: Get_Token, responsebasecookies.count -> " & CookieJar.Count)
-                    For i = 0 To CookieJar.Count - 1
-                        ' WriteLog("DBG: Get_Token, responsebasecookies " & CookieJar.GetCookies(New Uri(_AdrsAcceuil)).Item(i).Name & " : " & CookieJar.GetCookies(New Uri(_AdrsAcceuil)).Item(i).Value)
-                        Select Case CookieJar.GetCookies(New Uri(_AdrsAcceuil)).Item(i).Name
-                            Case "JSESSIONID" : authenconnec.JSESSIONID = CookieJar.GetCookies(New Uri(_AdrsAcceuil)).Item(i).Value
-                            Case "AMAuthCookie" : authenconnec.AMAuthCookie = CookieJar.GetCookies(New Uri(_AdrsAcceuil)).Item(i).Value
-                        End Select
-                    Next
-                    WriteLog("Get_Token, connexion au site enedis.fr en cours")
-                Else
-                    WriteLog("ERR: Get_Token, connexion au site " & _AdrsAcceuil & " non effectuée")
-                    Return False
-                End If
-            Catch ex As Exception
-                WriteLog("ERR: " & "GET_Token, connexion enedis.fr, " & ex.Message)
-                Return False
-            End Try
+            Dim Response As HttpWebResponse = Request.GetResponse()
 
-            Try
-                CookieLogin = CookieJar
-                WriteLog("DBG: Get_Token, tentative de connexion au site -> " & adrs)
-                WriteLog("DBG: Get_Token, parametre de connexion -> " & reqparam)
+            Dim responsereader = New StreamReader(Response.GetResponseStream())
+            responsebodystr = responsereader.ReadToEnd()
+            responsereader.Close()
+            authenconnec = Newtonsoft.Json.JsonConvert.DeserializeObject(responsebodystr, GetType(reponseauthen))
 
-                Dim postReq As HttpWebRequest = DirectCast(WebRequest.Create(adrs), HttpWebRequest)
-                postReq.Method = "POST"
-                postReq.KeepAlive = True
-                postReq.CookieContainer = CookieJar
-                postReq.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0"
-                postReq.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-                postReq.AllowAutoRedirect = False
-                postReq.Host = _LoginBaseUri
-                postReq.Referer = _AdrsAcceuil
-                postReq.ContentType = "application/x-www-form-urlencoded"
-                '    WriteLog("DBG: Get_Token, postReq.Headers.ToString -> " & postReq.Headers.ToString)
+            WriteLog("DBG: Get_Token, responsebodystr -> " & responsebodystr)
+            WriteLog("DBG: Get_Token, authenconnec.login -> " & authenconnec.login)
+            WriteLog("DBG: Get_Token, authenconnec.token -> " & authenconnec.authentication_token)
 
-                Dim writer As New StreamWriter(postReq.GetRequestStream)
-                writer.Write(reqparam)
-                writer.Close()
-
-                Dim postresponse As HttpWebResponse = DirectCast(postReq.GetResponse(), HttpWebResponse)
-                If postresponse.Headers("Set-Cookie") <> Nothing Then
-                    Dim header As String = postresponse.Headers("Set-Cookie").ToString
-                    WriteLog("DBG: Get_Token, responseHeaders -> " & postresponse.Headers.ToString)
-                    header = header.Replace("/,", "/")
-                    header = header.Replace(", ", " ")
-                    '                    WriteLog("DBG: Get_Token, responseHeaders -> " & header)
-                    Dim ckPropLogin() As String = Split(header, ";")
-                    For Each ckLogin As String In ckPropLogin
-                        CookieLogin.SetCookies(New Uri(adrs), ckLogin)
-                    Next
-                    WriteLog("DBG: Get_Token, LoginCookies.count -> " & CookieLogin.Count)
-                    For i = 0 To CookieLogin.Count - 1
-                        WriteLog("DBG: Get_Token, responsecookies " & CookieLogin.GetCookies(New Uri(adrs)).Item(i).Name & " : " & CookieLogin.GetCookies(New Uri(adrs)).Item(i).Value)
-                        Select Case CookieLogin.GetCookies(New Uri(adrs)).Item(i).Name
-                            Case "JSESSIONID" : authenconnec.JSESSIONID = CookieLogin.GetCookies(New Uri(adrs)).Item(i).Value
-                            Case "AMAuthCookie" : authenconnec.AMAuthCookie = CookieLogin.GetCookies(New Uri(adrs)).Item(i).Value
-                            Case "iPlanetDirectoryPro" : authenconnec.iPlanetDirectoryPro = True
-                        End Select
-                    Next
-                End If
-
-                If authenconnec.iPlanetDirectoryPro Then
-                    WriteLog("Get_Token, login au site " & _ApiBaseUri & " effectuée")
-                    Return True
-                Else
-                    WriteLog("ERR: Get_Token, login au site " & adrs & " non effectuée")
-                    Return False
-                End If
-            Catch ex As Exception
-                WriteLog("ERR: " & "GET_Token, connexion, " & ex.Message)
-                Return False
-            End Try
+            Return authenconnec.login
 
         Catch ex As Exception
             WriteLog("ERR: " & "GET_Token, " & ex.Message)
@@ -877,91 +1017,194 @@ Imports MySql.Data
         End Try
     End Function
 
-    Function Get_Data(adrs As String, pasdetemps As String) As Boolean
-        ' recupere les datas de Linky
+    Function Get_Device(adrs As String) As Boolean
+        ' recupere les device de Linky
 
-        ' exemple parametre requete
-        ' https://espace-client-particuliers.enedis.fr/group/espace-particuliers/suivi-de-consommation?p_p_id=lincspartdisplaycdc_WAR_lincspartcdcportlet&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=urlCdcJour&p_p_cacheability=cacheLevelPage&p_p_col_id=column-1&p_p_col_count=2
-        '  reqparam = "_lincspartdisplaycdc_WAR_lincspartcdcportlet_dateDebut=29%2F11%2F2018&_lincspartdisplaycdc_WAR_lincspartcdcportlet_dateFin=29%2F12%2F2018"
-
-        Dim datedebut As String = Date.Now.AddDays(-1).ToShortDateString
-        Dim datefin As String = Date.Now.ToShortDateString
-        Dim reqpart As String = "lincspartdisplaycdc_WAR_lincspartcdcportlet"
-        Dim reqparam As String = "_" & reqpart & "_dateDebut=" & datedebut.Replace("/", "%2F") & "&_" & reqpart & "_dateFin=" & datefin.Replace("/", "%2F")
-        Dim reqadrs As String = "?p_p_id=" & reqpart & "&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=" & pasdetemps & "&p_p_cacheability=cacheLevelPage&p_p_col_id=column-1&p_p_col_count=2"
+        Dim reqparam As String = ""
         Dim responsebodystr As String = ""
-        Dim urldata As String = adrs & reqadrs
-
-        Dim AdrsConso As String = "https://" & _ApiBaseUri & _ApiEndPointData
-        Dim CookieJar As New CookieContainer()
 
         Try
+            WriteLog("DBG: Get_Device, url -> " & adrs)
+            Dim httpDate As String = DateTime.UtcNow.ToString("ddd, dd MMM yyyy HH:mm:ss ") + "GMT"
+            Dim Request As HttpWebRequest = HttpWebRequest.Create(adrs)
+            Request.ContentType = "application/x-amz-json-1.1"
+            Request.Method = "GET"
+            Request.KeepAlive = True
+            Request.ContentLength = reqparam.Length
+            Request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:55.0) Gecko/20100101 Firefox/55.0"
+            Request.Accept = "*/*"
+            Request.Host = "tt1ph811kc.execute-api.eu-central-1.amazonaws.com"
+            Request.Referer = "http://app.Linky.com/dashboard/measures"
+            Request.Headers.Clear()
+            Request.Headers.Add("authentication_token", authenconnec.authentication_token)
+            Request.Headers.Add("origin", "http://app.Linky.com")
 
-            Try
-                WriteLog("DBG: Get_Data, url -> " & urldata)
-                WriteLog("DBG: Get_Data, reqparam -> " & reqparam)
-                Dim postReq As HttpWebRequest = DirectCast(WebRequest.Create(urldata), HttpWebRequest)
-                postReq.Method = "POST"
-                postReq.KeepAlive = True
-                postReq.CookieContainer = CookieJar
-                postReq.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:64.0) Gecko/20100101 Firefox/64.0"
-                postReq.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-                postReq.AllowAutoRedirect = False
-                postReq.Host = _ApiBaseUri
-                postReq.Referer = AdrsConso
-                postReq.ContentType = "application/x-www-form-urlencoded;charset=UTF-8"
-                '    WriteLog("DBG: Get_Token, postReq.Headers.ToString -> " & postReq.Headers.ToString)
+            Dim Response As HttpWebResponse = Request.GetResponse()
 
-                Dim writer As New StreamWriter(postReq.GetRequestStream)
-                writer.Write(reqparam)
-                writer.Close()
+            Dim responsereader = New StreamReader(Response.GetResponseStream())
+            responsebodystr = responsereader.ReadToEnd()
+            responsereader.Close()
 
-                Dim postresponse As HttpWebResponse = DirectCast(postReq.GetResponse(), HttpWebResponse)
+            '            responsebodystr = "[{""serial"":""203737"",""role"":""owner""},{""serial"":""203F66"",""role"":""owner""},{""serial"":""203D21"",""role"":""owner""},{""serial"":""201C54"",""role"":""owner""},{""serial"":""201A97"",""role"":""owner""},{""role"":""collaborator"",""serial"":""74415""},{""serial"":""2035EF"",""role"":""owner""},{""serial"":""20327A"",""role"":""owner""},{""serial"":""203279"",""role"":""owner""},{""role"":""collaborator"",""serial"":""1B28E4""}]"
 
-                Dim responsereader = New StreamReader(postresponse.GetResponseStream())
-                responsebodystr = responsereader.ReadToEnd()
-                responsereader.Close()
+            'nettoie la chaine car mot clé VB
+            responsebodystr = responsebodystr.Replace("function", "fonction") ' function mot reservé VB
+            responsebodystr = responsebodystr.Replace("sensor-fonction", "sensor_fonction") ' signe - reservé VB
 
-                WriteLog("DBG: Get_Data, reponsebodystr -> " & responsebodystr)
+            Dim jsonObj = Newtonsoft.Json.JsonConvert.DeserializeObject(Of List(Of Object))(responsebodystr)
 
+            listestat.Clear()
+            Dim s As String = ""
+            For Each _stat In jsonObj
+                s = _stat.ToString
+                'nettoie la chaine
+                s = s.Replace(" ", "")
+                s = s.Replace(vbCr, "")
+                s = s.Replace(vbLf, "")
+                '     s = "{""serial"":""203737"",""role"":""owner""}"
+                Dim st As Stations
+                st = Newtonsoft.Json.JsonConvert.DeserializeObject(s, GetType(Stations))
+                If st.serial.Length > 0 Then
+                    listestat.Insert(listestat.Count, st)
+                    '                    WriteLog("DBG: Get_Device, " & listestat.Count & " " & "station -> " & listestat.Item(listestat.Count - 1).serial)
+                End If
+            Next
+            WriteLog("DBG: Get_Device, " & listestat.Count & " " & "stations trouvées")
 
-                '           Dim jsonObj = Newtonsoft.Json.JsonConvert.DeserializeObject(Of List(Of Object))(responsebodystr)
+            'recherche des champs de statuts. Permet d'avoir une liste variable en fonction de la class status
+            Dim workTable As New DataTable
+            workTable.Columns.Add("ident", GetType(String))
+            workTable.Clear()
+            For Each station In listestat
+                Dim statu As Status
+                statu = station.status
+                Dim strjson As String = Newtonsoft.Json.JsonConvert.SerializeObject(statu, Newtonsoft.Json.Formatting.None)
+                Dim ArrayStatus() As String = Split(strjson, ",")
+                For Each st In ArrayStatus
+                    st = st.Replace("""", "")
+                    st = st.Replace("{", "")
+                    st = st.Replace("}", "")
+                    workTable.Rows.Add(Mid(st, 1, (InStr(st, ":") - 1)))
+                Next
+                Exit For
+            Next
 
+            Dim _libelleadr1 As String = "0 # All |"
+            Dim _libelleadr2 As String = ""
 
-                'Dim _libelleadr1 As String = "0 # All |"
-                'Dim _libelleadr2 As String = ""
+            'cas d'un choix de valeur pour toutes les stations
+            For Each st In workTable.Rows
+                _libelleadr2 += "0 #;  " & st(0) & " |"
+            Next
+            'ajoute les paramètre spécifique des stations sans generer de doublons
+            For i = 0 To listestat.Count - 1
+                For j = 0 To listestat.Item(i).fonctionlive.Count - 1
+                    If InStr(_libelleadr2, listestat.Item(i).fonctionlive.Item(j).sensor_fonction) = 0 Then
+                        _libelleadr2 += "0 #; " & listestat.Item(i).fonctionlive.Item(j).sensor_fonction & "|"
+                    End If
+                Next
+            Next
 
-                '' evite les doublons 
-                'Dim ld0 As New HoMIDom.HoMIDom.Driver.cLabels
-                'For i As Integer = 0 To _LabelsDevice.Count - 1
-                '    ld0 = _LabelsDevice(i)
-                '    Select Case ld0.NomChamp
-                '        Case "ADRESSE1"
-                '            _libelleadr1 = Mid(_libelleadr1, 1, Len(_libelleadr1) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
-                '            ld0.Parametre = _libelleadr1
-                '            _LabelsDevice(i) = ld0
-                '        Case "ADRESSE2"
-                '            _libelleadr2 = Mid(_libelleadr2, 1, Len(_libelleadr2) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
-                '            ld0.Parametre = _libelleadr2
-                '            _LabelsDevice(i) = ld0
-                '    End Select
-                'Next
+            'cas d'un choix de valeur par station
+            For i = 0 To listestat.Count - 1
+                _libelleadr1 += i + 1 & " # " & listestat.Item(i).serial & " / " & listestat.Item(i).status.name & "|"
+                For Each st In workTable.Rows
+                    _libelleadr2 += i + 1 & " #;  " & st(0) & " |"
+                Next
+                'complement avec les champ de fonction variables suivant stations
+                For j = 0 To listestat.Item(i).fonctionlive.Count - 1
+                    _libelleadr2 += i + 1 & " #; " & listestat.Item(i).fonctionlive.Item(j).sensor_fonction & "|"
+                Next
+            Next
 
-                Return True
-            Catch ex As Exception
-                WriteLog("ERR: " & "GET_Data, connexion, " & ex.Message)
-                Return False
-            End Try
+            ' evite les doublons 
+            Dim ld0 As New HoMIDom.HoMIDom.Driver.cLabels
+            For i As Integer = 0 To _LabelsDevice.Count - 1
+                ld0 = _LabelsDevice(i)
+                Select Case ld0.NomChamp
+                    Case "ADRESSE1"
+                        _libelleadr1 = Mid(_libelleadr1, 1, Len(_libelleadr1) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
+                        ld0.Parametre = _libelleadr1
+                        _LabelsDevice(i) = ld0
+                    Case "ADRESSE2"
+                        _libelleadr2 = Mid(_libelleadr2, 1, Len(_libelleadr2) - 1) 'enleve le dernier | pour eviter davoir une ligne vide a la fin
+                        ld0.Parametre = _libelleadr2
+                        _LabelsDevice(i) = ld0
+                End Select
+            Next
+
+            Return True
 
         Catch ex As Exception
-            WriteLog("ERR: " & "GET_Data, " & ex.Message)
-            WriteLog("ERR: " & "GET_Data, Url: " & urldata)
+            WriteLog("ERR: " & "GET_Device, " & ex.Message)
+            WriteLog("ERR: " & "GET_Device, Url: " & adrs)
             Return False
         End Try
     End Function
 
+    Function Get_Previsions(adrs As String) As Boolean
+        ' recupere les device de Linky
 
- 
+        Dim reqparam As String = ""
+        Dim responsebodystr As String = ""
+
+        Try
+            WriteLog("DBG: Get_Device, url -> " & adrs)
+            Dim httpDate As String = DateTime.UtcNow.ToString("ddd, dd MMM yyyy HH:mm:ss ") + "GMT"
+            Dim Request As HttpWebRequest = HttpWebRequest.Create(adrs)
+            Request.ContentType = "application/x-amz-json-1.1"
+            Request.Method = "GET"
+            Request.KeepAlive = True
+            Request.ContentLength = reqparam.Length
+            Request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:55.0) Gecko/20100101 Firefox/55.0"
+            Request.Accept = "*/*"
+            Request.Host = "tt1ph811kc.execute-api.eu-central-1.amazonaws.com"
+            Request.Referer = "http://app.Linky.com/dashboard/measures"
+            Request.Headers.Clear()
+            Request.Headers.Add("authentication_token", authenconnec.authentication_token)
+            Request.Headers.Add("origin", "http://app.Linky.com")
+
+            Dim Response As HttpWebResponse = Request.GetResponse()
+
+            Dim responsereader = New StreamReader(Response.GetResponseStream())
+            responsebodystr = responsereader.ReadToEnd()
+            responsereader.Close()
+
+             listprevisions = Newtonsoft.Json.JsonConvert.DeserializeObject(responsebodystr, GetType(Previsions))
+
+            Return True
+        Catch ex As Exception
+            WriteLog("ERR: " & "GET_Device, " & ex.Message)
+            WriteLog("ERR: " & "GET_Device, Url: " & adrs)
+            Return False
+        End Try
+    End Function
+
+    Private Function TraduireJour(ByVal Jour As String) As String
+        Try
+            TraduireJour = "?"
+            Select Case Jour
+                Case "Thu"
+                    TraduireJour = "Jeu"
+                Case "Fri"
+                    TraduireJour = "Ven"
+                Case "Sat"
+                    TraduireJour = "Sam"
+                Case "Sun"
+                    TraduireJour = "Dim"
+                Case "Mon"
+                    TraduireJour = "Lun"
+                Case "Tue"
+                    TraduireJour = "Mar"
+                Case "Wed"
+                    TraduireJour = "Mer"
+            End Select
+        Catch ex As Exception
+            WriteLog("ERR: TraduireJour, " & ex.ToString)
+            Return "?"
+        End Try
+    End Function
+
     Private Sub WriteLog(ByVal message As String)
         Try
             'utilise la fonction de base pour loguer un event
