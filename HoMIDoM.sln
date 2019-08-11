@@ -689,10 +689,10 @@ Global
 		{8DBBEEF9-7715-45C5-8F28-A4E5D0F6E188} = {A84FBDA1-CBD9-45E0-A3CC-7C0E7842D533}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		BuildVersion_IncrementBeforeBuild = True
-		BuildVersion_UseGlobalSettings = True
-		BuildVersion_BuildVersioningStyle = None.None.Increment.None
-		BuildVersion_UpdateFileVersion = True
 		BuildVersion_UpdateAssemblyVersion = True
+		BuildVersion_UpdateFileVersion = True
+		BuildVersion_BuildVersioningStyle = None.None.Increment.None
+		BuildVersion_UseGlobalSettings = True
+		BuildVersion_IncrementBeforeBuild = True
 	EndGlobalSection
 EndGlobal

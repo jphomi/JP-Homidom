@@ -562,6 +562,22 @@ Imports System.Threading
 
     End Sub
 
+    Public Sub WriteLog(ByVal message As String)
+        Try
+            'utilise la fonction de base pour loguer un event
+            If STRGS.InStr(message, "DBG:") > 0 Then
+                If _DEBUG Then
+                    _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, Me.Nom, STRGS.Right(message, message.Length - 5))
+                End If
+            ElseIf STRGS.InStr(message, "ERR:") > 0 Then
+                _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom, STRGS.Right(message, message.Length - 5))
+            Else
+                _Server.Log(TypeLog.INFO, TypeSource.DRIVER, Me.Nom, message)
+            End If
+        Catch ex As Exception
+            _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom & " WriteLog", ex.Message)
+        End Try
+    End Sub
 #End Region
 
 #Region "Fonctions internes"
@@ -584,31 +600,14 @@ Imports System.Threading
         End Set
     End Property
 
-    Private Sub WriteLog(ByVal message As String)
-        Try
-            'utilise la fonction de base pour loguer un event
-            If STRGS.InStr(message, "DBG:") > 0 Then
-                If _DEBUG Then
-                    _Server.Log(TypeLog.DEBUG, TypeSource.DRIVER, Me.Nom, STRGS.Right(message, message.Length - 5))
-                End If
-            ElseIf STRGS.InStr(message, "ERR:") > 0 Then
-                _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom, STRGS.Right(message, message.Length - 5))
-            Else
-                _Server.Log(TypeLog.INFO, TypeSource.DRIVER, Me.Nom, message)
-            End If
-        Catch ex As Exception
-            _Server.Log(TypeLog.ERREUR, TypeSource.DRIVER, Me.Nom & " WriteLog", ex.Message)
-        End Try
-    End Sub
-
 #End Region
 
 End Class
 
 #Region "Class externe"
+
 Public MustInherit Class BaseHoMIdomController
     Inherits ApiController
-
     'Public Property ServerKey As String
     Public ReadOnly Property ServerKey() As String
         Get
@@ -662,8 +661,8 @@ Public Class DevicesController
                 Next
             Else
                 Dim Val As Value = New Value
-                Val.Date = date_to_long(Now)
-                Val.Value = 0
+                Val.date = date_to_long(Now)
+                Val.value = 0
                 allHistImperi.values.Add(Val)
             End If
 
@@ -861,33 +860,44 @@ Public Class DevicesController
 
                                     Case "setAck", "stopShutter"
 
-                                                For Each devparam In devImperi.params
-                                                    If devparam.key = "Level" Or devparam.key = "Tripped" Then
-                                                        Dev = Driver_ImperiHome.CurrentServer.ReturnDeviceByID(ServerKey, devparam.value)
-                                                        action = New DeviceAction() With {.Nom = "OFF"}
-                                                        Driver_ImperiHome.CurrentServer.ExecuteDeviceCommand(Me.ServerKey, Dev.ID, action)
-                                                    End If
-                                                Next
+                                        For Each devparam In devImperi.params
+                                            If devparam.key = "Level" Or devparam.key = "Tripped" Then
+                                                Dev = Driver_ImperiHome.CurrentServer.ReturnDeviceByID(ServerKey, devparam.value)
+                                                action = New DeviceAction() With {.Nom = "OFF"}
+                                                Driver_ImperiHome.CurrentServer.ExecuteDeviceCommand(Me.ServerKey, Dev.ID, action)
+                                            End If
+                                        Next
 
                                     Case "setColor"
 
                                         For Each devparam In devImperi.params
                                             If devparam.key = "color" Then
+                                                Driver_ImperiHome.CurrentServer.Log(TypeLog.DEBUG, TypeSource.DRIVER, "Imperihome", " ExecuteCommandWithParams, SetColor : color = " & param)
+                                                ' Dev = Driver_ImperiHome.CurrentServer.ReturnDeviceByID(ServerKey, devparam.value)
+                                                '  action = New DeviceAction() With {.Nom = "red"}
+                                                '  Driver_ImperiHome.CurrentServer.Log(TypeLog.DEBUG, TypeSource.DRIVER, "Imperihome", " ExecuteCommandWithParams, SetColor : red = " & Convert.ToInt32(Mid(param, 3, 2), 16))
+                                                '  Dim devActionParameter As DeviceAction.Parametre = New DeviceAction.Parametre With {.Nom = "Value", .Value = Convert.ToInt32(Mid(param, 3, 2), 16)}
+                                                '  action.Parametres.Add(devActionParameter)
+                                                '  Driver_ImperiHome.CurrentServer.ExecuteDeviceCommand(Me.ServerKey, Dev.ID, action)
+
+                                                '    action = New DeviceAction() With {.Nom = "green"}
+                                                '    devActionParameter = New DeviceAction.Parametre With {.Nom = "Value", .Value = Convert.ToInt32(Mid(param, 5, 2), 16)}
+                                                '    Driver_ImperiHome.CurrentServer.Log(TypeLog.DEBUG, TypeSource.DRIVER, "Imperihome", " ExecuteCommandWithParams, SetColor : green = " & Convert.ToInt32(Mid(param, 5, 2), 16))
+                                                '    action.Parametres.Add(devActionParameter)
+                                                '    Driver_ImperiHome.CurrentServer.ExecuteDeviceCommand(Me.ServerKey, Dev.ID, action)
+
+                                                '    action = New DeviceAction() With {.Nom = "blue"}
+                                                '    devActionParameter = New DeviceAction.Parametre With {.Nom = "Value", .Value = Convert.ToInt32(Mid(param, 7, 2), 16)}
+                                                '    Driver_ImperiHome.CurrentServer.Log(TypeLog.DEBUG, TypeSource.DRIVER, "Imperihome", " ExecuteCommandWithParams, SetColor : blue = " & Convert.ToInt32(Mid(param, 7, 2), 16))
+                                                '    action.Parametres.Add(devActionParameter)
+                                                '    Driver_ImperiHome.CurrentServer.ExecuteDeviceCommand(Me.ServerKey, Dev.ID, action)
+
                                                 Dev = Driver_ImperiHome.CurrentServer.ReturnDeviceByID(ServerKey, devparam.value)
-                                                action = New DeviceAction() With {.Nom = "red"}
-                                                Dim devActionParameter As DeviceAction.Parametre = New DeviceAction.Parametre With {.Nom = "Value", .Value = Convert.ToInt32(Mid(param, 3, 2), 16)}
+                                                action = New DeviceAction() With {.Nom = "SETPOINT"}
+                                                Dim devActionParameter As DeviceAction.Parametre = New DeviceAction.Parametre With {.Nom = "Value", .Value = param}
                                                 action.Parametres.Add(devActionParameter)
                                                 Driver_ImperiHome.CurrentServer.ExecuteDeviceCommand(Me.ServerKey, Dev.ID, action)
 
-                                                action = New DeviceAction() With {.Nom = "green"}
-                                                devActionParameter = New DeviceAction.Parametre With {.Nom = "Value", .Value = Convert.ToInt32(Mid(param, 5, 2), 16)}
-                                                action.Parametres.Add(devActionParameter)
-                                                Driver_ImperiHome.CurrentServer.ExecuteDeviceCommand(Me.ServerKey, Dev.ID, action)
-
-                                                action = New DeviceAction() With {.Nom = "blue"}
-                                                devActionParameter = New DeviceAction.Parametre With {.Nom = "Value", .Value = Convert.ToInt32(Mid(param, 7, 2), 16)}
-                                                action.Parametres.Add(devActionParameter)
-                                                Driver_ImperiHome.CurrentServer.ExecuteDeviceCommand(Me.ServerKey, Dev.ID, action)
                                             End If
                                         Next
                                     Case Else
@@ -910,6 +920,7 @@ Public Class DevicesController
             End If
 
         Catch ex As Exception
+            Driver_ImperiHome.CurrentServer.Log(TypeLog.ERREUR, TypeSource.DRIVER, "Imperihome", " ExecuteCommandWithParams : " & ex.Message)
             Return False
         End Try
 
@@ -995,7 +1006,6 @@ Public Class DevicesController
         End Try
 
     End Function
-
 End Class
 
 ''' <summary>Class DeviceParam, Défini le type parametre de composant pour le client Imperihome</summary>
@@ -1123,7 +1133,6 @@ End Class
 
     Public id As String
     Public apiversion As Integer
-
 End Class
 
 #End Region

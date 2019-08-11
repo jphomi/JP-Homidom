@@ -65,8 +65,8 @@ Imports MySql.Data
     Dim _Password As String = ""
     Dim _Obj As Object = Nothing
 
-    Dim authenconnec As ReponseAuthen
-    '   Dim listestat As New List(Of Stations)
+    Dim authenconnec As reponseauthen
+    Dim listestat As New List(Of Stations)
     '    Dim meteo As List(Of String) = New List(Of String)
     Dim listprevisions As Previsions
 
